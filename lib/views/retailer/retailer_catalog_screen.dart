@@ -95,118 +95,212 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
             ),
       appBar: AppBar(
         titleSpacing: 16,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(Icons.storefront_rounded, size: 18, color: Colors.white),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+        title: isDesktop
+            ? Row(
                 children: [
-                  Text(
-                    auth.settings.storeName,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                  // 1. Distributor Name Pill (Height 36)
+                  Container(
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.slate800,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppTheme.slate700),
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
-                    children: [
-                      const Text(
-                        'Verified Retailer: ',
-                        style: TextStyle(fontSize: 11, color: AppTheme.slate400),
-                      ),
-                      Flexible(
-                        child: Text(
-                          widget.retailer.storeName,
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.storefront_rounded, size: 16, color: AppTheme.primaryLight),
+                        const SizedBox(width: 8),
+                        Text(
+                          auth.settings.storeName,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryLight,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 2. Retailer Name Pill (Height 36)
+                  Flexible(
+                    child: Container(
+                      height: 36,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.slate800,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppTheme.slate700),
+                      ),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.verified_user_rounded, size: 15, color: AppTheme.primaryLight),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Retailer: ',
+                            style: TextStyle(fontSize: 12, color: AppTheme.slate400),
+                          ),
+                          Flexible(
+                            child: Text(
+                              widget.retailer.storeName,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(Icons.storefront_rounded, size: 18, color: Colors.white),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          auth.settings.storeName,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                        Row(
+                          children: [
+                            const Text(
+                              'Verified Retailer: ',
+                              style: TextStyle(fontSize: 11, color: AppTheme.slate400),
+                            ),
+                            Flexible(
+                              child: Text(
+                                widget.retailer.storeName,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primaryLight,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+        actions: [
+          // 3. Route Badge Pill on desktop (Height 36)
+          if (isDesktop && widget.retailer.route.isNotEmpty) ...[
+            Container(
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: AppTheme.slate800,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppTheme.slate700),
+              ),
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 14, color: AppTheme.slate400),
+                  const SizedBox(width: 5),
+                  Text(
+                    widget.retailer.route,
+                    style: const TextStyle(fontSize: 12, color: AppTheme.slate200, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
           ],
-        ),
-        actions: [
-          // Route Badge on header
-          if (isDesktop && widget.retailer.route.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.slate800,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: AppTheme.slate700),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 13, color: AppTheme.slate400),
-                    const SizedBox(width: 4),
-                    Text(
-                      widget.retailer.route,
-                      style: const TextStyle(fontSize: 11, color: AppTheme.slate200),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          const SizedBox(width: 8),
 
-          // Header Cart Action (Tablet & Desktop only; Mobile retains FloatingActionButton exclusively)
-          if (isDesktop)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Consumer<CartProvider>(
-                builder: (context, cart, _) {
-                  return ElevatedButton.icon(
+          // 4. Cart Action (Height 36 on desktop)
+          if (isDesktop) ...[
+            Consumer<CartProvider>(
+              builder: (context, cart, _) {
+                return SizedBox(
+                  height: 36,
+                  child: ElevatedButton.icon(
                     onPressed: () => _openCartDrawer(context),
                     icon: Badge(
                       label: Text('${cart.itemCount}'),
                       isLabelVisible: cart.itemCount > 0,
                       backgroundColor: AppTheme.outOfStockRed,
-                      child: const Icon(Icons.shopping_cart_outlined, size: 17),
+                      child: const Icon(Icons.shopping_cart_outlined, size: 16),
                     ),
                     label: Text(
                       cart.subtotalPtr > 0 ? AppFormatters.formatCurrency(cart.subtotalPtr) : 'Cart',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate800,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: BorderSide(
+                          color: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate700,
+                        ),
+                      ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-          const SizedBox(width: 6),
+            const SizedBox(width: 8),
+          ],
 
-          // Logout Button
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, size: 18),
-            tooltip: 'Exit Order Desk',
-            onPressed: auth.logout,
-          ),
-          const SizedBox(width: 10),
+          // 5. Logout / Exit Button (Height 36 on desktop)
+          if (isDesktop)
+            SizedBox(
+              height: 36,
+              child: OutlinedButton.icon(
+                onPressed: auth.logout,
+                icon: const Icon(Icons.logout_rounded, size: 15, color: AppTheme.slate300),
+                label: const Text(
+                  'Exit',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.slate200),
+                ),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: AppTheme.slate800,
+                  side: const BorderSide(color: AppTheme.slate700),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.logout_rounded, size: 18),
+              tooltip: 'Exit Order Desk',
+              onPressed: auth.logout,
+            ),
+          const SizedBox(width: 12),
         ],
       ),
       body: Column(

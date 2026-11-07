@@ -43,7 +43,7 @@ class CatalogCardGrid extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: screenWidth < 1100 ? 2 : (screenWidth < 1400 ? 3 : 4),
-        mainAxisExtent: 310,
+        mainAxisExtent: 290,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),

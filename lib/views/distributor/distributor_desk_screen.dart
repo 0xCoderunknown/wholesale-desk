@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../config/formatters.dart';
 import '../../config/theme.dart';
 import '../../models/product.dart';
+import '../../services/repository_manager.dart';
 import '../../state/auth_provider.dart';
 import '../../state/desk_provider.dart';
 import '../widgets/high_density_badge.dart';
@@ -54,6 +55,50 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
       context: context,
       builder: (_) => StoreSettingsDialog(settings: auth.settings),
     );
+  }
+
+  Future<void> _resetDemoCatalog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.bolt_rounded, color: Color(0xFFF59E0B)),
+            SizedBox(width: 8),
+            Text('Reset Demo Catalog?'),
+          ],
+        ),
+        content: const Text(
+          'This will re-seed the standard FMCG demo catalog (10 wholesale items) and 3 sample retailer accounts.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Reset Demo Data'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await RepositoryManager.instance.seedInitialData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚡ Demo wholesale catalog & retailers restored successfully!'),
+            backgroundColor: AppTheme.primary,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -185,8 +230,13 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
             ),
           const SizedBox(width: 8),
 
-          // Admin Settings Action
+          // Admin Actions
           if (isAdmin) ...[
+            IconButton(
+              icon: const Icon(Icons.bolt_rounded, size: 20, color: Color(0xFFF59E0B)),
+              tooltip: 'Reset Demo Catalog (10 Products & 3 Stores)',
+              onPressed: _resetDemoCatalog,
+            ),
             IconButton(
               icon: const Icon(Icons.settings_outlined, size: 20),
               tooltip: 'Store & PIN Settings',

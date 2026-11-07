@@ -42,6 +42,9 @@ class ProductCardTile extends StatelessWidget {
     const FontWeight priceFontWeight = FontWeight.w700;
     const Color basePriceColor = AppTheme.slate800;
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 768;
+
     return Card(
       elevation: inCart ? 2 : 0,
       color: inCart ? AppTheme.primarySurface.withValues(alpha: 0.45) : Colors.white,
@@ -247,6 +250,7 @@ class ProductCardTile extends StatelessWidget {
                 inStock: product.inStock,
                 isAlreadyActive: nudge.isQualified,
                 onApplyScheme: () => cart.applyScheme(product, schemeThreshold, enforceMoq: enforceMoq),
+                isDesktop: isDesktop,
               ),
             ],
           ],

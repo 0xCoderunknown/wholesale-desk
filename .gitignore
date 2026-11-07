@@ -46,3 +46,14 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Firebase cache
+.firebase/
+.firebaserc
+
+# -----------------------------------------------------------------------
+# 🔒 Secrets & Local Configs — NEVER commit these to a public FOSS repository
+# -----------------------------------------------------------------------
+# Firebase configuration containing project secrets
+lib/config/firebase_options.local.dart
+*-config.json

@@ -105,6 +105,29 @@ To prevent hardcoding of business details (such as phone numbers or store identi
 
 ---
 
+## 🌐 Live Public Demo
+
+Experience the high-speed B2B Wholesale Desk live in your browser:  
+👉 **[https://wholesale-desk-hub.web.app](https://wholesale-desk-hub.web.app)**
+
+### Test Credentials (1-Click Chips on Login):
+- **Admin Desk (Master)**: PIN `5075` — full catalog CRUD, schemes, retailer PIN management, and 1-click `[⚡ Reset Demo]`
+- **Staff Counter (Restricted)**: PIN `1122` — 0ms catalog search and in-place stock toggle pills
+- **Retailer Order Desk**: Mobile `9876543210`, PIN `1234` — high-density catalog, MOQ steppers, and slide-out WhatsApp cart
+
+---
+
+## 🔒 Open-Source (FOSS) Setup & Firebase Config
+
+This repository is hardened for open-source (FOSS) safety with zero committed secrets:
+1. **Local Evaluation**: The app runs immediately out-of-the-box (`flutter run -d chrome`) with rich in-memory sample FMCG products, sample retailers, and fallback settings without requiring Firebase setup.
+2. **Connecting Your Firebase Project**:
+   - Copy `.firebaserc.example` to `.firebaserc` and set your Firebase project ID.
+   - Supply your web credentials in `config.json` under `"firebase"` or run `flutterfire configure --platforms=web`.
+   - In Firestore, enable Cloud Firestore in your Firebase console.
+
+---
+
 ## 🚀 Quick Start
 
 ### Run locally on Chrome:
@@ -112,7 +135,8 @@ To prevent hardcoding of business details (such as phone numbers or store identi
 flutter run -d chrome
 ```
 
-### Test Demo Credentials:
-- **Admin Desk**: PIN `5075`
-- **Staff Counter**: PIN `1122`
-- **Retailer Order Desk**: Mobile `9876543210`, PIN `1234`
+### Build & Deploy:
+```bash
+flutter build web --release
+firebase deploy --only hosting
+```

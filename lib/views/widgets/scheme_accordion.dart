@@ -10,6 +10,7 @@ class SchemeCollapsibleAccordion extends StatefulWidget {
   final bool inStock;
   final bool isAlreadyActive;
   final VoidCallback? onApplyScheme;
+  final bool isDesktop;
 
   const SchemeCollapsibleAccordion({
     super.key,
@@ -17,6 +18,7 @@ class SchemeCollapsibleAccordion extends StatefulWidget {
     required this.inStock,
     this.isAlreadyActive = false,
     this.onApplyScheme,
+    this.isDesktop = false,
   });
 
   @override
@@ -76,6 +78,7 @@ class _SchemeCollapsibleAccordionState extends State<SchemeCollapsibleAccordion>
     }
 
     final isActive = widget.isAlreadyActive;
+    final canExpand = !widget.isDesktop;
 
     // Expandable accordion for tiered schemes (10+1, 12+1 Free, Buy 24 Get ₹100 Off)
     return Container(
@@ -90,43 +93,84 @@ class _SchemeCollapsibleAccordionState extends State<SchemeCollapsibleAccordion>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header (Tappable to expand/collapse)
-          InkWell(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: BorderRadius.circular(6),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              child: Row(
-                children: [
-                  Text(isActive ? '✓ ' : '🏷️ ', style: const TextStyle(fontSize: 12)),
-                  Expanded(
-                    child: Text(
-                      isActive
-                          ? 'Scheme Active: ${p.scheme}'
-                          : 'Scheme: ${p.scheme}',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
+          // Header (Tappable on mobile to expand; on desktop tooltip reveals breakdown)
+          Tooltip(
+            message: widget.isDesktop ? details.breakdownCopy : '',
+            child: InkWell(
+              onTap: canExpand ? () => setState(() => _isExpanded = !_isExpanded) : null,
+              borderRadius: BorderRadius.circular(6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: Row(
+                  children: [
+                    Text(isActive ? '✓ ' : '🏷️ ', style: const TextStyle(fontSize: 12)),
+                    Expanded(
+                      child: Text(
+                        isActive
+                            ? 'Scheme Active: ${p.scheme}'
+                            : 'Scheme: ${p.scheme}',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: isActive ? const Color(0xFF065F46) : const Color(0xFF92400E),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+
+                    // On desktop: embedded 1-click [APPLY] button directly in the scheme header (since there is no expanding drawer)
+                    if (widget.isDesktop && widget.inStock && details.threshold > 0 && widget.onApplyScheme != null) ...[
+                      InkWell(
+                        onTap: widget.onApplyScheme,
+                        borderRadius: BorderRadius.circular(4),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isActive ? const Color(0xFF059669) : const Color(0xFF15803D),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isActive ? Icons.check_circle_rounded : Icons.bolt_rounded,
+                                size: 11,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                isActive ? 'APPLIED' : 'APPLY',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+
+                    if (canExpand)
+                      Icon(
+                        _isExpanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        size: 16,
                         color: isActive ? const Color(0xFF065F46) : const Color(0xFF92400E),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    _isExpanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    size: 16,
-                    color: isActive ? const Color(0xFF065F46) : const Color(0xFF92400E),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
 
-          // Compact Accordion Drawer (tight 8px padding, combined single-line info)
-          if (_isExpanded) ...[
+          // Compact Accordion Drawer (on mobile when expanded)
+          if (canExpand && _isExpanded) ...[
             Container(
               height: 1,
               color: isActive ? const Color(0xFFA7F3D0) : const Color(0xFFFEF08A),

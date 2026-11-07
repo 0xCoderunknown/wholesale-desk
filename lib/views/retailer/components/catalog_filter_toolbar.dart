@@ -111,104 +111,124 @@ class CatalogFilterToolbar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Instant In-Memory Search
+          // 1. Instant In-Memory Search (Height 38)
           Expanded(
-            child: TextField(
-              controller: searchController,
-              focusNode: searchFocus,
-              onChanged: onSearchChanged,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppTheme.slate500),
-                hintText: 'Search products by name, brand, or scheme (0ms latency)...',
-                suffixIcon: searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 16),
-                        onPressed: onClearSearch,
-                      )
-                    : null,
+            child: SizedBox(
+              height: 38,
+              child: TextField(
+                controller: searchController,
+                focusNode: searchFocus,
+                onChanged: onSearchChanged,
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppTheme.slate500),
+                  hintText: 'Search products by name, brand, or scheme (0ms latency)...',
+                  suffixIcon: searchController.text.isNotEmpty
+                      ? IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.clear, size: 16),
+                          onPressed: onClearSearch,
+                        )
+                      : null,
+                ),
               ),
             ),
           ),
           const SizedBox(width: 8),
 
-          // View Mode Switcher (Cards vs List)
+          // 2. View Mode Switcher (Cards vs List) (Height 38)
           Tooltip(
             message: isGridView ? 'Switch to List View' : 'Switch to Thumbnail Cards',
-            child: OutlinedButton.icon(
-              onPressed: onToggleViewMode,
-              icon: Icon(
-                isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
-                size: 16,
-                color: AppTheme.slate700,
-              ),
-              label: Text(
-                isGridView ? 'List' : 'Cards',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.slate700),
-              ),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                side: const BorderSide(color: AppTheme.slate300),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            child: SizedBox(
+              height: 38,
+              child: OutlinedButton.icon(
+                onPressed: onToggleViewMode,
+                icon: Icon(
+                  isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
+                  size: 16,
+                  color: AppTheme.slate700,
+                ),
+                label: Text(
+                  isGridView ? 'List' : 'Cards',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.slate700),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  side: const BorderSide(color: AppTheme.slate300),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
               ),
             ),
           ),
           const SizedBox(width: 8),
 
-          // Desktop Brand Filter
+          // 3. Desktop Brand Filter (Height 38)
           if (isDesktop) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppTheme.slate300),
-                borderRadius: BorderRadius.circular(6),
-                color: Colors.white,
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: selectedBrand,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.slate800,
+            SizedBox(
+              height: 38,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppTheme.slate300),
+                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.white,
+                ),
+                alignment: Alignment.center,
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    isDense: true,
+                    value: selectedBrand,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.slate800,
+                    ),
+                    items: brands.map((b) {
+                      return DropdownMenuItem(value: b, child: Text(b));
+                    }).toList(),
+                    onChanged: (b) {
+                      if (b != null) onBrandSelected(b);
+                    },
                   ),
-                  items: brands.map((b) {
-                    return DropdownMenuItem(value: b, child: Text(b));
-                  }).toList(),
-                  onChanged: (b) {
-                    if (b != null) onBrandSelected(b);
-                  },
                 ),
               ),
             ),
             const SizedBox(width: 8),
           ],
 
-          // Stock Filter Dropdown
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              border: Border.all(color: AppTheme.slate300),
-              borderRadius: BorderRadius.circular(6),
-              color: Colors.white,
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<StockFilterType>(
-                value: stockFilter,
-                icon: const Icon(Icons.filter_list_rounded, size: 16),
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.slate800,
+          // 4. Stock Filter Dropdown (Height 38)
+          SizedBox(
+            height: 38,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppTheme.slate300),
+                borderRadius: BorderRadius.circular(6),
+                color: Colors.white,
+              ),
+              alignment: Alignment.center,
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<StockFilterType>(
+                  isDense: true,
+                  value: stockFilter,
+                  icon: const Icon(Icons.filter_list_rounded, size: 16),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.slate800,
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: StockFilterType.all, child: Text('All Stock')),
+                    DropdownMenuItem(value: StockFilterType.inStock, child: Text('In Stock Only')),
+                    DropdownMenuItem(value: StockFilterType.outOfStock, child: Text('Out of Stock Only')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) onStockFilterSelected(v);
+                  },
                 ),
-                items: const [
-                  DropdownMenuItem(value: StockFilterType.all, child: Text('All Stock')),
-                  DropdownMenuItem(value: StockFilterType.inStock, child: Text('In Stock Only')),
-                  DropdownMenuItem(value: StockFilterType.outOfStock, child: Text('Out of Stock Only')),
-                ],
-                onChanged: (v) {
-                  if (v != null) onStockFilterSelected(v);
-                },
               ),
             ),
           ),
