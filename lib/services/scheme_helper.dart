@@ -28,33 +28,27 @@ class SchemeNudge {
 
 class SchemeHelper {
   /// Extracts the minimum trigger threshold integer from a scheme string.
-  /// (e.g., "20+1" -> 20, "10:2%" -> 10, "Buy 24 Get 1" -> 24)
+  /// - Returns integer for Volume Tier / Free Goods schemes (e.g., "10+1" -> 10, "12+1 Free" -> 12, "20 Bags + 1 Free" -> 20, "Buy 24 Get ₹100 Off" -> 24).
+  /// - Returns 0 for Cash Discounts, Percentages, and Net Rates (e.g. "5% Cash Disc", "3% Special Scheme", "Net Rate") where no discrete threshold exists.
   static int parseThreshold(String scheme) {
     if (scheme.trim().isEmpty) return 0;
     final trimmed = scheme.trim();
 
-    // 1. "X+Y" pattern (e.g., "20+1", "10+1 Free", "20 Bags + 1 Free")
-    final plusMatch = RegExp(r'(\d+)\s*\+\s*(\d+)').firstMatch(trimmed);
+    // 1. Percentage discounts or Net Rates apply continuously to any quantity. No discrete auto-fill threshold.
+    if (trimmed.contains('%') || trimmed.toLowerCase().contains('net rate')) {
+      return 0;
+    }
+
+    // 2. "X+Y" pattern (e.g., "10+1", "12+1 Free", "20 Bags + 1 Free", "20+1")
+    final plusMatch = RegExp(r'(\d+)\s*(?:[a-zA-Z]+\s*)?\+\s*(\d+)').firstMatch(trimmed);
     if (plusMatch != null) {
       return int.tryParse(plusMatch.group(1) ?? '0') ?? 0;
     }
 
-    // 2. "X:Y" pattern (e.g., "10:2%", "10:2")
-    final colonMatch = RegExp(r'(\d+)\s*:\s*(\d+)').firstMatch(trimmed);
-    if (colonMatch != null) {
-      return int.tryParse(colonMatch.group(1) ?? '0') ?? 0;
-    }
-
-    // 3. "Buy X Get Y" pattern
+    // 3. "Buy X Get ..." pattern (e.g. "Buy 24 Get ₹100 Off", "Buy 20 Get 1 Free")
     final buyMatch = RegExp(r'(?:buy|order|min)\s*(\d+)', caseSensitive: false).firstMatch(trimmed);
     if (buyMatch != null) {
       return int.tryParse(buyMatch.group(1) ?? '0') ?? 0;
-    }
-
-    // 4. Any standalone leading number
-    final numMatch = RegExp(r'^(\d+)').firstMatch(trimmed);
-    if (numMatch != null) {
-      return int.tryParse(numMatch.group(1) ?? '0') ?? 0;
     }
 
     return 0;
@@ -74,36 +68,52 @@ class SchemeHelper {
 
     final trimmed = scheme.trim();
     final baseMargin = (mrp > 0 && ptr > 0) ? ((mrp - ptr) / mrp) * 100 : 0.0;
-    final threshold = parseThreshold(trimmed);
 
-    // Check for "X+Y" Free Goods pattern
-    final plusMatch = RegExp(r'(\d+)\s*\+\s*(\d+)').firstMatch(trimmed);
+    // Rule: When currentQuantity == 0, completely hide micro-copy!
+    if (currentQuantity <= 0) {
+      return SchemeNudge(
+        hasScheme: false,
+        message: '',
+        isQualified: false,
+        baseMarginPercent: baseMargin,
+        effectiveMarginPercent: baseMargin,
+        effectivePtr: ptr,
+      );
+    }
+
+    // Continuous schemes like "5% Cash Disc", "Net Rate":
+    // Do NOT display any yellow micro-copy line at any time.
+    if (trimmed.contains('%') || trimmed.toLowerCase().contains('net rate')) {
+      final percentMatch = RegExp(r'(\d+(?:\.\d+)?)\s*%').firstMatch(trimmed);
+      final pct = percentMatch != null ? double.tryParse(percentMatch.group(1) ?? '0') ?? 0.0 : 0.0;
+      final effPtr = pct > 0 ? (ptr * (1.0 - (pct / 100.0))) : ptr;
+      final effMargin = (mrp > 0) ? ((mrp - effPtr) / mrp) * 100 : baseMargin;
+
+      return SchemeNudge(
+        hasScheme: true,
+        thresholdQuantity: 0,
+        message: '', // No micro-copy line for percentage or net rate schemes
+        isQualified: false,
+        baseMarginPercent: baseMargin,
+        effectiveMarginPercent: effMargin,
+        effectivePtr: effPtr,
+      );
+    }
+
+    // Volume Tier / Free Goods schemes ("X+Y" or "X Bags + Y")
+    final plusMatch = RegExp(r'(\d+)\s*(?:[a-zA-Z]+\s*)?\+\s*(\d+)').firstMatch(trimmed);
     if (plusMatch != null) {
       final buyX = int.tryParse(plusMatch.group(1) ?? '0') ?? 0;
       final freeY = int.tryParse(plusMatch.group(2) ?? '0') ?? 0;
 
       if (buyX > 0 && freeY > 0) {
-        if (currentQuantity <= 0) {
-          // Preview state before adding to cart
-          return SchemeNudge(
-            hasScheme: true,
-            thresholdQuantity: buyX,
-            nextFreeUnits: freeY,
-            unitsNeededForNext: buyX,
-            message: 'Buy $buyX, unlock +$freeY Free',
-            baseMarginPercent: baseMargin,
-            effectiveMarginPercent: baseMargin,
-            effectivePtr: ptr,
-          );
-        }
-
         final cycles = currentQuantity ~/ buyX;
         final remainder = currentQuantity % buyX;
         final earnedFree = cycles * freeY;
         final neededForNext = buyX - remainder;
 
         if (cycles == 0) {
-          // Below qualifying tier
+          // Below qualifying tier:
           return SchemeNudge(
             hasScheme: true,
             thresholdQuantity: buyX,
@@ -117,12 +127,11 @@ class SchemeHelper {
             effectivePtr: ptr,
           );
         } else {
-          // Threshold reached or exceeded
+          // Threshold reached or exceeded:
           final totalUnitsReceived = currentQuantity + earnedFree;
           final totalBilledCost = currentQuantity * ptr;
           final effPtr = totalUnitsReceived > 0 ? (totalBilledCost / totalUnitsReceived) : ptr;
           final effMargin = (mrp > 0) ? ((mrp - effPtr) / mrp) * 100 : baseMargin;
-          final appliedThreshold = cycles * buyX;
 
           return SchemeNudge(
             hasScheme: true,
@@ -131,7 +140,7 @@ class SchemeHelper {
             unitsNeededForNext: remainder == 0 ? buyX : neededForNext,
             nextFreeUnits: freeY,
             isQualified: true,
-            message: '✓ Active Scheme: $appliedThreshold + $earnedFree Free Applied',
+            message: '✓ Scheme Unlocked: $earnedFree Free ${earnedFree == 1 ? 'Unit' : 'Units'} Applied',
             baseMarginPercent: baseMargin,
             effectiveMarginPercent: effMargin,
             effectivePtr: effPtr,
@@ -140,44 +149,11 @@ class SchemeHelper {
       }
     }
 
-    // Cash discount schemes (e.g., "5% CD", "10:2%")
-    final percentMatch = RegExp(r'(\d+(?:\.\d+)?)\s*%').firstMatch(trimmed);
-    if (percentMatch != null) {
-      final pct = double.tryParse(percentMatch.group(1) ?? '0') ?? 0.0;
-      final isQual = threshold <= 0 || currentQuantity >= threshold;
-      final effPtr = isQual ? (ptr * (1.0 - (pct / 100.0))) : ptr;
-      final effMargin = (mrp > 0) ? ((mrp - effPtr) / mrp) * 100 : baseMargin;
-
-      if (!isQual && currentQuantity > 0) {
-        final needed = threshold - currentQuantity;
-        return SchemeNudge(
-          hasScheme: true,
-          thresholdQuantity: threshold,
-          unitsNeededForNext: needed,
-          isQualified: false,
-          message: 'Add $needed more to unlock $pct% Discount',
-          baseMarginPercent: baseMargin,
-          effectiveMarginPercent: baseMargin,
-          effectivePtr: ptr,
-        );
-      }
-
-      return SchemeNudge(
-        hasScheme: true,
-        thresholdQuantity: threshold,
-        isQualified: isQual,
-        message: isQual ? '✓ Active Scheme: $pct% Discount Applied' : 'Scheme: $trimmed',
-        baseMarginPercent: baseMargin,
-        effectiveMarginPercent: effMargin,
-        effectivePtr: effPtr,
-      );
-    }
-
     return SchemeNudge(
       hasScheme: true,
-      thresholdQuantity: threshold,
-      isQualified: currentQuantity > 0,
-      message: 'Active Scheme: $trimmed',
+      thresholdQuantity: 0,
+      isQualified: false,
+      message: '',
       baseMarginPercent: baseMargin,
       effectiveMarginPercent: baseMargin,
       effectivePtr: ptr,

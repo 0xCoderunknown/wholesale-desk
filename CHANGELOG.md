@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0] - 2026-11-07
+
+### Changed & Fixed
+- **Mobile View Single-Item-Per-Line & Pack-Size Legibility**:
+  - Enforced strictly **1 item/card per line** (`crossAxisCount: 1`) on mobile viewports (< 600px) in `CatalogCardGrid`, eliminating cramped 2-column squeezing on smartphones.
+  - Eliminated product name truncation and ellipsis clipping across mobile list and card tiles so product pack size, grammage, and volume variants (e.g., `Surf Excel Easy Wash Powder 500gm`, `Dettol 500ml`) remain 100% visible to retailers.
+  - Added `84px` bottom inset padding on mobile lists and grid views to guarantee the bottom product's action controls are never occluded by the floating cart button.
+  - Wrapped price row inside `Wrap` and `Expanded` to prevent horizontal overflow on narrow 360px mobile viewports.
+- **Mobile Responsive Search & Filter Toolbar**:
+  - Re-architected `CatalogFilterToolbar` into a responsive 2-tier layout for mobile screens: full-width search input for zero-fatigue typing, with view switcher (`List/Cards`) and stock filter chips cleanly grouped beneath.
+- **Dialog Keyboard Scroll Safety**:
+  - Wrapped `ProductEditDialog` and `RetailerManagementView`'s retailer dialog forms inside `SingleChildScrollView` to prevent virtual keyboard `RenderFlex` overflow errors on mobile screens.
+- **Cart Bottom Sheet Polish**:
+  - Replaced hardcoded width in `CartDrawer` with responsive `BoxConstraints(maxWidth: 440)`.
+  - Added a subtle mobile drag indicator pill at the top of the modal bottom sheet for intuitive downward swipe dismissal.
+- **Scheme Parser & 1-Tap Apply Logic Refinement**:
+  - Restamped `[Apply (+N)]` action buttons exclusively to Free Goods / Volume Tier Schemes with clear purchase thresholds (e.g. `10+1`, `12+1 Free`, `20 Bags + 1 Free`, `Buy 24 Get ₹100 Off`).
+  - Cash discounts, percentages, and net rates (e.g. `5% Cash Disc`, `3% Special Scheme`, `Net Rate`) are strictly rendered as static informational badges (`[ 🏷️ 5% Cash Disc ]`) with zero spurious `Apply` buttons.
+- **State-Driven Scheme Micro-Copy (Hidden at Qty = 0)**:
+  - Yellow micro-copy hint lines (`💡 ...`) are completely hidden by default when `qty == 0` across all views.
+  - Progressive distance guidance (`💡 Add X more to get +1 Free`) renders only when active `qty > 0 && qty < threshold`, and celebratory unlocked text when threshold is reached or exceeded.
+  - Non-tiered schemes (e.g. `Net Rate`, `5% Cash Disc`) omit micro-copy lines entirely.
+- **Out-of-Stock (OOS) Visual Lockdown**:
+  - Out-of-stock items (`in_stock: false`) completely suppress all `[Apply (+N)]` buttons and scheme micro-copy lines.
+  - Metadata badges (Scheme, MOQ, Box Pack) are dimmed (`opacity: 0.45`) and actions locked with disabled `[ Out of Stock ]` badge.
+  - Preserved identical fixed card heights between in-stock and out-of-stock cards in Grid view to prevent layout shift.
+- **Table & Grid Density Polish**:
+  - **Table View**: Cleaned Margin column to render concise emerald value chips (`+13.6%`) without redundant `Retailer Margin:` label. Side-by-side flex layout for Scheme badge and `Apply (+N)` button, keeping row height compact ($\le 64$px). Compact MOQ and Box pack layout (`MOQ: X · Box: Y`).
+  - **Grid View**: Clean metadata grouping beneath scheme tag (`MOQ: X | Box: Y`), enforcing uniform card heights across all row tiles.
+  - **Desktop Floating Cart Suppression**: Floating bottom-right cart bubble is automatically hidden on desktop viewports ($\ge 1024$px) in favor of the persistent top app bar cart button, retaining the floating pill exclusively on mobile/tablet screens ($< 1024$px).
+
 ## [1.4.0] - 2026-11-07
 
 ### Refactored

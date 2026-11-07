@@ -22,11 +22,21 @@ class CatalogCardGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return GridView.builder(
-      padding: const EdgeInsets.all(12),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 340,
-        mainAxisExtent: 280,
+      padding: EdgeInsets.only(
+        left: 12,
+        right: 12,
+        top: 12,
+        bottom: isMobile ? 84 : 12, // Avoid bottom floating cart pill occlusion on mobile
+      ),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isMobile
+            ? 1 // Strictly 1 card per line on mobile
+            : (screenWidth < 900 ? 2 : (screenWidth < 1250 ? 3 : 4)),
+        mainAxisExtent: isMobile ? 265 : 260,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),
@@ -53,7 +63,6 @@ class ProductCardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Granular selection: only rebuilds this card when its own quantity changes!
     final qty = context.select<CartProvider, int>((c) => c.getQuantity(product.id));
     final inCart = qty > 0;
     final cart = context.read<CartProvider>();
@@ -88,8 +97,8 @@ class ProductCardTile extends StatelessWidget {
                 ProductAvatar(
                   name: product.name,
                   brand: product.brand,
-                  size: 42,
-                  fontSize: 18,
+                  size: 40,
+                  fontSize: 17,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -103,8 +112,6 @@ class ProductCardTile extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: AppTheme.slate900,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -128,31 +135,51 @@ class ProductCardTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
 
-            // Badges row: Scheme, 1-Tap Auto-Fill, MOQ & Box Pack
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                if (product.scheme.trim().isNotEmpty) ...[
-                  SchemeBadge(scheme: product.scheme),
-                  if (schemeThreshold > 0 && product.inStock)
-                    SchemeApplyPill(
-                      threshold: schemeThreshold,
-                      isAlreadyActive: inCart && qty >= schemeThreshold,
-                      onApply: () => cart.applyScheme(product, schemeThreshold, enforceMoq: enforceMoq),
+            // Metadata Cluster: Scheme Row + MOQ/Box Row beneath (Dimmed if OOS)
+            Opacity(
+              opacity: product.inStock ? 1.0 : 0.45,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Row 1: Scheme Badge & 1-Tap Apply (only if In-Stock)
+                  if (product.scheme.trim().isNotEmpty) ...[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SchemeBadge(scheme: product.scheme),
+                        if (product.inStock && schemeThreshold > 0) ...[
+                          const SizedBox(width: 4),
+                          SchemeApplyPill(
+                            threshold: schemeThreshold,
+                            isAlreadyActive: inCart && qty >= schemeThreshold,
+                            onApply: () => cart.applyScheme(product, schemeThreshold, enforceMoq: enforceMoq),
+                          ),
+                        ],
+                      ],
                     ),
+                    const SizedBox(height: 4),
+                  ],
+
+                  // Row 2: MOQ & Box Pack Clustered Beneath
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      MoqBadge(moq: product.moq),
+                      if (product.hasCartonPack) ...[
+                        const SizedBox(width: 4),
+                        BoxPackBadge(cartonPack: product.cartonPack),
+                      ],
+                    ],
+                  ),
                 ],
-                MoqBadge(moq: product.moq),
-                if (product.hasCartonPack) BoxPackBadge(cartonPack: product.cartonPack),
-              ],
+              ),
             ),
 
-            // Upselling Nudge Prompt with Real-Time Distance Micro-Copy
-            if (nudge.hasScheme && nudge.message.isNotEmpty) ...[
-              const SizedBox(height: 6),
+            // Progressive Micro-Copy (STRICTLY hidden at qty == 0 or when Out of Stock)
+            if (product.inStock && inCart && nudge.hasScheme && nudge.message.isNotEmpty) ...[
+              const SizedBox(height: 5),
               SchemeNudgePill(
                 message: nudge.message,
                 isQualified: nudge.isQualified,
@@ -199,7 +226,7 @@ class ProductCardTile extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            // Prominent Add to Cart Button or Stepper with Direct ✕ Zero-Reset
+            // Prominent Add to Cart Button or Stepper (Disabled if OOS)
             SizedBox(
               width: double.infinity,
               height: 38,
@@ -249,4 +276,3 @@ class ProductCardTile extends StatelessWidget {
     );
   }
 }
-

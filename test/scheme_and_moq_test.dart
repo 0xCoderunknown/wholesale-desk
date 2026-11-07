@@ -9,13 +9,50 @@ import 'package:wholesale_desk/state/cart_provider.dart';
 
 void main() {
   group('SchemeHelper Parsing & Progressive Micro-Copy', () {
-    test('parseThreshold accurately extracts scheme trigger threshold', () {
+    test('parseThreshold extracts volume thresholds and ignores cash/percent/net-rate schemes', () {
+      // Free Goods / Volume Tier Schemes -> Parsed
       expect(SchemeHelper.parseThreshold('20+1'), equals(20));
       expect(SchemeHelper.parseThreshold('20 Bags + 1 Free'), equals(20));
-      expect(SchemeHelper.parseThreshold('10:2%'), equals(10));
-      expect(SchemeHelper.parseThreshold('Buy 24 Get 1 Free'), equals(24));
+      expect(SchemeHelper.parseThreshold('12+1 Free'), equals(12));
+      expect(SchemeHelper.parseThreshold('Buy 24 Get ₹100 Off'), equals(24));
       expect(SchemeHelper.parseThreshold('12+2 Special Scheme'), equals(12));
+
+      // Cash Discounts, Percentages, and Net Rates -> Strictly 0 (No Apply Button)
+      expect(SchemeHelper.parseThreshold('5% Cash Disc'), equals(0));
+      expect(SchemeHelper.parseThreshold('3% Special Scheme'), equals(0));
+      expect(SchemeHelper.parseThreshold('5% Scheme'), equals(0));
+      expect(SchemeHelper.parseThreshold('Net Rate'), equals(0));
       expect(SchemeHelper.parseThreshold(''), equals(0));
+    });
+
+    test('Micro-copy is completely hidden at qty == 0', () {
+      final nudge = SchemeHelper.calculateNudge(
+        scheme: '10+1 Free',
+        currentQuantity: 0,
+        ptr: 400.0,
+        mrp: 500.0,
+      );
+
+      expect(nudge.message, isEmpty);
+      expect(nudge.hasScheme, isFalse);
+    });
+
+    test('Micro-copy is completely hidden for non-tiered schemes (e.g. 5% Cash Disc, Net Rate)', () {
+      final nudgeDisc = SchemeHelper.calculateNudge(
+        scheme: '5% Cash Disc',
+        currentQuantity: 10,
+        ptr: 400.0,
+        mrp: 500.0,
+      );
+      expect(nudgeDisc.message, isEmpty);
+
+      final nudgeNet = SchemeHelper.calculateNudge(
+        scheme: 'Net Rate',
+        currentQuantity: 10,
+        ptr: 400.0,
+        mrp: 500.0,
+      );
+      expect(nudgeNet.message, isEmpty);
     });
 
     test('Progressive micro-copy: Below qualifying tier (10+1, qty=7)', () {
@@ -45,7 +82,7 @@ void main() {
       expect(nudge.hasScheme, isTrue);
       expect(nudge.isQualified, isTrue);
       expect(nudge.earnedFreeUnits, equals(1));
-      expect(nudge.message, equals('✓ Active Scheme: 10 + 1 Free Applied'));
+      expect(nudge.message, equals('✓ Scheme Unlocked: 1 Free Unit Applied'));
     });
 
     test('Progressive micro-copy: Multiples calculation (10+1, qty=20)', () {
@@ -59,7 +96,7 @@ void main() {
       expect(nudge.hasScheme, isTrue);
       expect(nudge.isQualified, isTrue);
       expect(nudge.earnedFreeUnits, equals(2));
-      expect(nudge.message, equals('✓ Active Scheme: 20 + 2 Free Applied'));
+      expect(nudge.message, equals('✓ Scheme Unlocked: 2 Free Units Applied'));
     });
   });
 

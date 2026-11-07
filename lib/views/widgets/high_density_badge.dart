@@ -90,7 +90,7 @@ class SchemeApplyPill extends StatelessWidget {
               ),
               const SizedBox(width: 3),
               Text(
-                isAlreadyActive ? '+$threshold Units' : 'Apply Scheme (+$threshold)',
+                isAlreadyActive ? '+$threshold Units' : 'Apply (+$threshold)',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 10,
@@ -310,9 +310,9 @@ class MarginBoostBadge extends StatelessWidget {
             const Icon(Icons.trending_up_rounded, size: 12, color: Color(0xFF15803D)),
             const SizedBox(width: 4),
             Text(
-              'Margin: ${baseMargin.toStringAsFixed(1)}% → ${effectiveMargin.toStringAsFixed(1)}% (Eff: ₹${effectivePtr.toStringAsFixed(1)}/u)',
+              '+${baseMargin.toStringAsFixed(1)}% → +${effectiveMargin.toStringAsFixed(1)}%',
               style: const TextStyle(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF166534), // Emerald 800
               ),
@@ -322,12 +322,20 @@ class MarginBoostBadge extends StatelessWidget {
       );
     }
 
-    return Text(
-      'Retailer Margin: +${baseMargin.toStringAsFixed(1)}%',
-      style: const TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-        color: AppTheme.primary,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDCFCE7), // Emerald 100
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: const Color(0xFFA7F3D0), width: 0.6),
+      ),
+      child: Text(
+        '+${baseMargin.toStringAsFixed(1)}%',
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF166534), // Emerald 800
+        ),
       ),
     );
   }

@@ -69,28 +69,30 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
       key: _scaffoldKey,
       backgroundColor: AppTheme.slate100,
       endDrawer: isDesktop ? CartDrawer(retailer: widget.retailer) : null,
-      floatingActionButton: Consumer<CartProvider>(
-        builder: (context, cart, _) {
-          return FloatingActionButton.extended(
-            onPressed: () => _openCartDrawer(context),
-            backgroundColor: cart.itemCount > 0 ? AppTheme.whatsappGreen : AppTheme.slate800,
-            foregroundColor: Colors.white,
-            elevation: 5,
-            icon: Badge(
-              label: Text('${cart.itemCount}'),
-              isLabelVisible: cart.itemCount > 0,
-              backgroundColor: AppTheme.outOfStockRed,
-              child: const Icon(Icons.shopping_cart_rounded, size: 20),
+      floatingActionButton: screenWidth >= 1024
+          ? null
+          : Consumer<CartProvider>(
+              builder: (context, cart, _) {
+                return FloatingActionButton.extended(
+                  onPressed: () => _openCartDrawer(context),
+                  backgroundColor: cart.itemCount > 0 ? AppTheme.whatsappGreen : AppTheme.slate800,
+                  foregroundColor: Colors.white,
+                  elevation: 5,
+                  icon: Badge(
+                    label: Text('${cart.itemCount}'),
+                    isLabelVisible: cart.itemCount > 0,
+                    backgroundColor: AppTheme.outOfStockRed,
+                    child: const Icon(Icons.shopping_cart_rounded, size: 20),
+                  ),
+                  label: Text(
+                    cart.itemCount > 0
+                        ? '${AppFormatters.formatCurrency(cart.subtotalPtr)} • Cart'
+                        : 'Cart',
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                );
+              },
             ),
-            label: Text(
-              cart.itemCount > 0
-                  ? '${AppFormatters.formatCurrency(cart.subtotalPtr)} • Cart'
-                  : 'Cart',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-            ),
-          );
-        },
-      ),
       appBar: AppBar(
         titleSpacing: 16,
         title: Row(

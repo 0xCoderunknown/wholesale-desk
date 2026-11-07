@@ -89,10 +89,11 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               // Title Bar
               Row(
                 children: [
@@ -319,6 +320,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

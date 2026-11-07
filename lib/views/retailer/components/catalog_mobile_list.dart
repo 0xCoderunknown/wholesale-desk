@@ -23,7 +23,7 @@ class CatalogMobileList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.only(left: 12, right: 12, top: 10, bottom: 84), // Avoid FAB occlusion
       itemCount: products.length,
       separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
@@ -118,28 +118,31 @@ class MobileProductListItem extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            // Scheme, 1-Tap Auto-Fill, MOQ & Box Pack Badges
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                if (product.scheme.trim().isNotEmpty) ...[
-                  SchemeBadge(scheme: product.scheme),
-                  if (schemeThreshold > 0 && product.inStock)
-                    SchemeApplyPill(
-                      threshold: schemeThreshold,
-                      isAlreadyActive: inCart && qty >= schemeThreshold,
-                      onApply: () => cart.applyScheme(product, schemeThreshold, enforceMoq: enforceMoq),
-                    ),
+            // Scheme & Metadata (Dimmed if Out of Stock)
+            Opacity(
+              opacity: product.inStock ? 1.0 : 0.45,
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  if (product.scheme.trim().isNotEmpty) ...[
+                    SchemeBadge(scheme: product.scheme),
+                    if (schemeThreshold > 0 && product.inStock)
+                      SchemeApplyPill(
+                        threshold: schemeThreshold,
+                        isAlreadyActive: inCart && qty >= schemeThreshold,
+                        onApply: () => cart.applyScheme(product, schemeThreshold, enforceMoq: enforceMoq),
+                      ),
+                  ],
+                  MoqBadge(moq: product.moq),
+                  if (product.hasCartonPack) BoxPackBadge(cartonPack: product.cartonPack),
                 ],
-                MoqBadge(moq: product.moq),
-                if (product.hasCartonPack) BoxPackBadge(cartonPack: product.cartonPack),
-              ],
+              ),
             ),
 
-            // Upselling Nudge with Real-Time Distance Micro-Copy
-            if (nudge.hasScheme && nudge.message.isNotEmpty) ...[
+            // Upselling Nudge: Strictly hidden at qty == 0 or when Out of Stock
+            if (product.inStock && inCart && nudge.hasScheme && nudge.message.isNotEmpty) ...[
               const SizedBox(height: 6),
               SchemeNudgePill(
                 message: nudge.message,
@@ -149,42 +152,47 @@ class MobileProductListItem extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // Rates & Action Row (with Boosted Margin & Direct Delete)
+            // Rates & Action Row (with Clean Margin Chip & Direct Delete)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          AppFormatters.formatCurrency(product.ptr),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryDark,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        children: [
+                          Text(
+                            AppFormatters.formatCurrency(product.ptr),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryDark,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'MRP: ${AppFormatters.formatCurrency(product.mrp)}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppTheme.slate500,
-                            fontWeight: FontWeight.w500,
+                          Text(
+                            'MRP: ${AppFormatters.formatCurrency(product.mrp)}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.slate500,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    MarginBoostBadge(
-                      baseMargin: product.marginPercent,
-                      effectiveMargin: nudge.effectiveMarginPercent,
-                      effectivePtr: nudge.effectivePtr,
-                      isBoosted: nudge.hasBoostedMargin,
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      MarginBoostBadge(
+                        baseMargin: product.marginPercent,
+                        effectiveMargin: nudge.effectiveMarginPercent,
+                        effectivePtr: nudge.effectivePtr,
+                        isBoosted: nudge.hasBoostedMargin,
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
 
                 // Add / Stepper with Direct ✕ Zero-Reset
                 if (product.inStock)
@@ -226,4 +234,3 @@ class MobileProductListItem extends StatelessWidget {
     );
   }
 }
-

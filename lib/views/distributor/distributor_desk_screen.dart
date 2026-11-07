@@ -455,15 +455,18 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
                     // Product & Brand (Zero bloat, no image widget)
                     DataCell(
                       Container(
-                        constraints: const BoxConstraints(maxWidth: 240),
+                        constraints: const BoxConstraints(maxWidth: 300),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              p.name,
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900),
-                              overflow: TextOverflow.ellipsis,
+                            Tooltip(
+                              message: p.name,
+                              child: Text(
+                                p.name,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900),
+                                maxLines: 2,
+                              ),
                             ),
                             Text(
                               p.brand,

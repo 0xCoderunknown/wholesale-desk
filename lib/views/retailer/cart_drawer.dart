@@ -69,8 +69,10 @@ class _CartDrawerState extends State<CartDrawer> {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
 
+    final isMobileSheet = MediaQuery.of(context).size.width <= 850;
+
     return Container(
-      width: 440,
+      constraints: const BoxConstraints(maxWidth: 440),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(left: BorderSide(color: AppTheme.slate200, width: 1)),
@@ -78,6 +80,22 @@ class _CartDrawerState extends State<CartDrawer> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Mobile Drag Indicator
+          if (isMobileSheet)
+            Container(
+              color: AppTheme.slate900,
+              padding: const EdgeInsets.only(top: 8),
+              alignment: Alignment.center,
+              child: Container(
+                width: 38,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.slate600,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+
           // Drawer Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

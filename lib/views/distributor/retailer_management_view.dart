@@ -33,10 +33,11 @@ class _RetailerManagementViewState extends State<RetailerManagementView> {
             padding: const EdgeInsets.all(20),
             child: Form(
               key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                   Row(
                     children: [
                       Icon(
@@ -176,6 +177,7 @@ class _RetailerManagementViewState extends State<RetailerManagementView> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

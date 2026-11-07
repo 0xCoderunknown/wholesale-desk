@@ -30,13 +30,13 @@ class CatalogDataTable extends StatelessWidget {
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 1080),
+            constraints: const BoxConstraints(minWidth: 1040),
             child: DataTable(
               headingRowHeight: 38,
               dataRowMinHeight: 52,
               dataRowMaxHeight: 64,
               horizontalMargin: 16,
-              columnSpacing: 16,
+              columnSpacing: 14,
               headingRowColor: WidgetStateProperty.all(AppTheme.slate100),
               columns: const [
                 DataColumn(
@@ -78,7 +78,6 @@ class CatalogDataTable extends StatelessWidget {
   }
 
   DataRow _buildRow(BuildContext context, Product p, CartProvider cart) {
-    // Read cart quantity
     final inCart = cart.isInCart(p.id);
     final qty = cart.getQuantity(p.id);
     final schemeThreshold = SchemeHelper.parseThreshold(p.scheme);
@@ -98,7 +97,7 @@ class CatalogDataTable extends StatelessWidget {
         // Product & Brand with Letter Monogram Avatar (Zero media overhead)
         DataCell(
           Container(
-            constraints: const BoxConstraints(maxWidth: 220),
+            constraints: const BoxConstraints(maxWidth: 300),
             child: Row(
               children: [
                 ProductAvatar(name: p.name, brand: p.brand, size: 34, fontSize: 14),
@@ -108,10 +107,13 @@ class CatalogDataTable extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        p.name,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900),
-                        overflow: TextOverflow.ellipsis,
+                      Tooltip(
+                        message: p.name,
+                        child: Text(
+                          p.name,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900),
+                          maxLines: 2,
+                        ),
                       ),
                       Text(
                         p.brand,
@@ -125,45 +127,57 @@ class CatalogDataTable extends StatelessWidget {
           ),
         ),
 
-        // Scheme with 1-Tap Auto-Fill & Distance Nudge
+        // Scheme Column: side-by-side flex row, dimmed if OOS, micro-copy ONLY if inStock && qty > 0
         DataCell(
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (p.scheme.trim().isNotEmpty) SchemeBadge(scheme: p.scheme),
-                  if (schemeThreshold > 0 && p.inStock) ...[
-                    const SizedBox(width: 4),
-                    SchemeApplyPill(
-                      threshold: schemeThreshold,
-                      isAlreadyActive: inCart && qty >= schemeThreshold,
-                      onApply: () => cart.applyScheme(p, schemeThreshold, enforceMoq: enforceMoq),
-                    ),
+          Opacity(
+            opacity: p.inStock ? 1.0 : 0.45,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (p.scheme.trim().isNotEmpty) SchemeBadge(scheme: p.scheme),
+                    if (p.inStock && schemeThreshold > 0) ...[
+                      const SizedBox(width: 4),
+                      SchemeApplyPill(
+                        threshold: schemeThreshold,
+                        isAlreadyActive: inCart && qty >= schemeThreshold,
+                        onApply: () => cart.applyScheme(p, schemeThreshold, enforceMoq: enforceMoq),
+                      ),
+                    ],
                   ],
-                ],
-              ),
-              if (nudge.hasScheme && nudge.message.isNotEmpty) ...[
-                const SizedBox(height: 3),
-                SchemeNudgePill(
-                  message: nudge.message,
-                  isQualified: nudge.isQualified,
                 ),
+                // Micro-copy strictly hidden at qty == 0 or when Out of Stock
+                if (p.inStock && qty > 0 && nudge.hasScheme && nudge.message.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  SchemeNudgePill(
+                    message: nudge.message,
+                    isQualified: nudge.isQualified,
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
 
-        // MOQ
-        DataCell(MoqBadge(moq: p.moq)),
-
-        // Box Pack
+        // MOQ (dimmed if OOS)
         DataCell(
-          p.hasCartonPack
-              ? BoxPackBadge(cartonPack: p.cartonPack)
-              : const Text('-', style: TextStyle(color: AppTheme.slate400, fontSize: 12)),
+          Opacity(
+            opacity: p.inStock ? 1.0 : 0.45,
+            child: MoqBadge(moq: p.moq),
+          ),
+        ),
+
+        // Box Pack (dimmed if OOS)
+        DataCell(
+          Opacity(
+            opacity: p.inStock ? 1.0 : 0.45,
+            child: p.hasCartonPack
+                ? BoxPackBadge(cartonPack: p.cartonPack)
+                : const Text('-', style: TextStyle(color: AppTheme.slate400, fontSize: 12)),
+          ),
         ),
 
         // MRP (Clean text, NO strikethrough)
@@ -182,7 +196,7 @@ class CatalogDataTable extends StatelessWidget {
           ),
         ),
 
-        // Margin % (with Boosted Scheme Indicator)
+        // Margin %: Clean value chip (+13.6%), stripped redundant 'Retailer Margin:' label
         DataCell(
           MarginBoostBadge(
             baseMargin: p.marginPercent,
@@ -197,7 +211,7 @@ class CatalogDataTable extends StatelessWidget {
           StockTogglePill(inStock: p.inStock, enabled: false, compact: true),
         ),
 
-        // Large Add to Cart Button or Stepper with Direct ✕ Zero-Reset
+        // Action Column: Add/Stepper or disabled Out of Stock
         DataCell(
           p.inStock
               ? inCart
@@ -230,4 +244,3 @@ class CatalogDataTable extends StatelessWidget {
     );
   }
 }
-
