@@ -101,6 +101,37 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
     }
   }
 
+  Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        title: const Text('Logout Desk?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        content: const Text(
+          'Are you sure you want to exit the Distributor Desk?',
+          style: TextStyle(fontSize: 13, color: AppTheme.slate600),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.slate600)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.outOfStockRed,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      auth.logout();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -108,7 +139,7 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
     final isAdmin = auth.isAdmin;
     final isStaff = auth.isStaff;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth > 850;
+    final isDesktop = screenWidth >= 768;
 
     return Scaffold(
       backgroundColor: AppTheme.slate100,
@@ -248,7 +279,7 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
           IconButton(
             icon: const Icon(Icons.logout_rounded, size: 20),
             tooltip: 'Logout Desk',
-            onPressed: auth.logout,
+            onPressed: () => _confirmLogout(context, auth),
           ),
           const SizedBox(width: 10),
         ],
@@ -313,22 +344,29 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
             children: [
               // In-memory instant client search
               Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  focusNode: _searchFocus,
-                  onChanged: desk.setSearchQuery,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppTheme.slate500),
-                    hintText: 'Counter search: product name, brand, or scheme...',
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 16),
-                            onPressed: () {
-                              _searchController.clear();
-                              desk.setSearchQuery('');
-                            },
-                          )
-                        : null,
+                child: SizedBox(
+                  height: 38,
+                  child: TextField(
+                    controller: _searchController,
+                    focusNode: _searchFocus,
+                    onChanged: desk.setSearchQuery,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppTheme.slate500),
+                      hintText: 'Counter search: product name, brand, or scheme...',
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: const Icon(Icons.clear, size: 16),
+                              onPressed: () {
+                                _searchController.clear();
+                                desk.setSearchQuery('');
+                              },
+                            )
+                          : null,
+                    ),
                   ),
                 ),
               ),
@@ -336,22 +374,27 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
 
               // Brand Selector
               if (isDesktop) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppTheme.slate300),
-                    borderRadius: BorderRadius.circular(6),
-                    color: Colors.white,
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: desk.selectedBrand,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.slate800),
-                      items: desk.brands.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
-                      onChanged: (b) {
-                        if (b != null) desk.setSelectedBrand(b);
-                      },
+                SizedBox(
+                  height: 38,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.slate300),
+                      borderRadius: BorderRadius.circular(6),
+                      color: Colors.white,
+                    ),
+                    alignment: Alignment.center,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isDense: true,
+                        value: desk.selectedBrand,
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.slate800),
+                        items: desk.brands.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+                        onChanged: (b) {
+                          if (b != null) desk.setSelectedBrand(b);
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -359,26 +402,31 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
               ],
 
               // Stock Status Filter
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppTheme.slate300),
-                  borderRadius: BorderRadius.circular(6),
-                  color: Colors.white,
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<StockFilterType>(
-                    value: desk.stockFilter,
-                    icon: const Icon(Icons.filter_list_rounded, size: 16),
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.slate800),
-                    items: const [
-                      DropdownMenuItem(value: StockFilterType.all, child: Text('All Stock')),
-                      DropdownMenuItem(value: StockFilterType.inStock, child: Text('In Stock Only')),
-                      DropdownMenuItem(value: StockFilterType.outOfStock, child: Text('Out of Stock Only')),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) desk.setStockFilter(v);
-                    },
+              SizedBox(
+                height: 38,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppTheme.slate300),
+                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.white,
+                  ),
+                  alignment: Alignment.center,
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<StockFilterType>(
+                      isDense: true,
+                      value: desk.stockFilter,
+                      icon: const Icon(Icons.filter_list_rounded, size: 16),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.slate800),
+                      items: const [
+                        DropdownMenuItem(value: StockFilterType.all, child: Text('All Stock')),
+                        DropdownMenuItem(value: StockFilterType.inStock, child: Text('In Stock Only')),
+                        DropdownMenuItem(value: StockFilterType.outOfStock, child: Text('Out of Stock Only')),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) desk.setStockFilter(v);
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -386,12 +434,16 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
               // Add Product Button (Admin only)
               if (isAdmin) ...[
                 const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: () => _openProductDialog(),
-                  icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text('Add Product'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                SizedBox(
+                  height: 38,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openProductDialog(),
+                    icon: const Icon(Icons.add_rounded, size: 16),
+                    label: const Text('Add Product'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
                   ),
                 ),
               ],

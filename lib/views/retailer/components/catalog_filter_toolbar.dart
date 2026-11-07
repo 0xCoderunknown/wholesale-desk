@@ -44,40 +44,48 @@ class CatalogFilterToolbar extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Search Input: flex: 1
+            // Search Input: flex: 1 (Height 38)
             Expanded(
-              child: TextField(
-                controller: searchController,
-                focusNode: searchFocus,
-                onChanged: onSearchChanged,
-                decoration: InputDecoration(
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-                  prefixIcon: const Icon(Icons.search_rounded, size: 17, color: AppTheme.slate500),
-                  hintText: 'Search products...',
-                  suffixIcon: searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 15),
-                          onPressed: onClearSearch,
-                        )
-                      : null,
+              child: SizedBox(
+                height: 38,
+                child: TextField(
+                  controller: searchController,
+                  focusNode: searchFocus,
+                  onChanged: onSearchChanged,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 17, color: AppTheme.slate500),
+                    hintText: 'Search products...',
+                    suffixIcon: searchController.text.isNotEmpty
+                        ? IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(Icons.clear, size: 15),
+                            onPressed: onClearSearch,
+                          )
+                        : null,
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 8),
 
-            // Stock Filter: Compact dropdown taking ~110px
+            // Stock Filter: Compact dropdown taking ~110px (Height 38)
             SizedBox(
+              height: 38,
               width: 112,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   border: Border.all(color: AppTheme.slate300),
                   borderRadius: BorderRadius.circular(6),
                   color: Colors.white,
                 ),
+                alignment: Alignment.center,
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<StockFilterType>(
+                    isDense: true,
                     isExpanded: true,
                     value: stockFilter,
                     icon: const Icon(Icons.filter_list_rounded, size: 15),

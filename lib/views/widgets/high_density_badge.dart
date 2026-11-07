@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../config/theme.dart';
 
 class SchemeBadge extends StatelessWidget {
@@ -70,7 +71,9 @@ class SchemeApplyPill extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
           decoration: BoxDecoration(
-            color: isAlreadyActive ? const Color(0xFF065F46) : const Color(0xFF047857), // Emerald
+            color: isAlreadyActive
+                ? const Color(0xFF065F46)
+                : const Color(0xFF047857), // Emerald
             borderRadius: BorderRadius.circular(4),
             boxShadow: [
               BoxShadow(
@@ -84,13 +87,15 @@ class SchemeApplyPill extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isAlreadyActive ? Icons.add_circle_outline_rounded : Icons.flash_on_rounded,
+                isAlreadyActive
+                    ? Icons.check_circle_rounded
+                    : Icons.bolt_rounded,
                 size: 11,
                 color: Colors.white,
               ),
               const SizedBox(width: 3),
               Text(
-                isAlreadyActive ? '+$threshold Units' : 'Apply (+$threshold)',
+                isAlreadyActive ? 'APPLIED' : 'APPLY',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 10,
@@ -118,10 +123,7 @@ class MoqBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.slate100,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: AppTheme.slate300,
-          width: 0.8,
-        ),
+        border: Border.all(color: AppTheme.slate300, width: 0.8),
       ),
       child: Text(
         'MOQ: $moq',
@@ -242,9 +244,7 @@ class SchemeNudgePill extends StatelessWidget {
     final textColor = isQualified
         ? Colors.white
         : const Color(0xFF92400E); // Amber 800
-    final iconColor = isQualified
-        ? Colors.white
-        : const Color(0xFFB45309);
+    final iconColor = isQualified ? Colors.white : const Color(0xFFB45309);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -257,7 +257,9 @@ class SchemeNudgePill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isQualified ? Icons.check_circle_rounded : Icons.tips_and_updates_outlined,
+            isQualified
+                ? Icons.check_circle_rounded
+                : Icons.tips_and_updates_outlined,
             size: 13,
             color: iconColor,
           ),
@@ -298,7 +300,9 @@ class MarginBoostBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final marginVal = (isBoosted && effectiveMargin > baseMargin) ? effectiveMargin : baseMargin;
+    final marginVal = (isBoosted && effectiveMargin > baseMargin)
+        ? effectiveMargin
+        : baseMargin;
     final marginStr = marginVal % 1 == 0
         ? '${marginVal.toInt()}%'
         : '${marginVal.toStringAsFixed(1)}%';
@@ -359,7 +363,11 @@ class MarginBoostBadge extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle_rounded, size: 11, color: Colors.white),
+              const Icon(
+                Icons.check_circle_rounded,
+                size: 11,
+                color: Colors.white,
+              ),
               const SizedBox(width: 4),
               Text(
                 'MARGIN: $marginStr',

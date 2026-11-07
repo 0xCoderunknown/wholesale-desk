@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/breakpoints.dart';
 import '../../config/formatters.dart';
 import '../../config/theme.dart';
 import '../../models/retailer.dart';
 import '../../state/auth_provider.dart';
 import '../../state/cart_provider.dart';
 import '../../state/desk_provider.dart';
-import 'cart_drawer.dart';
+import 'retailer_cart_screen.dart';
 import 'components/catalog_card_grid.dart';
 import 'components/catalog_data_table.dart';
 import 'components/catalog_filter_toolbar.dart';
-import 'components/catalog_mobile_list.dart';
 
 class RetailerCatalogScreen extends StatefulWidget {
   final Retailer retailer;
@@ -35,46 +35,63 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
     super.dispose();
   }
 
-  void _openCartDrawer(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    if (width > 850) {
-      _scaffoldKey.currentState?.openEndDrawer();
-    } else {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => Container(
-          height: MediaQuery.of(context).size.height * 0.85,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: CartDrawer(retailer: widget.retailer),
+  Future<void> _confirmLogout(BuildContext context, AuthProvider auth) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        title: const Text('Exit Order Desk?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        content: const Text(
+          'Are you sure you want to exit? Your cart items will remain saved on this device.',
+          style: TextStyle(fontSize: 13, color: AppTheme.slate600),
         ),
-      );
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.slate600)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.outOfStockRed,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Exit'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      auth.logout();
     }
+  }
+
+  void _openCartDesk(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RetailerCartScreen(retailer: widget.retailer),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final desk = context.watch<DeskProvider>();
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= 768;
+    final isMobile = AppBreakpoints.isMobile(context);
+    final isDesktop = AppBreakpoints.isDesktop(context);
+    final hasMultiColumnCatalog = !isMobile;
     final enforceMoq = auth.settings.enforceMoq;
 
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppTheme.slate100,
-      endDrawer: isDesktop ? CartDrawer(retailer: widget.retailer) : null,
-      floatingActionButton: isDesktop
+      floatingActionButton: !isMobile
           ? null
           : Consumer<CartProvider>(
               builder: (context, cart, _) {
                 return FloatingActionButton.extended(
-                  onPressed: () => _openCartDrawer(context),
+                  onPressed: () => _openCartDesk(context),
                   backgroundColor: cart.itemCount > 0 ? AppTheme.whatsappGreen : AppTheme.slate800,
                   foregroundColor: Colors.white,
                   elevation: 5,
@@ -191,7 +208,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                         Row(
                           children: [
                             const Text(
-                              'Verified Retailer: ',
+                              'Verified: ',
                               style: TextStyle(fontSize: 11, color: AppTheme.slate400),
                             ),
                             Flexible(
@@ -205,6 +222,20 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            if (isMobile && widget.retailer.route.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  '• ${widget.retailer.route}',
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.slate300,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],
@@ -213,8 +244,8 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                 ],
               ),
         actions: [
-          // 3. Route Badge Pill on desktop (Height 36)
-          if (isDesktop && widget.retailer.route.isNotEmpty) ...[
+          // 3. Route Badge Pill on tablet/desktop (Height 36)
+          if (!isMobile && widget.retailer.route.isNotEmpty) ...[
             Container(
               height: 36,
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -239,48 +270,58 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
             const SizedBox(width: 8),
           ],
 
-          // 4. Cart Action (Height 36 on desktop)
-          if (isDesktop) ...[
-            Consumer<CartProvider>(
-              builder: (context, cart, _) {
-                return SizedBox(
-                  height: 36,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _openCartDrawer(context),
-                    icon: Badge(
-                      label: Text('${cart.itemCount}'),
-                      isLabelVisible: cart.itemCount > 0,
-                      backgroundColor: AppTheme.outOfStockRed,
-                      child: const Icon(Icons.shopping_cart_outlined, size: 16),
-                    ),
-                    label: Text(
-                      cart.subtotalPtr > 0 ? AppFormatters.formatCurrency(cart.subtotalPtr) : 'Cart',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate800,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        side: BorderSide(
-                          color: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate700,
-                        ),
+          // 4. Cart Action (Button on tablet/desktop, compact icon with badge on mobile)
+          Consumer<CartProvider>(
+            builder: (context, cart, _) {
+              if (isMobile) {
+                return IconButton(
+                  icon: Badge(
+                    label: Text('${cart.itemCount}'),
+                    isLabelVisible: cart.itemCount > 0,
+                    backgroundColor: AppTheme.outOfStockRed,
+                    child: const Icon(Icons.shopping_cart_outlined, size: 20, color: Colors.white),
+                  ),
+                  tooltip: 'View Cart',
+                  onPressed: () => _openCartDesk(context),
+                );
+              }
+              return SizedBox(
+                height: 36,
+                child: ElevatedButton.icon(
+                  onPressed: () => _openCartDesk(context),
+                  icon: Badge(
+                    label: Text('${cart.itemCount}'),
+                    isLabelVisible: cart.itemCount > 0,
+                    backgroundColor: AppTheme.outOfStockRed,
+                    child: const Icon(Icons.shopping_cart_outlined, size: 16),
+                  ),
+                  label: Text(
+                    cart.subtotalPtr > 0 ? AppFormatters.formatCurrency(cart.subtotalPtr) : 'Cart',
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate800,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      side: BorderSide(
+                        color: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate700,
                       ),
                     ),
                   ),
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-          ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
 
-          // 5. Logout / Exit Button (Height 36 on desktop)
-          if (isDesktop)
+          // 5. Logout / Exit Button (36px on tablet/desktop, icon on mobile, both guarded by _confirmLogout)
+          if (!isMobile)
             SizedBox(
               height: 36,
               child: OutlinedButton.icon(
-                onPressed: auth.logout,
+                onPressed: () => _confirmLogout(context, auth),
                 icon: const Icon(Icons.logout_rounded, size: 15, color: AppTheme.slate300),
                 label: const Text(
                   'Exit',
@@ -296,46 +337,21 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
             )
           else
             IconButton(
-              icon: const Icon(Icons.logout_rounded, size: 18),
+              icon: const Icon(Icons.logout_rounded, size: 19, color: AppTheme.slate300),
               tooltip: 'Exit Order Desk',
-              onPressed: auth.logout,
+              onPressed: () => _confirmLogout(context, auth),
             ),
           const SizedBox(width: 12),
         ],
       ),
       body: Column(
         children: [
-          // Retailer Route Banner on Mobile
-          if (!isDesktop && widget.retailer.route.isNotEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              color: AppTheme.primarySurface,
-              child: Row(
-                children: [
-                  const Icon(Icons.alt_route_rounded, size: 14, color: AppTheme.primaryDark),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'Route: ${widget.retailer.route} • Mobile: ${AppFormatters.formatIndianMobile(widget.retailer.mobile)}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryDark,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
           // Isolated Search & Filter Bar Component
           CatalogFilterToolbar(
             searchController: _searchController,
             searchFocus: _searchFocus,
             isGridView: _isGridView,
-            isDesktop: isDesktop,
+            isDesktop: hasMultiColumnCatalog,
             brands: desk.brands,
             selectedBrand: desk.selectedBrand,
             stockFilter: desk.stockFilter,
@@ -356,16 +372,24 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Showing ${desk.filteredProducts.length} of ${desk.totalCount} wholesale products',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.slate600,
+                Expanded(
+                  child: Text(
+                    isMobile
+                        ? '${desk.filteredProducts.length} products'
+                        : 'Showing ${desk.filteredProducts.length} of ${desk.totalCount} wholesale products',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.slate600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Text(
-                  '${desk.inStockCount} In Stock • ${desk.outOfStockCount} Out of Stock',
+                  isMobile
+                      ? '${desk.inStockCount} In Stock • ${desk.outOfStockCount} Out'
+                      : '${desk.inStockCount} In Stock • ${desk.outOfStockCount} Out of Stock',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
@@ -404,20 +428,15 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                       ],
                     ),
                   )
-                : !isDesktop
-                    ? CatalogMobileList(
+                : (!hasMultiColumnCatalog || _isGridView)
+                    ? CatalogCardGrid(
                         products: desk.filteredProducts,
                         enforceMoq: enforceMoq,
                       )
-                    : _isGridView
-                        ? CatalogCardGrid(
-                            products: desk.filteredProducts,
-                            enforceMoq: enforceMoq,
-                          )
-                        : CatalogDataTable(
-                            products: desk.filteredProducts,
-                            enforceMoq: enforceMoq,
-                          ),
+                    : CatalogDataTable(
+                        products: desk.filteredProducts,
+                        enforceMoq: enforceMoq,
+                      ),
           ),
         ],
       ),

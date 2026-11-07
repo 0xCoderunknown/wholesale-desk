@@ -15,7 +15,7 @@ A high-speed, zero-bloat **B2B Wholesale Order & Distributor Desk** built for Fl
 6. **Role-Based 4-Digit PIN Access**:
    - **Admin (Master PIN `5075`)**: Full Distributor Desk with catalog management, in-place rate/scheme/MOQ/box size editing, stock toggle, Retailer PIN management, and Store Settings.
    - **Staff (Staff PIN `1122`)**: Restricted Counter Desk. Can search catalog with 0ms latency; **only** permitted action is toggling `in_stock` (true/false). Rates and settings are hidden/read-only.
-   - **Retailer (Mobile + 4-Digit PIN, e.g. `9876543210` / `1234`)**: Authenticates into verified Retailer Catalog with store name & route banner, in-memory instant search, MOQ-enforcing quantity steppers, live savings calculator, and slide-out WhatsApp cart drawer.
+   - **Retailer (Mobile + 4-Digit PIN, e.g. `9876543210` / `1234`)**: Authenticates into verified Retailer Catalog with store name & route banner, in-memory instant search, MOQ-enforcing quantity steppers, live savings calculator, and dedicated Wholesale Order Desk.
 
 ---
 
@@ -113,7 +113,7 @@ Experience the high-speed B2B Wholesale Desk live in your browser:
 ### Test Credentials (1-Click Chips on Login):
 - **Admin Desk (Master)**: PIN `5075` — full catalog CRUD, schemes, retailer PIN management, and 1-click `[⚡ Reset Demo]`
 - **Staff Counter (Restricted)**: PIN `1122` — 0ms catalog search and in-place stock toggle pills
-- **Retailer Order Desk**: Mobile `9876543210`, PIN `1234` — high-density catalog, MOQ steppers, and slide-out WhatsApp cart
+- **Retailer Order Desk**: Mobile `9876543210`, PIN `1234` — high-density catalog, MOQ steppers, and dedicated Wholesale Order & Dispatch Desk
 
 ---
 

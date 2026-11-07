@@ -3,13 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:wholesale_desk/config/theme.dart';
 import 'package:wholesale_desk/models/product.dart';
+import 'package:wholesale_desk/models/retailer.dart';
 import 'package:wholesale_desk/services/scheme_helper.dart';
+import 'package:wholesale_desk/state/auth_provider.dart';
 import 'package:wholesale_desk/state/cart_provider.dart';
 import 'package:wholesale_desk/state/desk_provider.dart';
+import 'package:wholesale_desk/views/retailer/retailer_cart_screen.dart';
 import 'package:wholesale_desk/views/retailer/components/catalog_card_grid.dart';
 import 'package:wholesale_desk/views/retailer/components/catalog_filter_toolbar.dart';
-import 'package:wholesale_desk/views/retailer/components/catalog_mobile_list.dart';
-import 'package:wholesale_desk/views/widgets/scheme_accordion.dart';
+import 'package:wholesale_desk/views/retailer/retailer_catalog_screen.dart';
+import 'package:wholesale_desk/views/widgets/catalog_quantity_stepper.dart';
+import 'package:wholesale_desk/views/widgets/scheme_inline_strip.dart';
 
 void main() {
   final sampleProduct = Product(
@@ -27,23 +31,28 @@ void main() {
   Widget buildTestableWidget({
     required Widget child,
     CartProvider? cartProvider,
+    AuthProvider? authProvider,
+    DeskProvider? deskProvider,
     Size surfaceSize = const Size(390, 844), // iPhone 14/15/16 portrait
   }) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => cartProvider ?? CartProvider()),
+        if (authProvider != null) ChangeNotifierProvider.value(value: authProvider),
+        if (deskProvider != null) ChangeNotifierProvider.value(value: deskProvider),
       ],
       child: MaterialApp(
+        theme: AppTheme.lightTheme,
         home: MediaQuery(
           data: MediaQueryData(size: surfaceSize),
-          child: Scaffold(body: child),
+          child: child is Scaffold ? child : Scaffold(body: child),
         ),
       ),
     );
   }
 
   group('Mobile View Layout & Single Item Per Line (<768px)', () {
-    testWidgets('CatalogMobileList renders 1 item per row, full title, dual action & accordion',
+    testWidgets('CatalogCardGrid renders 1 item per row, full title, dual action & accordion',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -52,7 +61,7 @@ void main() {
       await tester.pumpWidget(
         buildTestableWidget(
           cartProvider: cart,
-          child: CatalogMobileList(
+          child: CatalogCardGrid(
             products: [sampleProduct],
             enforceMoq: true,
           ),
@@ -72,7 +81,7 @@ void main() {
       expect(find.text('Buy 1 Box (24)'), findsOneWidget);
 
       // Verify Collapsible Scheme Accordion (Shikhar Style)
-      expect(find.byType(SchemeCollapsibleAccordion), findsOneWidget);
+      expect(find.byType(SchemeInlineStrip), findsOneWidget);
       expect(find.textContaining('Scheme: 10+1 Free'), findsOneWidget);
 
       // Tapping "Buy 1 Box (24)" immediately populates 24 units in cart
@@ -221,7 +230,7 @@ void main() {
       expect(foundTogether, isTrue);
     });
 
-    testWidgets('Accordion gating: static flat badge for percentage scheme vs expandable drawer for tiered',
+    testWidgets('Inline scheme strip: static flat badge for percentage scheme vs 1-click inline apply button for tiered (no accordion)',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -240,7 +249,7 @@ void main() {
 
       await tester.pumpWidget(
         buildTestableWidget(
-          child: SchemeCollapsibleAccordion(
+          child: SchemeInlineStrip(
             product: percentProduct,
             inStock: true,
             isAlreadyActive: false,
@@ -249,35 +258,36 @@ void main() {
         ),
       );
 
-      // Percentage scheme: flat static amber badge with no expansion arrow (Icons.keyboard_arrow_down)
+      // Percentage scheme: flat static amber badge with no expansion arrow or apply button
       expect(find.text('5% Cash Disc auto-applied'), findsOneWidget);
       expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsNothing);
+      expect(find.textContaining('APPLY'), findsNothing);
 
-      // Tiered scheme: expandable accordion
+      // Tiered scheme: clean inline single-line strip with inline [APPLY] button and no accordion drawer
+      var appliedCount = 0;
       await tester.pumpWidget(
         buildTestableWidget(
-          child: SchemeCollapsibleAccordion(
+          child: SchemeInlineStrip(
             product: sampleProduct, // '10+1 Free'
             inStock: true,
             isAlreadyActive: false,
-            onApplyScheme: () {},
+            onApplyScheme: () {
+              appliedCount++;
+            },
           ),
         ),
       );
 
-      // Tiered scheme shows expandable header and arrow
+      // Tiered scheme shows scheme label and inline APPLY button without expansion arrows
       expect(find.textContaining('Scheme: 10+1 Free'), findsOneWidget);
-      expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
-
-      // Tap to expand drawer
-      await tester.tap(find.textContaining('Scheme: 10+1 Free'));
-      await tester.pumpAndSettle();
-
-      // Drawer is expanded with clean non-repetitive deal breakdown rule
-      expect(find.textContaining('Buy 10 units → Get 1 unit FREE'), findsOneWidget);
-      // Single lightning sign via Icon(Icons.bolt_rounded) without duplicate emoji in label
-      expect(find.text('Apply Scheme (+10 Units)'), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsNothing);
+      expect(find.text('APPLY'), findsOneWidget);
       expect(find.byIcon(Icons.bolt_rounded), findsOneWidget);
+
+      // Tapping inline button immediately triggers onApplyScheme without drawer animation
+      await tester.tap(find.text('APPLY'));
+      await tester.pump();
+      expect(appliedCount, equals(1));
     });
 
     testWidgets('In-place action replacement replaces Add to Cart with Stepper keeping Buy 1 Box adjacent',
@@ -289,7 +299,7 @@ void main() {
       await tester.pumpWidget(
         buildTestableWidget(
           cartProvider: cart,
-          child: CatalogMobileList(
+          child: CatalogCardGrid(
             products: [sampleProduct],
             enforceMoq: true,
           ),
@@ -307,17 +317,41 @@ void main() {
       // After adding: Add to Cart is replaced in-place by Stepper; Buy 1 Box remains adjacent
       expect(find.text('Add to Cart'), findsNothing);
       expect(find.byIcon(Icons.add_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
-      // At minBound (MOQ 6), left icon shows delete_outline_rounded
-      expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.close_rounded), findsNothing); // Redundant cross removed
+      expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget); // 1-tap delete button is present!
       expect(find.text('Buy 1 Box (24)'), findsOneWidget);
       expect(find.text('${sampleProduct.moq}'), findsOneWidget); // MOQ = 6
 
-      // Increment above MOQ -> left icon changes to remove_rounded
+      // Increment: 6 -> 7
       await tester.tap(find.byIcon(Icons.add_rounded));
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.remove_rounded), findsOneWidget);
       expect(find.text('7'), findsOneWidget);
+
+      // Decrement: 7 -> 6 (smooth step-down)
+      await tester.tap(find.byIcon(Icons.remove_rounded));
+      await tester.pumpAndSettle();
+      expect(find.text('6'), findsOneWidget);
+
+      // Decrement at MOQ floor (6) does not drop below MOQ
+      await tester.tap(find.byIcon(Icons.remove_rounded));
+      await tester.pumpAndSettle();
+      expect(find.text('6'), findsOneWidget);
+
+      // Direct inline typing: enter 50 directly in the TextField
+      final qtyInput = find.descendant(
+        of: find.byType(CatalogQuantityStepper),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(qtyInput, '50');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(cart.getQuantity(sampleProduct.id), equals(50));
+      expect(find.text('50'), findsOneWidget);
+
+      // 1-Tap Delete removes the item and restores Add to Cart
+      await tester.tap(find.byIcon(Icons.delete_outline_rounded));
+      await tester.pumpAndSettle();
+      expect(find.text('Add to Cart'), findsOneWidget);
     });
 
     testWidgets('Unified Price & Margin Bar renders [₹MRP_VALUE  [MARGIN: XYZ%]  ₹PTR_VALUE]',
@@ -327,7 +361,7 @@ void main() {
 
       await tester.pumpWidget(
         buildTestableWidget(
-          child: CatalogMobileList(
+          child: CatalogCardGrid(
             products: [sampleProduct],
             enforceMoq: true,
           ),
@@ -357,7 +391,7 @@ void main() {
       await tester.pumpWidget(
         buildTestableWidget(
           cartProvider: cart,
-          child: CatalogMobileList(
+          child: CatalogCardGrid(
             products: [sampleProduct], // scheme: '10+1 Free', ptr: 122.0, mrp: 140.0, moq: 6
             enforceMoq: true,
           ),
@@ -389,15 +423,16 @@ void main() {
       final ptrWidget = tester.widget<Text>(find.text('₹110.91'));
       expect(ptrWidget.style?.color, equals(const Color(0xFF059669))); // Vibrant green highlight
 
-      // 3. Scheme accordion header turns green with active text (clean, non-repetitive)
+      // 3. Scheme inline banner turns green with active text and APPLIED button
       expect(find.textContaining('Scheme Active: 10+1 Free'), findsOneWidget);
-
-      // Expand accordion to verify button state
-      await tester.tap(find.textContaining('Scheme Active: 10+1 Free'));
-      await tester.pumpAndSettle();
-
-      // Button appears pressed: solid green with checkmark
-      expect(find.text('✓ Scheme Applied (+10 Units)'), findsOneWidget);
+      expect(find.text('APPLIED'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SchemeInlineStrip),
+          matching: find.byIcon(Icons.check_circle_rounded),
+        ),
+        findsOneWidget,
+      );
     });
   });
 
@@ -444,6 +479,135 @@ void main() {
       expect(nudge.effectivePtr, equals(95.0));
       // Effective Margin = ((120 - 95) / 120) * 100 = 20.83%
       expect(nudge.effectiveMarginPercent, closeTo(20.83, 0.05));
+    });
+  });
+
+  group('Responsive Top Bar & Tablet/Mobile Layouts', () {
+    final sampleRetailer = Retailer(
+      id: 'ret_1',
+      storeName: 'Guwahati General Store',
+      mobile: '9876543210',
+      pin: '1234',
+      route: 'North Corridor',
+      status: 'active',
+    );
+
+    testWidgets('Mobile Top Bar (<768px) displays integrated identity, cart action, and guarded exit',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final auth = AuthProvider();
+      final desk = DeskProvider();
+      final cart = CartProvider();
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          authProvider: auth,
+          deskProvider: desk,
+          cartProvider: cart,
+          surfaceSize: const Size(390, 844),
+          child: RetailerCatalogScreen(retailer: sampleRetailer),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Top bar displays store identity and integrated retailer subtitle with route
+      expect(find.text(auth.settings.storeName), findsOneWidget);
+      expect(find.text('Guwahati General Store'), findsOneWidget);
+      expect(find.textContaining('North Corridor'), findsOneWidget);
+
+      // Top Bar Cart Action is visible
+      expect(find.byTooltip('View Cart'), findsOneWidget);
+
+      // Tapping Logout triggers confirmation dialog
+      await tester.tap(find.byTooltip('Exit Order Desk'));
+      await tester.pumpAndSettle();
+      expect(find.text('Exit Order Desk?'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+
+      // Cancel closes dialog
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('Exit Order Desk?'), findsNothing);
+    });
+
+    testWidgets('Tablet View (768px - 1023px) renders 2-column catalog and un-crowded top bar',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1080)); // iPad portrait
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final auth = AuthProvider();
+      final desk = DeskProvider();
+      final cart = CartProvider();
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          authProvider: auth,
+          deskProvider: desk,
+          cartProvider: cart,
+          surfaceSize: const Size(800, 1080),
+          child: RetailerCatalogScreen(retailer: sampleRetailer),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Top bar displays Exit button with text and Route pill in actions
+      expect(find.text('Exit'), findsOneWidget);
+      expect(find.text('North Corridor'), findsOneWidget);
+      expect(find.text('Guwahati General Store'), findsOneWidget);
+    });
+
+    testWidgets('RetailerCartScreen displays empty state with Back to Catalog button, and populated state with clear confirmation',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 800)); // Desktop width
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final auth = AuthProvider();
+      final cart = CartProvider();
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          authProvider: auth,
+          cartProvider: cart,
+          surfaceSize: const Size(1280, 800),
+          child: RetailerCartScreen(retailer: sampleRetailer),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Empty State: shows clean icon and actionable Back to Product Catalog button
+      expect(find.text('Your wholesale cart is empty'), findsOneWidget);
+      expect(find.text('Back to Product Catalog'), findsOneWidget);
+
+      // Add item to cart
+      cart.addItem(sampleProduct);
+      await tester.pumpAndSettle();
+
+      // Populated State: item visible with line totals and Send Order on WhatsApp
+      expect(find.text(sampleProduct.name), findsOneWidget);
+      expect(find.text('Send Order on WhatsApp'), findsOneWidget);
+
+      // Clear button triggers confirmation dialog
+      expect(find.text('Clear'), findsOneWidget);
+      await tester.tap(find.text('Clear'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Clear Wholesale Cart?'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+
+      // Cancel keeps item
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(cart.items.length, equals(1));
+
+      // Clear confirmed clears cart
+      await tester.tap(find.text('Clear'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Clear All'));
+      await tester.pumpAndSettle();
+      expect(cart.items.isEmpty, isTrue);
+      expect(find.text('Your wholesale cart is empty'), findsOneWidget);
     });
   });
 }

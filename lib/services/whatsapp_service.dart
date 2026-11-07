@@ -12,12 +12,31 @@ class WhatsAppService {
     required List<CartItem> items,
     required double totalPtr,
     required double totalMrp,
+    String? orderNotes,
     DateTime? timestamp,
   }) {
     final now = timestamp ?? DateTime.now();
     final dateStr = AppFormatters.formatIndianDateTime(now);
     final totalUnits = items.fold<int>(0, (sum, item) => sum + item.quantity);
     final totalSavings = totalMrp - totalPtr;
+
+    final totalBoxes = items.fold<int>(0, (sum, it) {
+      final cp = it.product.cartonPack;
+      return cp > 0 ? sum + (it.quantity ~/ cp) : sum;
+    });
+    final looseUnits = items.fold<int>(0, (sum, it) {
+      final cp = it.product.cartonPack;
+      return cp > 0 ? sum + (it.quantity % cp) : sum + it.quantity;
+    });
+    final totalFreeUnits = items.fold<int>(0, (sum, it) {
+      final n = SchemeHelper.calculateNudge(
+        scheme: it.product.scheme,
+        currentQuantity: it.quantity,
+        ptr: it.product.ptr,
+        mrp: it.product.mrp,
+      );
+      return sum + n.earnedFreeUnits;
+    });
 
     final buffer = StringBuffer();
     buffer.writeln('🛒 *WHOLESALE ORDER - $storeName*');
@@ -71,11 +90,22 @@ class WhatsAppService {
 
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('📦 *Total Lines:* ${items.length} ($totalUnits units)');
+    buffer.writeln('📦 *Packaging Breakdown:* $totalBoxes Cartons + $looseUnits Loose Units');
+    if (totalFreeUnits > 0) {
+      buffer.writeln('🎁 *Bonus Free Goods:* +$totalFreeUnits units FREE');
+    }
     buffer.writeln('💰 *Total Order Value (PTR):* *${AppFormatters.formatCurrency(totalPtr)}*');
     buffer.writeln('🏷️ *Total MRP Value:* ${AppFormatters.formatCurrency(totalMrp)}');
     if (totalSavings > 0) {
       buffer.writeln('🎉 *Retailer Margin/Savings:* *${AppFormatters.formatCurrency(totalSavings)}*');
     }
+
+    if (orderNotes != null && orderNotes.trim().isNotEmpty) {
+      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
+      buffer.writeln('📝 *Retailer Remarks / Instructions:*');
+      buffer.writeln(orderNotes.trim());
+    }
+
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('_Order generated via Wholesale Desk Portal_');
 
@@ -90,6 +120,7 @@ class WhatsAppService {
     required List<CartItem> items,
     required double totalPtr,
     required double totalMrp,
+    String? orderNotes,
   }) async {
     final message = buildOrderMessage(
       storeName: storeName,
@@ -97,6 +128,7 @@ class WhatsAppService {
       items: items,
       totalPtr: totalPtr,
       totalMrp: totalMrp,
+      orderNotes: orderNotes,
     );
 
     // Clean phone number: remove any non-digit chars

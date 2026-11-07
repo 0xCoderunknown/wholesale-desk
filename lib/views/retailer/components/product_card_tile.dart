@@ -8,7 +8,7 @@ import '../../../state/cart_provider.dart';
 import '../../widgets/catalog_quantity_stepper.dart';
 import '../../widgets/high_density_badge.dart';
 import '../../widgets/product_avatar.dart';
-import '../../widgets/scheme_accordion.dart';
+import '../../widgets/scheme_inline_strip.dart';
 
 /// Canonical, high-density product card component used across mobile list and desktop grid.
 class ProductCardTile extends StatelessWidget {
@@ -56,7 +56,7 @@ class ProductCardTile extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -100,7 +100,7 @@ class ProductCardTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 5),
 
             // Metadata Badges (MOQ & Box Pack, dimmed if OOS)
             Opacity(
@@ -117,12 +117,12 @@ class ProductCardTile extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
 
             // Unified Price & Margin Bar: [₹MRP_VALUE  [MARGIN: XYZ%]  ₹PTR_VALUE]
             // Note: MRP and PTR share the exact same font size and default color; PTR turns green when discounted.
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(6),
@@ -164,7 +164,7 @@ class ProductCardTile extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
 
             // Dual Action Row: In-place stepper replacement with Buy 1 Box adjacent
             if (product.inStock)
@@ -181,6 +181,7 @@ class ProductCardTile extends StatelessWidget {
                             onIncrement: () => cart.increment(product.id),
                             onDecrement: () => cart.decrement(product.id, enforceMoq: enforceMoq),
                             onDirectDelete: () => cart.removeItem(product.id),
+                            onQuantityChanged: (newQty) => cart.updateQuantity(product.id, newQty, enforceMoq: enforceMoq),
                           )
                         : ElevatedButton.icon(
                             onPressed: () => cart.addItem(product, enforceMoq: enforceMoq),
@@ -192,7 +193,7 @@ class ProductCardTile extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primary,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                             ),
                           ),
@@ -213,7 +214,7 @@ class ProductCardTile extends StatelessWidget {
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                           side: const BorderSide(color: Color(0xFF93C5FD), width: 1.2),
                           backgroundColor: const Color(0xFFEFF6FF),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -226,7 +227,7 @@ class ProductCardTile extends StatelessWidget {
             else
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: AppTheme.slate100,
@@ -242,10 +243,10 @@ class ProductCardTile extends StatelessWidget {
                 ),
               ),
 
-            // Relocate Scheme Details to Collapsible Accordion (Shikhar Style)
+            // Single-line flat scheme strip with inline [APPLY] action
             if (product.scheme.trim().isNotEmpty) ...[
-              const SizedBox(height: 8),
-              SchemeCollapsibleAccordion(
+              const SizedBox(height: 6),
+              SchemeInlineStrip(
                 product: product,
                 inStock: product.inStock,
                 isAlreadyActive: nudge.isQualified,

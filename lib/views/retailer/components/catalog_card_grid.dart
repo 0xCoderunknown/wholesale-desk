@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/breakpoints.dart';
 import '../../../models/product.dart';
 import 'product_card_tile.dart';
 
@@ -17,7 +18,7 @@ class CatalogCardGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 768;
+    final isMobile = AppBreakpoints.isMobile(context);
 
     // Mobile fallback (< 768px): single item per row using dynamic height list
     if (isMobile) {
@@ -43,7 +44,7 @@ class CatalogCardGrid extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: screenWidth < 1100 ? 2 : (screenWidth < 1400 ? 3 : 4),
-        mainAxisExtent: 290,
+        mainAxisExtent: 250,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),

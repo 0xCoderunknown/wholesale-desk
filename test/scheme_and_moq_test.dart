@@ -159,14 +159,14 @@ void main() {
       expect(cart.subtotalPtr, equals(20 * 1800.0));
     });
 
-    test('1-Tap Scheme Auto-Fill increments by slab if already at or above threshold', () {
+    test('1-Tap Scheme Auto-Fill does NOT double if already qualified', () {
       final cart = CartProvider();
       cart.applyScheme(testProduct, 20);
       expect(cart.getQuantity(testProduct.id), equals(20));
 
-      // Second tap increments by another slab of 20
+      // Second tap does NOT double to 40; keeps retailer in control
       cart.applyScheme(testProduct, 20);
-      expect(cart.getQuantity(testProduct.id), equals(40));
+      expect(cart.getQuantity(testProduct.id), equals(20));
     });
 
     test('Direct Item Deletion & Zero-Reset clears 50 units in exactly 1 tap', () {
@@ -184,12 +184,22 @@ void main() {
       expect(cart.subtotalPtr, equals(0.0));
     });
 
-    test('When enforceMoq is true, decrementing below MOQ removes item', () {
+    test('When enforceMoq is true, decrementing stops at MOQ floor and does not drop below MOQ', () {
       final cart = CartProvider();
-      cart.addItem(testProduct, enforceMoq: true); // qty = 5
-      cart.decrement(testProduct.id, enforceMoq: true); // drops below 5 -> removes
+      cart.addItem(testProduct, enforceMoq: true);
+      cart.updateQuantity(testProduct.id, 8, enforceMoq: true); // sets to 8
+      cart.decrement(testProduct.id, enforceMoq: true); // drops to 7
+      expect(cart.getQuantity(testProduct.id), equals(7));
 
-      expect(cart.isInCart(testProduct.id), isFalse);
+      cart.decrement(testProduct.id, enforceMoq: true); // drops to 6
+      expect(cart.getQuantity(testProduct.id), equals(6));
+
+      cart.decrement(testProduct.id, enforceMoq: true); // drops to 5 (MOQ floor)
+      expect(cart.getQuantity(testProduct.id), equals(5));
+
+      // Attempting to decrement below MOQ (5) is blocked
+      cart.decrement(testProduct.id, enforceMoq: true);
+      expect(cart.getQuantity(testProduct.id), equals(5));
     });
 
     test('When enforceMoq is false, decrementing allows units down to 1 before removal', () {

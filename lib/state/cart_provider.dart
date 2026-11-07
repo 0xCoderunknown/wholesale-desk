@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/cart_item.dart';
 import '../models/product.dart';
+import '../services/scheme_helper.dart';
 
 class CartProvider extends ChangeNotifier {
   final Map<String, CartItem> _items = {};
@@ -18,6 +19,48 @@ class CartProvider extends ChangeNotifier {
       _items.values.fold(0.0, (sum, item) => sum + item.lineTotalMrp);
 
   double get totalSavings => totalMrp - subtotalPtr;
+
+  /// Total full cartons across all items with defined cartonPack
+  int get totalBoxes => _items.values.fold(0, (sum, it) {
+        final cp = it.product.cartonPack;
+        return cp > 0 ? sum + (it.quantity ~/ cp) : sum;
+      });
+
+  /// Total loose units that do not complete a full carton
+  int get totalLooseUnits => _items.values.fold(0, (sum, it) {
+        final cp = it.product.cartonPack;
+        return cp > 0 ? sum + (it.quantity % cp) : sum + it.quantity;
+      });
+
+  /// Total bonus units earned from all active schemes
+  int get totalEarnedFreeUnits => _items.values.fold(0, (sum, it) {
+        final n = SchemeHelper.calculateNudge(
+          scheme: it.product.scheme,
+          currentQuantity: it.quantity,
+          ptr: it.product.ptr,
+          mrp: it.product.mrp,
+        );
+        return sum + n.earnedFreeUnits;
+      });
+
+  /// Monetary value of free goods evaluated at PTR
+  double get totalFreeGoodsValue => _items.values.fold(0.0, (sum, it) {
+        final n = SchemeHelper.calculateNudge(
+          scheme: it.product.scheme,
+          currentQuantity: it.quantity,
+          ptr: it.product.ptr,
+          mrp: it.product.mrp,
+        );
+        return sum + (n.earnedFreeUnits * it.product.ptr);
+      });
+
+  /// Items in cart that are close (1-3 units) to unlocking free goods
+  List<CartItem> get itemsNearScheme => _items.values.where((it) {
+        final threshold = SchemeHelper.parseThreshold(it.product.scheme);
+        if (threshold <= 0) return false;
+        final diff = threshold - it.quantity;
+        return diff > 0 && diff <= 3;
+      }).toList();
 
   bool isInCart(String productId) => _items.containsKey(productId);
 
@@ -50,12 +93,15 @@ class CartProvider extends ChangeNotifier {
       final item = _items[productId]!;
       final minBound = (enforceMoq && item.product.moq > 0) ? item.product.moq : 1;
 
-      if (item.quantity <= minBound) {
-        _items.remove(productId);
-      } else {
+      // Allow decrementing down to MOQ (or 1 if enforceMoq is false)
+      if (item.quantity > minBound) {
         item.quantity -= 1;
+        notifyListeners();
+      } else if (!enforceMoq && item.quantity <= 1) {
+        // When MOQ is not enforced, decrementing at 1 removes the item
+        _items.remove(productId);
+        notifyListeners();
       }
-      notifyListeners();
     }
   }
 
@@ -64,8 +110,11 @@ class CartProvider extends ChangeNotifier {
       final item = _items[productId]!;
       final minBound = (enforceMoq && item.product.moq > 0) ? item.product.moq : 1;
 
-      if (newQuantity < minBound) {
+      if (newQuantity <= 0) {
         _items.remove(productId);
+      } else if (enforceMoq && newQuantity < minBound) {
+        // Enforce MOQ floor when set by hand
+        item.quantity = minBound;
       } else {
         item.quantity = newQuantity;
       }
@@ -75,7 +124,7 @@ class CartProvider extends ChangeNotifier {
 
   /// 1-Tap direct scheme auto-fill.
   /// If not in cart or below threshold, sets quantity to [thresholdQuantity].
-  /// If already at or above threshold, increments by another full scheme slab.
+  /// If already at or above threshold, does NOT double; leaves retailer in control.
   void applyScheme(Product product, int thresholdQuantity, {bool enforceMoq = true}) {
     if (!product.inStock || thresholdQuantity <= 0) return;
 
@@ -83,23 +132,37 @@ class CartProvider extends ChangeNotifier {
       final current = _items[product.id]!.quantity;
       if (current < thresholdQuantity) {
         _items[product.id]!.quantity = thresholdQuantity;
-      } else {
-        _items[product.id]!.quantity += thresholdQuantity;
+        notifyListeners();
       }
+      // If already at or above threshold, do not double!
     } else {
       _items[product.id] = CartItem(
         product: product,
         quantity: thresholdQuantity,
       );
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   /// 1-Tap carton/box quick-buy.
-  /// Sets quantity directly to product.cartonPack (or increments by 1 box if already active).
+  /// Sets quantity directly to 1 box (product.cartonPack). Does NOT double if already in cart.
   void buyBox(Product product, {bool enforceMoq = true}) {
     if (!product.inStock || product.cartonPack <= 0) return;
-    applyScheme(product, product.cartonPack, enforceMoq: enforceMoq);
+
+    if (_items.containsKey(product.id)) {
+      final current = _items[product.id]!.quantity;
+      if (current < product.cartonPack) {
+        _items[product.id]!.quantity = product.cartonPack;
+        notifyListeners();
+      }
+      // If already at or above 1 box, do not double!
+    } else {
+      _items[product.id] = CartItem(
+        product: product,
+        quantity: product.cartonPack,
+      );
+      notifyListeners();
+    }
   }
 
   void removeItem(String productId) {

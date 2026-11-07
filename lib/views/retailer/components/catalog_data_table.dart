@@ -234,6 +234,7 @@ class CatalogDataTable extends StatelessWidget {
                       onIncrement: () => cart.increment(p.id),
                       onDecrement: () => cart.decrement(p.id, enforceMoq: enforceMoq),
                       onDirectDelete: () => cart.removeItem(p.id),
+                      onQuantityChanged: (newQty) => cart.updateQuantity(p.id, newQty, enforceMoq: enforceMoq),
                     )
                   : ElevatedButton.icon(
                       onPressed: () => cart.addItem(p, enforceMoq: enforceMoq),
