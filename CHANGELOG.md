@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-11-07
+
+### Refactored
+- **Separation of Concerns (SoC) Architectural Decoupling**:
+  - **Pure Domain Model**: Decoupled `Product` from `cloud_firestore` SDK and `FieldValue.serverTimestamp()`, eliminating Firebase dependency leaks in WooCommerce mode.
+  - **Dependency Injection**: Refactored `AuthProvider` and `DeskProvider` constructors to accept optional repository instances (`RepositoryManager? repository`) for testability.
+  - **Centralized Formatters (`AppFormatters`)**: Created `lib/config/formatters.dart` single source of truth for Indian currency, rate formatting, percentage calculations, and carton pack representations across all UI layers.
+  - **Unified Stepper (`CatalogQuantityStepper`)**: Replaced 4 duplicate stepper implementations with a single canonical component supporting `.compact`, `.fullWidth`, and `.drawer` presentation layouts.
+  - **God-Widget Decomposition**: Decomposed the monolithic 1,111-line `RetailerCatalogScreen` into isolated, focused components:
+    - `CatalogFilterToolbar` (search text field, brand dropdown, stock filter, view mode toggle).
+    - `CatalogCardGrid` & `ProductCardTile` (isolated card grid with granular `context.select` cart listener).
+    - `CatalogDataTable` (isolated high-density desktop table).
+    - `CatalogMobileList` & `MobileProductListItem` (isolated mobile POS list).
+  - **Granular Rebuild Optimization**: Replaced coarse-grained root `context.watch<CartProvider>()` with granular tile-level `context.select` subscriptions and localized `Consumer<CartProvider>` wrappers, preventing unnecessary full-screen re-renders on counter web sessions.
+
+
 ## [1.3.0] - 2026-11-07
 
 ### Added

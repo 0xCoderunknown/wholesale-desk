@@ -290,7 +290,14 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
                             ),
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Icons.phone_android_rounded, size: 18),
-                              hintText: '10-digit mobile number',
+                              prefixText: '+91 ',
+                              prefixStyle: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.slate800,
+                              ),
+                              hintText: '10-digit Indian mobile number',
+                              counterText: '',
                               suffixIcon: IconButton(
                                 icon: const Icon(Icons.clear, size: 16),
                                 onPressed: () => _mobileController.clear(),

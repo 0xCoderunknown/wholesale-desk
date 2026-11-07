@@ -11,7 +11,7 @@ enum UserRole {
 }
 
 class AuthProvider extends ChangeNotifier {
-  final RepositoryManager _repo = RepositoryManager.instance;
+  final RepositoryManager _repo;
 
   UserRole _role = UserRole.unauthenticated;
   Retailer? _currentRetailer;
@@ -30,7 +30,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isStaff => _role == UserRole.staff;
   bool get isRetailer => _role == UserRole.retailer;
 
-  AuthProvider() {
+  AuthProvider({RepositoryManager? repository}) : _repo = repository ?? RepositoryManager.instance {
     _init();
   }
 

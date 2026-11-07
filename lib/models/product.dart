@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Product {
   final String id;
   final String name;
@@ -31,6 +29,11 @@ class Product {
   double get margin => mrp - ptr;
   double get marginPercent => mrp > 0 ? ((mrp - ptr) / mrp) * 100 : 0.0;
 
+  /// Pure domain logic: returns effective minimum order quantity respecting enforceMoq
+  int minOrderQuantity({bool enforceMoq = true}) {
+    return (enforceMoq && moq > 0) ? moq : 1;
+  }
+
   bool matchesQuery(String query) {
     if (query.isEmpty) return true;
     final q = query.toLowerCase().trim();
@@ -42,12 +45,17 @@ class Product {
   factory Product.fromMap(String id, Map<String, dynamic> map) {
     DateTime? updated;
     final rawDate = map['updated_at'];
-    if (rawDate is Timestamp) {
-      updated = rawDate.toDate();
+    if (rawDate is DateTime) {
+      updated = rawDate;
     } else if (rawDate is String) {
       updated = DateTime.tryParse(rawDate);
     } else if (rawDate is int) {
       updated = DateTime.fromMillisecondsSinceEpoch(rawDate);
+    } else if (rawDate != null && rawDate.runtimeType.toString().contains('Timestamp')) {
+      // Dynamic duck-typing for Firestore Timestamp without hard SDK coupling
+      try {
+        updated = (rawDate as dynamic).toDate() as DateTime?;
+      } catch (_) {}
     }
 
     final rawCarton = map['carton_pack'] ?? map['box_size'];
@@ -82,7 +90,7 @@ class Product {
       'box_size': cartonPack,
       'in_stock': inStock,
       'image_url': imageUrl,
-      'updated_at': FieldValue.serverTimestamp(),
+      'updated_at': (updatedAt ?? DateTime.now()).toIso8601String(),
     };
   }
 

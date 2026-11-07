@@ -389,10 +389,12 @@ class DatabaseService implements WholesaleRepository {
 
     if (_isFirebaseAvailable && _firestore != null) {
       try {
+        final data = product.toMap();
+        data['updated_at'] = FieldValue.serverTimestamp();
         await _firestore!
             .collection('products')
             .doc(product.id)
-            .set(product.toMap(), SetOptions(merge: true));
+            .set(data, SetOptions(merge: true));
       } catch (_) {}
     }
   }

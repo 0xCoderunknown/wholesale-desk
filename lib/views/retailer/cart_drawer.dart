@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../config/formatters.dart';
 import '../../config/theme.dart';
 import '../../models/retailer.dart';
 import '../../services/scheme_helper.dart';
 import '../../services/whatsapp_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/cart_provider.dart';
+import '../widgets/catalog_quantity_stepper.dart';
 import '../widgets/high_density_badge.dart';
 
 class CartDrawer extends StatefulWidget {
@@ -20,7 +21,6 @@ class CartDrawer extends StatefulWidget {
 
 class _CartDrawerState extends State<CartDrawer> {
   bool _isSending = false;
-  static final _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
 
   Future<void> _handleWhatsAppCheckout(BuildContext context) async {
     final cart = context.read<CartProvider>();
@@ -142,7 +142,7 @@ class _CartDrawerState extends State<CartDrawer> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'Route: ${widget.retailer.route} • ${widget.retailer.mobile}',
+                        'Route: ${widget.retailer.route} • ${AppFormatters.formatIndianMobile(widget.retailer.mobile)}',
                         style: const TextStyle(
                           fontSize: 11,
                           color: AppTheme.slate600,
@@ -196,7 +196,6 @@ class _CartDrawerState extends State<CartDrawer> {
                       final p = item.product;
                       final auth = context.read<AuthProvider>();
                       final enforceMoq = auth.settings.enforceMoq;
-                      final minBound = (enforceMoq && p.moq > 0) ? p.moq : 1;
                       final schemeThreshold = SchemeHelper.parseThreshold(p.scheme);
                       final nudge = SchemeHelper.calculateNudge(
                         scheme: p.scheme,
@@ -256,7 +255,7 @@ class _CartDrawerState extends State<CartDrawer> {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        _currency.format(item.lineTotalPtr),
+                                        AppFormatters.formatCurrency(item.lineTotalPtr),
                                         style: const TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w700,
@@ -264,7 +263,7 @@ class _CartDrawerState extends State<CartDrawer> {
                                         ),
                                       ),
                                       Text(
-                                        'MRP: ${_currency.format(item.lineTotalMrp)}',
+                                        'MRP: ${AppFormatters.formatCurrency(item.lineTotalMrp)}',
                                         style: const TextStyle(
                                           fontSize: 11,
                                           color: AppTheme.slate500,
@@ -311,7 +310,7 @@ class _CartDrawerState extends State<CartDrawer> {
 
                           const SizedBox(height: 8),
 
-                          // Rate info, Effective PTR & Stepper
+                          // Rate info, Effective PTR & Unified Stepper
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -320,8 +319,8 @@ class _CartDrawerState extends State<CartDrawer> {
                                 children: [
                                   Text(
                                     enforceMoq
-                                        ? 'PTR: ${_currency.format(p.ptr)} / unit (MOQ: ${p.moq})'
-                                        : 'PTR: ${_currency.format(p.ptr)} / unit',
+                                        ? 'PTR: ${AppFormatters.formatCurrency(p.ptr)} / unit (MOQ: ${p.moq})'
+                                        : 'PTR: ${AppFormatters.formatCurrency(p.ptr)} / unit',
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -330,7 +329,7 @@ class _CartDrawerState extends State<CartDrawer> {
                                   ),
                                   if (nudge.hasBoostedMargin)
                                     Text(
-                                      'Eff. Rate: ${_currency.format(nudge.effectivePtr)}/u (+${nudge.effectiveMarginPercent.toStringAsFixed(1)}% margin)',
+                                      'Eff. Rate: ${AppFormatters.formatCurrency(nudge.effectivePtr)}/u (+${nudge.effectiveMarginPercent.toStringAsFixed(1)}% margin)',
                                       style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
@@ -339,44 +338,15 @@ class _CartDrawerState extends State<CartDrawer> {
                                     ),
                                 ],
                               ),
-                              // Compact Stepper with Long-Press Delete
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: AppTheme.slate300),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _buildStepButton(
-                                      icon: item.quantity <= minBound
-                                          ? Icons.delete_outline_rounded
-                                          : Icons.remove_rounded,
-                                      color: item.quantity <= minBound
-                                          ? AppTheme.outOfStockRed
-                                          : AppTheme.slate700,
-                                      onTap: () => cart.decrement(p.id, enforceMoq: enforceMoq),
-                                    ),
-                                    Container(
-                                      constraints: const BoxConstraints(minWidth: 36),
-                                      alignment: Alignment.center,
-                                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                                      child: Text(
-                                        '${item.quantity}',
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppTheme.slate900,
-                                        ),
-                                      ),
-                                    ),
-                                    _buildStepButton(
-                                      icon: Icons.add_rounded,
-                                      color: AppTheme.primary,
-                                      onTap: () => cart.increment(p.id),
-                                    ),
-                                  ],
-                                ),
+                              // Unified DRY Stepper
+                              CatalogQuantityStepper(
+                                product: p,
+                                quantity: item.quantity,
+                                enforceMoq: enforceMoq,
+                                style: StepperStyle.drawer,
+                                onIncrement: () => cart.increment(p.id),
+                                onDecrement: () => cart.decrement(p.id, enforceMoq: enforceMoq),
+                                onDirectDelete: () => cart.removeItem(p.id),
                               ),
                             ],
                           ),
@@ -407,7 +377,7 @@ class _CartDrawerState extends State<CartDrawer> {
                         ),
                       ),
                       Text(
-                        'Gross MRP: ${_currency.format(cart.totalMrp)}',
+                        'Gross MRP: ${AppFormatters.formatCurrency(cart.totalMrp)}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppTheme.slate500,
@@ -429,7 +399,7 @@ class _CartDrawerState extends State<CartDrawer> {
                           ),
                         ),
                         Text(
-                          '+ ${_currency.format(cart.totalSavings)}',
+                          '+ ${AppFormatters.formatCurrency(cart.totalSavings)}',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -451,7 +421,7 @@ class _CartDrawerState extends State<CartDrawer> {
                         ),
                       ),
                       Text(
-                        _currency.format(cart.subtotalPtr),
+                        AppFormatters.formatCurrency(cart.subtotalPtr),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -493,20 +463,6 @@ class _CartDrawerState extends State<CartDrawer> {
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildStepButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(5),
-        child: Icon(icon, size: 15, color: color),
       ),
     );
   }

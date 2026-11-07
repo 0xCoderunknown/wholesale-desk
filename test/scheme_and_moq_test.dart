@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wholesale_desk/config/formatters.dart';
 import 'package:wholesale_desk/models/cart_item.dart';
 import 'package:wholesale_desk/models/product.dart';
 import 'package:wholesale_desk/models/retailer.dart';
@@ -217,6 +218,27 @@ void main() {
       expect(message, contains('Total Order Value (PTR):* *₹5,000.00*'));
       expect(message, contains('Guwahati Kirana Store'));
       expect(message, contains('Fancy Bazaar'));
+      // Verify Indian Date & Time (DD/MM/YYYY) and Mobile (+91)
+      expect(message, contains('📅 *Date & Time (IST):* 07/11/2026, 06:30 PM'));
+      expect(message, contains('📱 *Mobile:* +91 98765 43210'));
+    });
+  });
+
+  group('Indian Business Formatting Standards (AppFormatters)', () {
+    test('Formats Indian Rupee with Lakhs and Crores grouping', () {
+      expect(AppFormatters.formatCurrency(100000.0), equals('₹1,00,000.00'));
+      expect(AppFormatters.formatCurrency(1250.50), equals('₹1,250.50'));
+    });
+
+    test('Formats Indian standard date as DD/MM/YYYY', () {
+      final date = DateTime(2026, 11, 7, 18, 58);
+      expect(AppFormatters.formatIndianDate(date), equals('07/11/2026'));
+      expect(AppFormatters.formatIndianDateTime(date), equals('07/11/2026, 06:58 PM'));
+    });
+
+    test('Formats 10-digit Indian mobile numbers with +91 and 5-5 split', () {
+      expect(AppFormatters.formatIndianMobile('9876543210'), equals('+91 98765 43210'));
+      expect(AppFormatters.formatIndianMobile('919876543210'), equals('+91 98765 43210'));
     });
   });
 }

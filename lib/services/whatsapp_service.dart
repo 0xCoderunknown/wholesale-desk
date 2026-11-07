@@ -1,16 +1,10 @@
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../config/formatters.dart';
 import '../models/cart_item.dart';
 import '../models/retailer.dart';
 import 'scheme_helper.dart';
 
 class WhatsAppService {
-  static final NumberFormat _currencyFormat = NumberFormat.currency(
-    locale: 'en_IN',
-    symbol: '₹',
-    decimalDigits: 2,
-  );
-
   /// Builds the formatted B2B order message string
   static String buildOrderMessage({
     required String storeName,
@@ -21,7 +15,7 @@ class WhatsAppService {
     DateTime? timestamp,
   }) {
     final now = timestamp ?? DateTime.now();
-    final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(now);
+    final dateStr = AppFormatters.formatIndianDateTime(now);
     final totalUnits = items.fold<int>(0, (sum, item) => sum + item.quantity);
     final totalSavings = totalMrp - totalPtr;
 
@@ -29,19 +23,19 @@ class WhatsAppService {
     buffer.writeln('🛒 *WHOLESALE ORDER - $storeName*');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('🏪 *Retailer:* ${retailer.storeName}');
-    buffer.writeln('📱 *Mobile:* ${retailer.mobile}');
+    buffer.writeln('📱 *Mobile:* ${AppFormatters.formatIndianMobile(retailer.mobile)}');
     if (retailer.route.isNotEmpty) {
       buffer.writeln('📍 *Route:* ${retailer.route}');
     }
-    buffer.writeln('📅 *Time:* $dateStr');
+    buffer.writeln('📅 *Date & Time (IST):* $dateStr');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('*ORDER ITEMS (${items.length}):*');
 
     for (int i = 0; i < items.length; i++) {
       final item = items[i];
       final p = item.product;
-      final lineTotal = _currencyFormat.format(item.lineTotalPtr);
-      final rate = _currencyFormat.format(p.ptr);
+      final lineTotal = AppFormatters.formatCurrency(item.lineTotalPtr);
+      final rate = AppFormatters.formatCurrency(p.ptr);
       final nudge = SchemeHelper.calculateNudge(
         scheme: p.scheme,
         currentQuantity: item.quantity,
@@ -65,7 +59,7 @@ class WhatsAppService {
       buffer.writeln();
 
       if (nudge.hasBoostedMargin) {
-        buffer.writeln('   • Rate: $rate | Eff. Rate: *${_currencyFormat.format(nudge.effectivePtr)}* | Line Total: *$lineTotal*');
+        buffer.writeln('   • Rate: $rate | Eff. Rate: *${AppFormatters.formatCurrency(nudge.effectivePtr)}* | Line Total: *$lineTotal*');
       } else {
         buffer.writeln('   • Rate: $rate | Line Total: *$lineTotal*');
       }
@@ -77,10 +71,10 @@ class WhatsAppService {
 
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('📦 *Total Lines:* ${items.length} ($totalUnits units)');
-    buffer.writeln('💰 *Total Order Value (PTR):* *${_currencyFormat.format(totalPtr)}*');
-    buffer.writeln('🏷️ *Total MRP Value:* ${_currencyFormat.format(totalMrp)}');
+    buffer.writeln('💰 *Total Order Value (PTR):* *${AppFormatters.formatCurrency(totalPtr)}*');
+    buffer.writeln('🏷️ *Total MRP Value:* ${AppFormatters.formatCurrency(totalMrp)}');
     if (totalSavings > 0) {
-      buffer.writeln('🎉 *Retailer Margin/Savings:* *${_currencyFormat.format(totalSavings)}*');
+      buffer.writeln('🎉 *Retailer Margin/Savings:* *${AppFormatters.formatCurrency(totalSavings)}*');
     }
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('_Order generated via Wholesale Desk Portal_');

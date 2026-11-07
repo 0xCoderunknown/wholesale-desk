@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../config/formatters.dart';
 import '../../config/theme.dart';
 import '../../models/product.dart';
 import '../../state/auth_provider.dart';
@@ -23,7 +23,6 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
-  static final _currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
 
   @override
   void initState() {
@@ -500,7 +499,7 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
                     // MRP
                     DataCell(
                       Text(
-                        _currency.format(p.mrp),
+                        AppFormatters.formatCurrency(p.mrp),
                         style: const TextStyle(fontSize: 12, color: AppTheme.slate600),
                       ),
                     ),
@@ -508,7 +507,7 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
                     // PTR (Rate)
                     DataCell(
                       Text(
-                        _currency.format(p.ptr),
+                        AppFormatters.formatCurrency(p.ptr),
                         style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
                       ),
                     ),
@@ -632,7 +631,7 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'PTR: ${_currency.format(p.ptr)} (MRP: ${_currency.format(p.mrp)})',
+                      'PTR: ${AppFormatters.formatCurrency(p.ptr)} (MRP: ${AppFormatters.formatCurrency(p.mrp)})',
                       style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
                     ),
                     if (isAdmin)

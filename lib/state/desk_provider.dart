@@ -5,7 +5,7 @@ import '../services/repository_manager.dart';
 enum StockFilterType { all, inStock, outOfStock }
 
 class DeskProvider extends ChangeNotifier {
-  final RepositoryManager _repo = RepositoryManager.instance;
+  final RepositoryManager _repo;
 
   List<Product> _products = [];
   String _searchQuery = '';
@@ -59,7 +59,7 @@ class DeskProvider extends ChangeNotifier {
     }).toList();
   }
 
-  DeskProvider() {
+  DeskProvider({RepositoryManager? repository}) : _repo = repository ?? RepositoryManager.instance {
     _init();
   }
 

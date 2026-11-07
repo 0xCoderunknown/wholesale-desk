@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/formatters.dart';
 import '../../config/theme.dart';
 import '../../models/retailer.dart';
 import '../../services/repository_manager.dart';
@@ -292,7 +293,7 @@ class _RetailerManagementViewState extends State<RetailerManagementView> {
                                       ),
                                       const SizedBox(height: 3),
                                       Text(
-                                        'Mobile: ${r.mobile} • PIN: ${r.pin} • Route: ${r.route}',
+                                        'Mobile: ${AppFormatters.formatIndianMobile(r.mobile)} • PIN: ${r.pin} • Route: ${r.route}',
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: AppTheme.slate600,
