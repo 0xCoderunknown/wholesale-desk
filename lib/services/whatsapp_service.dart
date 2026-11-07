@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/cart_item.dart';
 import '../models/retailer.dart';
+import 'scheme_helper.dart';
 
 class WhatsAppService {
   static final NumberFormat _currencyFormat = NumberFormat.currency(
@@ -10,16 +11,16 @@ class WhatsAppService {
     decimalDigits: 2,
   );
 
-  /// Generates the itemized B2B wholesale order text and launches WhatsApp
-  static Future<bool> sendWholesaleOrder({
-    required String targetPhone,
+  /// Builds the formatted B2B order message string
+  static String buildOrderMessage({
     required String storeName,
     required Retailer retailer,
     required List<CartItem> items,
     required double totalPtr,
     required double totalMrp,
-  }) async {
-    final now = DateTime.now();
+    DateTime? timestamp,
+  }) {
+    final now = timestamp ?? DateTime.now();
     final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(now);
     final totalUnits = items.fold<int>(0, (sum, item) => sum + item.quantity);
     final totalSavings = totalMrp - totalPtr;
@@ -41,19 +42,34 @@ class WhatsAppService {
       final p = item.product;
       final lineTotal = _currencyFormat.format(item.lineTotalPtr);
       final rate = _currencyFormat.format(p.ptr);
+      final nudge = SchemeHelper.calculateNudge(
+        scheme: p.scheme,
+        currentQuantity: item.quantity,
+        ptr: p.ptr,
+        mrp: p.mrp,
+      );
 
       buffer.writeln('${i + 1}. *${p.name}*');
-      buffer.write('   • Qty: *${item.quantity}* units (MOQ: ${p.moq}');
+      buffer.write('   • Billed Qty: *${item.quantity}* units');
+
       if (p.hasCartonPack) {
         final boxes = (item.quantity / p.cartonPack).toStringAsFixed(1).replaceAll('.0', '');
-        buffer.write(' | Box: ${p.cartonPack}u ≈ ${boxes}b');
+        buffer.write(' (Box: ${p.cartonPack}u ≈ ${boxes}b)');
       }
-      buffer.write(')');
-      if (item.hasScheme) {
+
+      if (nudge.earnedFreeUnits > 0) {
+        buffer.write(' | 🎁 Bonus: *+${nudge.earnedFreeUnits} Free Units* (Total: ${item.quantity + nudge.earnedFreeUnits}u)');
+      } else if (item.hasScheme) {
         buffer.write(' | Scheme: *${p.scheme}*');
       }
       buffer.writeln();
-      buffer.writeln('   • Rate: $rate | Total: *$lineTotal*');
+
+      if (nudge.hasBoostedMargin) {
+        buffer.writeln('   • Rate: $rate | Eff. Rate: *${_currencyFormat.format(nudge.effectivePtr)}* | Line Total: *$lineTotal*');
+      } else {
+        buffer.writeln('   • Rate: $rate | Line Total: *$lineTotal*');
+      }
+
       if (i < items.length - 1) {
         buffer.writeln();
       }
@@ -69,9 +85,29 @@ class WhatsAppService {
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('_Order generated via Wholesale Desk Portal_');
 
+    return buffer.toString();
+  }
+
+  /// Generates the itemized B2B wholesale order text and launches WhatsApp
+  static Future<bool> sendWholesaleOrder({
+    required String targetPhone,
+    required String storeName,
+    required Retailer retailer,
+    required List<CartItem> items,
+    required double totalPtr,
+    required double totalMrp,
+  }) async {
+    final message = buildOrderMessage(
+      storeName: storeName,
+      retailer: retailer,
+      items: items,
+      totalPtr: totalPtr,
+      totalMrp: totalMrp,
+    );
+
     // Clean phone number: remove any non-digit chars
     final cleanPhone = targetPhone.replaceAll(RegExp(r'\D'), '');
-    final encodedText = Uri.encodeComponent(buffer.toString());
+    final encodedText = Uri.encodeComponent(message);
     final urlString = 'https://wa.me/$cleanPhone?text=$encodedText';
 
     final uri = Uri.parse(urlString);

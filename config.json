@@ -1,19 +1,25 @@
 {
-  "_comment": "Human-configurable setup for Wholesale Desk. Update values as your business information changes.",
-  "store_name": "Apex Wholesale Distributors",
-  "whatsapp_phone": "917002796068",
-  "master_pin": "5075",
-  "staff_pin": "1122",
-  "backend_type": "firebase",
-  "woocommerce_base_url": "https://mywholesalestore.com",
+  "_README": "WHOLESALE DESK CONFIGURATION. Change 'active_backend' to switch between 'woocommerce' or 'firebase'.",
+
+  "active_backend": "firebase",
+
+  "store_identity": {
+    "store_name": "Apex Wholesale Distributors",
+    "_security_note": "WhatsApp phone number and Staff PIN are NOT hardcoded here. They are dynamically controlled from your live database so changing SIMs or staff turnover can be managed instantly from the Admin Desk UI."
+  },
+
+  "woocommerce": {
+    "_info": "Active ONLY when 'active_backend' is set to 'woocommerce'",
+    "site_url": "https://mywholesalestore.com"
+  },
+
   "firebase": {
-    "_comment": "Optional: Place your Firebase Web credentials here if using Cloud Firestore.",
-    "api_key": "demo-api-key",
-    "project_id": "wholesale-desk-demo",
-    "app_id": "1:1234567890:web:abcdef123456",
-    "messaging_sender_id": "1234567890",
-    "auth_domain": "wholesale-desk-demo.firebaseapp.com",
-    "storage_bucket": "wholesale-desk-demo.appspot.com"
+    "_info": "Active ONLY when 'active_backend' is set to 'firebase'. Paste your Firebase Web keys from Firebase Console below:",
+    "api_key": "YOUR_FIREBASE_API_KEY",
+    "project_id": "YOUR_FIREBASE_PROJECT_ID",
+    "app_id": "YOUR_FIREBASE_APP_ID",
+    "messaging_sender_id": "YOUR_FIREBASE_MESSAGING_SENDER_ID",
+    "auth_domain": "YOUR_FIREBASE_PROJECT_ID.firebaseapp.com",
+    "storage_bucket": "YOUR_FIREBASE_PROJECT_ID.appspot.com"
   }
 }
-

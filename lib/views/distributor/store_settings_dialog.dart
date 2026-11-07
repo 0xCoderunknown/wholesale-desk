@@ -21,6 +21,7 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
   late TextEditingController _staffPinController;
   late TextEditingController _wpUrlController;
   late String _backendType; // 'firebase' | 'woocommerce'
+  late bool _enforceMoq;
   bool _isSaving = false;
   bool _isSeeding = false;
 
@@ -33,6 +34,7 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
     _staffPinController = TextEditingController(text: widget.settings.staffPin);
     _wpUrlController = TextEditingController(text: widget.settings.wpBaseUrl);
     _backendType = widget.settings.backendType;
+    _enforceMoq = widget.settings.enforceMoq;
   }
 
   @override
@@ -56,6 +58,7 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
       staffPin: _staffPinController.text.trim(),
       backendType: _backendType,
       wpBaseUrl: _wpUrlController.text.trim(),
+      enforceMoq: _enforceMoq,
     );
 
     RepositoryManager.instance.switchBackend(
@@ -248,6 +251,45 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
                   ),
                   const SizedBox(height: 12),
                 ],
+
+                // MOQ Enforcement Toggle (Requirement #2)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.slate50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.slate300),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.rule_folder_rounded, size: 20, color: AppTheme.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Enforce MOQ on Orders',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900),
+                            ),
+                            Text(
+                              _enforceMoq
+                                  ? 'Retailers must order at least the MOQ quantity.'
+                                  : 'MOQ relaxed: Retailers can order any quantity (1+).',
+                              style: const TextStyle(fontSize: 11, color: AppTheme.slate500),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _enforceMoq,
+                        activeTrackColor: AppTheme.primary,
+                        onChanged: (val) => setState(() => _enforceMoq = val),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
 
                 // Store Name
                 const Text('Distributor / Store Name *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),

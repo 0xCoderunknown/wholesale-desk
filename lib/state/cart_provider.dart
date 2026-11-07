@@ -23,13 +23,13 @@ class CartProvider extends ChangeNotifier {
 
   int getQuantity(String productId) => _items[productId]?.quantity ?? 0;
 
-  void addItem(Product product) {
+  void addItem(Product product, {bool enforceMoq = true}) {
     if (!product.inStock) return;
 
     if (_items.containsKey(product.id)) {
       _items[product.id]!.quantity += 1;
     } else {
-      final initialQty = product.moq > 0 ? product.moq : 1;
+      final initialQty = (enforceMoq && product.moq > 0) ? product.moq : 1;
       _items[product.id] = CartItem(
         product: product,
         quantity: initialQty,
@@ -45,12 +45,12 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
-  void decrement(String productId) {
+  void decrement(String productId, {bool enforceMoq = true}) {
     if (_items.containsKey(productId)) {
       final item = _items[productId]!;
-      final minMoq = item.product.moq > 0 ? item.product.moq : 1;
+      final minBound = (enforceMoq && item.product.moq > 0) ? item.product.moq : 1;
 
-      if (item.quantity <= minMoq) {
+      if (item.quantity <= minBound) {
         _items.remove(productId);
       } else {
         item.quantity -= 1;
@@ -59,18 +59,40 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
-  void updateQuantity(String productId, int newQuantity) {
+  void updateQuantity(String productId, int newQuantity, {bool enforceMoq = true}) {
     if (_items.containsKey(productId)) {
       final item = _items[productId]!;
-      final minMoq = item.product.moq > 0 ? item.product.moq : 1;
+      final minBound = (enforceMoq && item.product.moq > 0) ? item.product.moq : 1;
 
-      if (newQuantity < minMoq) {
+      if (newQuantity < minBound) {
         _items.remove(productId);
       } else {
         item.quantity = newQuantity;
       }
       notifyListeners();
     }
+  }
+
+  /// 1-Tap direct scheme auto-fill.
+  /// If not in cart or below threshold, sets quantity to [thresholdQuantity].
+  /// If already at or above threshold, increments by another full scheme slab.
+  void applyScheme(Product product, int thresholdQuantity, {bool enforceMoq = true}) {
+    if (!product.inStock || thresholdQuantity <= 0) return;
+
+    if (_items.containsKey(product.id)) {
+      final current = _items[product.id]!.quantity;
+      if (current < thresholdQuantity) {
+        _items[product.id]!.quantity = thresholdQuantity;
+      } else {
+        _items[product.id]!.quantity += thresholdQuantity;
+      }
+    } else {
+      _items[product.id] = CartItem(
+        product: product,
+        quantity: thresholdQuantity,
+      );
+    }
+    notifyListeners();
   }
 
   void removeItem(String productId) {
@@ -83,4 +105,3 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-

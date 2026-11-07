@@ -5,6 +5,7 @@ class AppSettings {
   final String staffPin;
   final String backendType; // 'firebase' | 'woocommerce'
   final String wpBaseUrl; // e.g. 'https://mywholesalestore.com'
+  final bool enforceMoq; // Distributor can turn off MOQ enforcement
 
   const AppSettings({
     required this.whatsappPhone,
@@ -13,6 +14,7 @@ class AppSettings {
     required this.staffPin,
     this.backendType = 'firebase',
     this.wpBaseUrl = '',
+    this.enforceMoq = true,
   });
 
   bool get isWooCommerce => backendType.toLowerCase() == 'woocommerce';
@@ -26,6 +28,7 @@ class AppSettings {
       staffPin: '1122',
       backendType: 'firebase',
       wpBaseUrl: '',
+      enforceMoq: true,
     );
   }
 
@@ -37,6 +40,7 @@ class AppSettings {
       staffPin: map['staff_pin']?.toString() ?? '1122',
       backendType: map['backend_type']?.toString() ?? 'firebase',
       wpBaseUrl: map['wp_base_url']?.toString() ?? '',
+      enforceMoq: map['enforce_moq'] is bool ? map['enforce_moq'] as bool : true,
     );
   }
 
@@ -48,6 +52,7 @@ class AppSettings {
       'staff_pin': staffPin,
       'backend_type': backendType,
       'wp_base_url': wpBaseUrl,
+      'enforce_moq': enforceMoq,
     };
   }
 
@@ -58,6 +63,7 @@ class AppSettings {
     String? staffPin,
     String? backendType,
     String? wpBaseUrl,
+    bool? enforceMoq,
   }) {
     return AppSettings(
       whatsappPhone: whatsappPhone ?? this.whatsappPhone,
@@ -66,6 +72,7 @@ class AppSettings {
       staffPin: staffPin ?? this.staffPin,
       backendType: backendType ?? this.backendType,
       wpBaseUrl: wpBaseUrl ?? this.wpBaseUrl,
+      enforceMoq: enforceMoq ?? this.enforceMoq,
     );
   }
 }

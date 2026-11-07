@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/retailer.dart';
+import '../../services/scheme_helper.dart';
 import '../../services/whatsapp_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/cart_provider.dart';
@@ -193,6 +194,16 @@ class _CartDrawerState extends State<CartDrawer> {
                     itemBuilder: (context, index) {
                       final item = cart.items[index];
                       final p = item.product;
+                      final auth = context.read<AuthProvider>();
+                      final enforceMoq = auth.settings.enforceMoq;
+                      final minBound = (enforceMoq && p.moq > 0) ? p.moq : 1;
+                      final schemeThreshold = SchemeHelper.parseThreshold(p.scheme);
+                      final nudge = SchemeHelper.calculateNudge(
+                        scheme: p.scheme,
+                        currentQuantity: item.quantity,
+                        ptr: p.ptr,
+                        mrp: p.mrp,
+                      );
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,45 +247,99 @@ class _CartDrawerState extends State<CartDrawer> {
                                   ],
                                 ),
                               ),
-                              // Line Total
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
+                              // Line Total & Direct Delete Target
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    _currency.format(item.lineTotalPtr),
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.primaryDark,
-                                    ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        _currency.format(item.lineTotalPtr),
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppTheme.primaryDark,
+                                        ),
+                                      ),
+                                      Text(
+                                        'MRP: ${_currency.format(item.lineTotalMrp)}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: AppTheme.slate500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    'MRP: ${_currency.format(item.lineTotalMrp)}',
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      decoration: TextDecoration.lineThrough,
-                                      color: AppTheme.slate400,
-                                    ),
+                                  const SizedBox(width: 6),
+                                  // Direct 1-Tap Remove Target
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.outOfStockRed),
+                                    tooltip: 'Remove from cart',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => cart.removeItem(p.id),
                                   ),
                                 ],
                               ),
                             ],
                           ),
+
+                          // Real-time Progressive Scheme Nudge
+                          if (nudge.hasScheme && nudge.message.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: SchemeNudgePill(
+                                    message: nudge.message,
+                                    isQualified: nudge.isQualified,
+                                  ),
+                                ),
+                                if (schemeThreshold > 0) ...[
+                                  const SizedBox(width: 6),
+                                  SchemeApplyPill(
+                                    threshold: schemeThreshold,
+                                    isAlreadyActive: item.quantity >= schemeThreshold,
+                                    onApply: () => cart.applyScheme(p, schemeThreshold, enforceMoq: enforceMoq),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+
                           const SizedBox(height: 8),
 
-                          // Rate info & Stepper
+                          // Rate info, Effective PTR & Stepper
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'PTR: ${_currency.format(p.ptr)} / unit (MOQ: ${p.moq})',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.slate600,
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    enforceMoq
+                                        ? 'PTR: ${_currency.format(p.ptr)} / unit (MOQ: ${p.moq})'
+                                        : 'PTR: ${_currency.format(p.ptr)} / unit',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.slate600,
+                                    ),
+                                  ),
+                                  if (nudge.hasBoostedMargin)
+                                    Text(
+                                      'Eff. Rate: ${_currency.format(nudge.effectivePtr)}/u (+${nudge.effectiveMarginPercent.toStringAsFixed(1)}% margin)',
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF15803D),
+                                      ),
+                                    ),
+                                ],
                               ),
-                              // Compact Stepper
+                              // Compact Stepper with Long-Press Delete
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(6),
@@ -284,13 +349,13 @@ class _CartDrawerState extends State<CartDrawer> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     _buildStepButton(
-                                      icon: item.quantity <= p.moq
+                                      icon: item.quantity <= minBound
                                           ? Icons.delete_outline_rounded
                                           : Icons.remove_rounded,
-                                      color: item.quantity <= p.moq
+                                      color: item.quantity <= minBound
                                           ? AppTheme.outOfStockRed
                                           : AppTheme.slate700,
-                                      onTap: () => cart.decrement(p.id),
+                                      onTap: () => cart.decrement(p.id, enforceMoq: enforceMoq),
                                     ),
                                     Container(
                                       constraints: const BoxConstraints(minWidth: 36),
