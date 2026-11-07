@@ -8,6 +8,7 @@ import '../../../state/cart_provider.dart';
 import '../../widgets/catalog_quantity_stepper.dart';
 import '../../widgets/high_density_badge.dart';
 import '../../widgets/product_avatar.dart';
+import '../../widgets/scheme_accordion.dart';
 import '../../widgets/stock_toggle_pill.dart';
 
 class CatalogCardGrid extends StatelessWidget {
@@ -23,20 +24,33 @@ class CatalogCardGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
+    final isMobile = screenWidth < 768;
+
+    // Mobile (< 768px): strictly 1 item per row (ListView allows cards to dynamically expand for scheme accordion)
+    if (isMobile) {
+      return ListView.separated(
+        padding: const EdgeInsets.only(
+          left: 12,
+          right: 12,
+          top: 12,
+          bottom: 84, // Avoid bottom floating cart pill occlusion
+        ),
+        itemCount: products.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (context, index) {
+          return ProductCardTile(
+            product: products[index],
+            enforceMoq: enforceMoq,
+          );
+        },
+      );
+    }
 
     return GridView.builder(
-      padding: EdgeInsets.only(
-        left: 12,
-        right: 12,
-        top: 12,
-        bottom: isMobile ? 84 : 12, // Avoid bottom floating cart pill occlusion on mobile
-      ),
+      padding: const EdgeInsets.all(12),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isMobile
-            ? 1 // Strictly 1 card per line on mobile
-            : (screenWidth < 900 ? 2 : (screenWidth < 1250 ? 3 : 4)),
-        mainAxisExtent: isMobile ? 265 : 260,
+        crossAxisCount: screenWidth < 1100 ? 2 : (screenWidth < 1400 ? 3 : 4),
+        mainAxisExtent: 310,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),
@@ -89,6 +103,7 @@ class ProductCardTile extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Header with Monogram Avatar & Stock Pill
             Row(
@@ -135,60 +150,26 @@ class ProductCardTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
 
-            // Metadata Cluster: Scheme Row + MOQ/Box Row beneath (Dimmed if OOS)
+            // Metadata Badges (MOQ & Box Pack, dimmed if OOS)
             Opacity(
               opacity: product.inStock ? 1.0 : 0.45,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Row 1: Scheme Badge & 1-Tap Apply (only if In-Stock)
-                  if (product.scheme.trim().isNotEmpty) ...[
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SchemeBadge(scheme: product.scheme),
-                        if (product.inStock && schemeThreshold > 0) ...[
-                          const SizedBox(width: 4),
-                          SchemeApplyPill(
-                            threshold: schemeThreshold,
-                            isAlreadyActive: inCart && qty >= schemeThreshold,
-                            onApply: () => cart.applyScheme(product, schemeThreshold, enforceMoq: enforceMoq),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
+                  MoqBadge(moq: product.moq),
+                  if (product.hasCartonPack) ...[
+                    const SizedBox(width: 6),
+                    BoxPackBadge(cartonPack: product.cartonPack),
                   ],
-
-                  // Row 2: MOQ & Box Pack Clustered Beneath
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      MoqBadge(moq: product.moq),
-                      if (product.hasCartonPack) ...[
-                        const SizedBox(width: 4),
-                        BoxPackBadge(cartonPack: product.cartonPack),
-                      ],
-                    ],
-                  ),
                 ],
               ),
             ),
 
-            // Progressive Micro-Copy (STRICTLY hidden at qty == 0 or when Out of Stock)
-            if (product.inStock && inCart && nudge.hasScheme && nudge.message.isNotEmpty) ...[
-              const SizedBox(height: 5),
-              SchemeNudgePill(
-                message: nudge.message,
-                isQualified: nudge.isQualified,
-              ),
-            ],
+            const SizedBox(height: 10),
 
-            const Spacer(),
-
-            // Price and Dynamic Boosted Margin Row (MRP WITHOUT strikethrough)
+            // Price and Dynamic Boosted Margin Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -224,52 +205,94 @@ class ProductCardTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
-            // Prominent Add to Cart Button or Stepper (Disabled if OOS)
-            SizedBox(
-              width: double.infinity,
-              height: 38,
-              child: product.inStock
-                  ? inCart
-                      ? CatalogQuantityStepper(
-                          product: product,
-                          quantity: qty,
-                          enforceMoq: enforceMoq,
-                          style: StepperStyle.fullWidth,
-                          onIncrement: () => cart.increment(product.id),
-                          onDecrement: () => cart.decrement(product.id, enforceMoq: enforceMoq),
-                          onDirectDelete: () => cart.removeItem(product.id),
-                        )
-                      : ElevatedButton.icon(
-                          onPressed: () => cart.addItem(product, enforceMoq: enforceMoq),
-                          icon: const Icon(Icons.add_shopping_cart_rounded, size: 16),
-                          label: const Text(
-                            'Add to Cart',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            // Dual Action Row: "Add to Cart" + "1-Tap Carton/Box Buy"
+            if (product.inStock)
+              inCart
+                  ? CatalogQuantityStepper(
+                      product: product,
+                      quantity: qty,
+                      enforceMoq: enforceMoq,
+                      style: StepperStyle.fullWidth,
+                      onIncrement: () => cart.increment(product.id),
+                      onDecrement: () => cart.decrement(product.id, enforceMoq: enforceMoq),
+                      onDirectDelete: () => cart.removeItem(product.id),
+                    )
+                  : Row(
+                      children: [
+                        // Primary Action: Add to Cart
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => cart.addItem(product, enforceMoq: enforceMoq),
+                            icon: const Icon(Icons.add_shopping_cart_rounded, size: 15),
+                            label: const Text(
+                              'Add to Cart',
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                            ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                          ),
-                        )
-                  : Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppTheme.slate100,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'Out of Stock',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.slate400,
                         ),
-                      ),
-                    ),
-            ),
+                        // Bulk Quick-Buy: 1-Tap Carton/Box Buy
+                        if (product.hasCartonPack) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => cart.buyBox(product, enforceMoq: enforceMoq),
+                              icon: const Icon(Icons.inventory_2_outlined, size: 15, color: Color(0xFF2563EB)),
+                              label: Text(
+                                'Buy 1 Box (${product.cartonPack})',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 11.5,
+                                  color: Color(0xFF1E40AF),
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                                side: const BorderSide(color: Color(0xFF93C5FD), width: 1.2),
+                                backgroundColor: const Color(0xFFEFF6FF),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    )
+            else
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppTheme.slate100,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'Out of Stock',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.slate400,
+                  ),
+                ),
+              ),
+
+            // Relocate Scheme Details to Collapsible Accordion (Shikhar Style)
+            if (product.scheme.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              SchemeCollapsibleAccordion(
+                product: product,
+                inStock: product.inStock,
+                isAlreadyActive: inCart && qty >= schemeThreshold,
+                onApplyScheme: () => cart.applyScheme(product, schemeThreshold, enforceMoq: enforceMoq),
+              ),
+            ],
           ],
         ),
       ),

@@ -62,7 +62,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
     final auth = context.watch<AuthProvider>();
     final desk = context.watch<DeskProvider>();
     final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth > 850;
+    final isDesktop = screenWidth >= 768;
     final enforceMoq = auth.settings.enforceMoq;
 
     return Scaffold(

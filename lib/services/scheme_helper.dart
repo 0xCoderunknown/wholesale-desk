@@ -93,11 +93,56 @@ class SchemeHelper {
         hasScheme: true,
         thresholdQuantity: 0,
         message: '', // No micro-copy line for percentage or net rate schemes
-        isQualified: false,
+        isQualified: pct > 0 && currentQuantity > 0,
         baseMarginPercent: baseMargin,
         effectiveMarginPercent: effMargin,
         effectivePtr: effPtr,
       );
+    }
+
+    // Flat Slab Cash Rebate ("Buy 24 Get ₹100 Off" or "Buy 24 Get 100 Off")
+    final rebateMatch = RegExp(
+      r'(?:buy|order|min)\s*(\d+)\s*(?:get\s*)?(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(?:off|cashback|disc)',
+      caseSensitive: false,
+    ).firstMatch(trimmed);
+    if (rebateMatch != null) {
+      final buyX = int.tryParse(rebateMatch.group(1) ?? '0') ?? 0;
+      final rebateY = double.tryParse(rebateMatch.group(2) ?? '0') ?? 0.0;
+
+      if (buyX > 0 && rebateY > 0) {
+        final cycles = currentQuantity ~/ buyX;
+        final remainder = currentQuantity % buyX;
+        final neededForNext = buyX - remainder;
+
+        if (cycles == 0) {
+          return SchemeNudge(
+            hasScheme: true,
+            thresholdQuantity: buyX,
+            unitsNeededForNext: neededForNext,
+            isQualified: false,
+            message: 'Add $neededForNext more to unlock ₹${rebateY.toStringAsFixed(0)} Off',
+            baseMarginPercent: baseMargin,
+            effectiveMarginPercent: baseMargin,
+            effectivePtr: ptr,
+          );
+        } else {
+          final totalRebate = cycles * rebateY;
+          final billedCost = (currentQuantity * ptr) - totalRebate;
+          final effPtr = currentQuantity > 0 ? (billedCost / currentQuantity) : ptr;
+          final effMargin = (mrp > 0) ? ((mrp - effPtr) / mrp) * 100 : baseMargin;
+
+          return SchemeNudge(
+            hasScheme: true,
+            thresholdQuantity: buyX,
+            unitsNeededForNext: remainder == 0 ? buyX : neededForNext,
+            isQualified: true,
+            message: '✓ Scheme Unlocked: ₹${totalRebate.toStringAsFixed(0)} Off Applied',
+            baseMarginPercent: baseMargin,
+            effectiveMarginPercent: effMargin,
+            effectivePtr: effPtr,
+          );
+        }
+      }
     }
 
     // Volume Tier / Free Goods schemes ("X+Y" or "X Bags + Y")
@@ -158,5 +203,76 @@ class SchemeHelper {
       effectiveMarginPercent: baseMargin,
       effectivePtr: ptr,
     );
+  }
+
+  /// Computes the maximum potential effective margin, effective PTR,
+  /// and itemized breakdown description when a scheme threshold is satisfied.
+  static ({double maxMargin, double effPtr, String breakdownCopy, int threshold}) getMaxSchemeDetails({
+    required String scheme,
+    required double ptr,
+    required double mrp,
+  }) {
+    final baseMargin = (mrp > 0 && ptr > 0) ? ((mrp - ptr) / mrp) * 100 : 0.0;
+    if (scheme.trim().isEmpty || mrp <= 0 || ptr <= 0) {
+      return (maxMargin: baseMargin, effPtr: ptr, breakdownCopy: '', threshold: 0);
+    }
+
+    final trimmed = scheme.trim();
+
+    // 1. Percentage / Cash Discount ("5% Cash Disc")
+    final percentMatch = RegExp(r'(\d+(?:\.\d+)?)\s*%').firstMatch(trimmed);
+    if (percentMatch != null) {
+      final pct = double.tryParse(percentMatch.group(1) ?? '0') ?? 0.0;
+      if (pct > 0) {
+        final effPtr = ptr * (1.0 - (pct / 100.0));
+        final effMargin = ((mrp - effPtr) / mrp) * 100;
+        return (
+          maxMargin: effMargin,
+          effPtr: effPtr,
+          breakdownCopy: '$pct% Instant Cash Discount on billed amount',
+          threshold: 0,
+        );
+      }
+    }
+
+    // 2. Free Goods ("12+1 Free" or "20 Bags + 1 Free")
+    final plusMatch = RegExp(r'(\d+)\s*(?:[a-zA-Z]+\s*)?\+\s*(\d+)').firstMatch(trimmed);
+    if (plusMatch != null) {
+      final buyX = int.tryParse(plusMatch.group(1) ?? '0') ?? 0;
+      final freeY = int.tryParse(plusMatch.group(2) ?? '0') ?? 0;
+      if (buyX > 0 && freeY > 0) {
+        final totalUnits = buyX + freeY;
+        final effPtr = (buyX * ptr) / totalUnits;
+        final effMargin = ((mrp - effPtr) / mrp) * 100;
+        return (
+          maxMargin: effMargin,
+          effPtr: effPtr,
+          breakdownCopy: 'Buy $buyX units → Get $freeY ${freeY == 1 ? 'unit' : 'units'} FREE',
+          threshold: buyX,
+        );
+      }
+    }
+
+    // 3. Flat Slab Cash Rebate ("Buy 24 Get ₹100 Off")
+    final rebateMatch = RegExp(
+      r'(?:buy|order|min)\s*(\d+)\s*(?:get\s*)?(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(?:off|cashback|disc)',
+      caseSensitive: false,
+    ).firstMatch(trimmed);
+    if (rebateMatch != null) {
+      final buyX = int.tryParse(rebateMatch.group(1) ?? '0') ?? 0;
+      final rebateY = double.tryParse(rebateMatch.group(2) ?? '0') ?? 0.0;
+      if (buyX > 0 && rebateY > 0) {
+        final effPtr = ((buyX * ptr) - rebateY) / buyX;
+        final effMargin = ((mrp - effPtr) / mrp) * 100;
+        return (
+          maxMargin: effMargin,
+          effPtr: effPtr,
+          breakdownCopy: 'Buy $buyX units → Get ₹${rebateY.toStringAsFixed(0)} instant rebate',
+          threshold: buyX,
+        );
+      }
+    }
+
+    return (maxMargin: baseMargin, effPtr: ptr, breakdownCopy: '', threshold: 0);
   }
 }

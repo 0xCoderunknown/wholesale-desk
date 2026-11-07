@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.6.0] - 2026-11-07
+
+### Added & Enhanced
+- **Dynamic Margin Recalculation on Scheme Activation**:
+  - Fully implemented verified domain math for Free Goods (`X+Y`), Percentage Discounts (`N%`), and Flat Slab Cash Rebates (`Buy X Get ₹Y Off`).
+  - Active scheme highlight: Margin pill dynamically transitions to vibrant emerald green with an active indicator checkmark, displaying boosted margin (`+20.3% Margin`) and effective rate subtext (`(Effective: ₹263.08/unit)`).
+- **Dual Action Row: "Add to Cart" + "1-Tap Carton/Box Buy"**:
+  - Primary action: `[ 🛒 Add to Cart ]`.
+  - Bulk quick-buy action: `[ 📦 Buy 1 Box (N) ]` outline pill (e.g., `Buy 1 Box (24)`).
+  - Tapping `Buy 1 Box` sets quantity directly to box pack count via `CartProvider.buyBox()`, instantly unlocking qualified schemes and dynamic margin without intermediate stepper clicks.
+- **Strict Single-Column Layout (< 768px)**:
+  - Catalog layout strictly enforces single-column (`1fr`) presentation on screens `< 768px`.
+  - Product titles have zero clipping or ellipsis, making end-of-title packaging sizes (`500gm`, `100ml`, `Pack of 12`) completely readable.
+- **Collapsible Scheme Accordion (Shikhar Style)**:
+  - Relocated scheme section directly below action buttons on mobile cards and list rows.
+  - Default (Collapsed): Clean single-line summary strip `🏷️ Scheme: 12+1 Free (Get up to 20.3% Margin) ▼`.
+  - Expanded: Itemized breakdown showing `"Buy 12 units → Get 1 unit FREE"`, `"Effective PTR: ₹263.08/unit"`, and 1-tap `[ ⚡ Apply Scheme (+12 Units) ]` trigger.
+
 ## [1.5.0] - 2026-11-07
 
 ### Changed & Fixed

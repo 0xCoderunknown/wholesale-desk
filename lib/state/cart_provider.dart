@@ -95,6 +95,13 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 1-Tap carton/box quick-buy.
+  /// Sets quantity directly to product.cartonPack (or increments by 1 box if already active).
+  void buyBox(Product product, {bool enforceMoq = true}) {
+    if (!product.inStock || product.cartonPack <= 0) return;
+    applyScheme(product, product.cartonPack, enforceMoq: enforceMoq);
+  }
+
   void removeItem(String productId) {
     _items.remove(productId);
     notifyListeners();

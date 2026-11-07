@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/formatters.dart';
 import '../../config/theme.dart';
 
 class SchemeBadge extends StatelessWidget {
@@ -298,25 +299,48 @@ class MarginBoostBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isBoosted && effectiveMargin > baseMargin) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
-          color: const Color(0xFFDCFCE7), // Emerald 100
+          color: const Color(0xFF059669), // Vibrant emerald green 600
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: const Color(0xFF86EFAC), width: 0.8),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF059669).withValues(alpha: 0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.trending_up_rounded, size: 12, color: Color(0xFF15803D)),
-            const SizedBox(width: 4),
-            Text(
-              '+${baseMargin.toStringAsFixed(1)}% → +${effectiveMargin.toStringAsFixed(1)}%',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF166534), // Emerald 800
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle_rounded, size: 11, color: Colors.white),
+                const SizedBox(width: 4),
+                Text(
+                  '+${effectiveMargin.toStringAsFixed(1)}% Margin',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
+            if (effectivePtr > 0) ...[
+              const SizedBox(height: 1),
+              Text(
+                '(Effective: ${AppFormatters.formatCurrency(effectivePtr)}/unit)',
+                style: const TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFD1FAE5), // Emerald 100
+                ),
+              ),
+            ],
           ],
         ),
       );
