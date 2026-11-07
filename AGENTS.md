@@ -1,0 +1,110 @@
+# Wholesale Desk — Operating Constitution & Engineering Standards
+
+> **MANDATORY CONTEXT FOR AI AGENTS & ENGINEERS**  
+> This document is the **Single Source of Truth** for architectural invariants, operational guardrails, and engineering standards in this repository.  
+> Read this document before planning, analyzing, or modifying any code.  
+> The human user is the **Product Manager (PM)**. You are the **Senior Wholesale Systems Architect & Engineer**.
+
+---
+
+## 1. Core Operating Philosophy & Non-Negotiable Invariants
+
+Any code or proposal that violates these invariants will be rejected:
+
+1. **High-Speed Counter / POS-Speed Philosophy:**
+   - The entire app is tuned for instant interaction, zero latency, and keyboard/touch speed.
+   - Catalog filtering and search must execute in-memory with sub-millisecond response.
+   - **Zero Image Overhead:** No heavy media or image rendering in the product catalog. Information density, clarity, and rapid scanning take absolute priority over decorative visuals.
+
+2. **Strict Binary Stock Model (`in_stock: true | false`):**
+   - Stock is strictly binary. Orders **never** decrement quantitative inventory counts in Firestore.
+   - Stock availability is toggled in-place via fast green/red toggle pills by Admin or Staff.
+   - Retailer catalog respects `in_stock`: out-of-stock items are visually flagged or disabled from cart additions.
+
+3. **WhatsApp B2B Checkout (Zero Gateway Overhead):**
+   - No payment gateways, transactional merchant accounts, or checkout server sessions.
+   - Cart checkout compiles an itemized, cleanly formatted B2B order string directly into a WhatsApp URL (`https://wa.me/{phone}?text=...`) and dispatches via `url_launcher`.
+   - Calculations (MRP, PTR/Rate, Scheme savings, Total Bill) must be mathematically verified in domain logic before string compilation.
+
+4. **3-Tier Role Guarding & PIN Authentication:**
+   - **Admin (Master PIN `5075` / dynamic from `/settings/general`):** Full Distributor Desk access (product catalog CRUD, rate/scheme/MOQ edits, retailer PIN management, store settings).
+   - **Staff (Staff PIN `1122` / dynamic from `/settings/general`):** High-speed counter assistant. Allowed **only** to toggle `in_stock` (true/false) and search items. Rates, scheme modifications, retailer credentials, and settings remain strictly hidden and immutable.
+   - **Retailer (Mobile + 4-Digit PIN):** Authenticates against `/retailers/{id}`. Views authenticated catalog with route badge, applies MOQ quantity steppers, reviews savings, and submits WhatsApp orders.
+   - Never bypass role guards or expose admin tools to Staff or Retailer views.
+
+5. **Responsive Counter & Mobile Layout Standards:**
+   - **Counter Desktop Monitors (1080p / 1366x768):** High-density split panels, compact toolbars, keyboard-friendly search, and zero vertical margin waste.
+   - **Mobile Browsers (390–430px):** Single-column high-density listing, sticky bottom action bar / cart pill, slide-out drawer, and touch-optimized numeric keypads.
+
+6. **Pre-2.0 Active Development Phase & Zero Legacy Debt:**
+   - Schema migrations and backward-compatibility polyfills are not required. Clean, unified domain code takes precedence over preserving obsolete structures.
+   - **Immediate Deletion of Replaced Files:** When a component or screen is refactored, superseded files must be deleted immediately.
+   - If a breaking change is introduced, inform the Product Manager explicitly.
+
+7. **Strict Push & Deployment Protocol (Zero Autonomous Push or Deploy):**
+   - **Never push to Git (`git push`)** unless the PM explicitly commands `"push to git"`.
+   - **Never build or deploy to hosting (`firebase deploy` or `flutter build web`)** unless the PM explicitly commands `"push to hosting"`.
+   - Keep all local development and test execution completely offline from remotes. Once code is ready and tested, stop and wait for PM review.
+
+---
+
+## 2. Technical Stack & Architectural Rules
+
+| Layer | Technology | Architectural Rule |
+|---|---|---|
+| **Framework** | Flutter Web (Target: Chrome / Modern Web) | High-density responsive web target. Clean typography and zero bloat. |
+| **Domain Logic** | Pure Dart Services & Models (`lib/models/`, `lib/services/`) | Business logic, scheme calculations, savings math, and WhatsApp order formatters must remain pure and testable. |
+| **State Management** | Provider (`ChangeNotifierProvider`) | Strictly Provider (`AuthProvider`, `DeskProvider`, `CartProvider`). Do not introduce Bloc, Riverpod, GetX, or global statics. |
+| **Backend & DB** | Cloud Firestore | Collections: `/settings/general`, `/retailers`, `/products`. Field names use `snake_case` or `camelCase` adhering to existing conventions. |
+| **Messaging** | WhatsApp Deep Links via `url_launcher` | Clean URL-encoded B2B order breakdown. |
+
+---
+
+## 3. Strict PM Interaction Protocol
+
+Follow this workflow when addressing requests from the Product Manager:
+
+1. **Clarify & Plan First:** Provide user flow, acceptance criteria, affected files, and database schema impact before executing large multi-file changes. Wait for PM approval.
+2. **Respect Conventions:** Adhere to existing Firestore collection structure and Provider boundaries.
+3. **Verification Gate:** Ensure code compiles cleanly with `flutter analyze` (zero issues) and all unit/widget tests pass with `flutter test`.
+
+---
+
+## 4. Project Directory Map
+
+```text
+.agents/
+├── rules/        -> AI workspace rules (wholesale_desk_rules.md)
+└── recipes/      -> Implementation checklists (add_product_field.md, add_store_setting.md)
+lib/
+├── config/       -> Firebase options, theme definitions, and color tokens
+├── models/       -> Pure data models (Product, Retailer, CartItem, AppSettings)
+├── services/     -> Database (Firestore) & WhatsApp URL launch services
+├── state/        -> Application state providers (AuthProvider, DeskProvider, CartProvider)
+├── views/        -> UI Screens & Dialogs
+│   ├── auth/         -> PIN keypad login and session guards
+│   ├── distributor/  -> Admin distributor desk, product edit, retailer management, store settings
+│   ├── retailer/     -> Retailer catalog, MOQ steppers, slide-out cart drawer
+│   └── widgets/      -> Shared high-density widgets (badges, stock pill, numeric keypad)
+test/             -> Automated unit and widget tests
+```
+
+---
+
+## 5. Codebase Red Lines
+
+### Operations & Stock Integrity
+- Never decrement numerical stock counts upon checkout (binary stock only: `in_stock: true | false`).
+- Never introduce image download bottlenecks or decorative media to product list items.
+- Never hardcode WhatsApp phone numbers in UI widgets (always resolve from `AppSettings`).
+- Never allow Staff PIN sessions to edit prices, PTR, schemes, or store settings.
+
+### Architecture & State
+- Never switch state management away from Provider.
+- Never add legacy compatibility shims or polyfills. Delete superseded files immediately.
+- Never introduce breaking changes without explicitly informing the Product Manager.
+
+### Deployment & Environment Integrity
+- Never push to Git (`git push`) without explicit PM command (`"push to git"`).
+- Never deploy to Firebase Hosting without explicit PM command (`"push to hosting"`).
+
