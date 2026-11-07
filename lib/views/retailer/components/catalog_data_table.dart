@@ -203,6 +203,7 @@ class CatalogDataTable extends StatelessWidget {
             effectiveMargin: nudge.effectiveMarginPercent,
             effectivePtr: nudge.effectivePtr,
             isBoosted: nudge.hasBoostedMargin,
+            compact: true,
           ),
         ),
 

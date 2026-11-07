@@ -69,7 +69,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
       key: _scaffoldKey,
       backgroundColor: AppTheme.slate100,
       endDrawer: isDesktop ? CartDrawer(retailer: widget.retailer) : null,
-      floatingActionButton: screenWidth >= 1024
+      floatingActionButton: isDesktop
           ? null
           : Consumer<CartProvider>(
               builder: (context, cart, _) {
@@ -171,32 +171,33 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
             ),
           const SizedBox(width: 8),
 
-          // Header Cart Action with Consumer (Isolates rebuilds)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Consumer<CartProvider>(
-              builder: (context, cart, _) {
-                return ElevatedButton.icon(
-                  onPressed: () => _openCartDrawer(context),
-                  icon: Badge(
-                    label: Text('${cart.itemCount}'),
-                    isLabelVisible: cart.itemCount > 0,
-                    backgroundColor: AppTheme.outOfStockRed,
-                    child: const Icon(Icons.shopping_cart_outlined, size: 17),
-                  ),
-                  label: Text(
-                    cart.subtotalPtr > 0 ? AppFormatters.formatCurrency(cart.subtotalPtr) : 'Cart',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate800,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                  ),
-                );
-              },
+          // Header Cart Action (Tablet & Desktop only; Mobile retains FloatingActionButton exclusively)
+          if (isDesktop)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Consumer<CartProvider>(
+                builder: (context, cart, _) {
+                  return ElevatedButton.icon(
+                    onPressed: () => _openCartDrawer(context),
+                    icon: Badge(
+                      label: Text('${cart.itemCount}'),
+                      isLabelVisible: cart.itemCount > 0,
+                      backgroundColor: AppTheme.outOfStockRed,
+                      child: const Icon(Icons.shopping_cart_outlined, size: 17),
+                    ),
+                    label: Text(
+                      cart.subtotalPtr > 0 ? AppFormatters.formatCurrency(cart.subtotalPtr) : 'Cart',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate800,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
           const SizedBox(width: 6),
 
           // Logout Button
@@ -309,17 +310,17 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                       ],
                     ),
                   )
-                : _isGridView
-                    ? CatalogCardGrid(
+                : !isDesktop
+                    ? CatalogMobileList(
                         products: desk.filteredProducts,
                         enforceMoq: enforceMoq,
                       )
-                    : isDesktop
-                        ? CatalogDataTable(
+                    : _isGridView
+                        ? CatalogCardGrid(
                             products: desk.filteredProducts,
                             enforceMoq: enforceMoq,
                           )
-                        : CatalogMobileList(
+                        : CatalogDataTable(
                             products: desk.filteredProducts,
                             enforceMoq: enforceMoq,
                           ),

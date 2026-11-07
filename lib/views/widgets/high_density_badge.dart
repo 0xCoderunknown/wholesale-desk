@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../config/formatters.dart';
 import '../../config/theme.dart';
 
 class SchemeBadge extends StatelessWidget {
@@ -286,6 +285,7 @@ class MarginBoostBadge extends StatelessWidget {
   final double effectiveMargin;
   final double effectivePtr;
   final bool isBoosted;
+  final bool compact;
 
   const MarginBoostBadge({
     super.key,
@@ -293,13 +293,58 @@ class MarginBoostBadge extends StatelessWidget {
     required this.effectiveMargin,
     required this.effectivePtr,
     this.isBoosted = false,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isBoosted && effectiveMargin > baseMargin) {
+    final marginVal = (isBoosted && effectiveMargin > baseMargin) ? effectiveMargin : baseMargin;
+    final marginStr = marginVal % 1 == 0
+        ? '${marginVal.toInt()}%'
+        : '${marginVal.toStringAsFixed(1)}%';
+
+    if (compact) {
+      if (isBoosted && effectiveMargin > baseMargin) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFF059669),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            '+$marginStr',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        );
+      }
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFFDCFCE7),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: const Color(0xFFA7F3D0), width: 0.6),
+        ),
+        child: Text(
+          '+$marginStr',
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF166534),
+          ),
+        ),
+      );
+    }
+
+    if (isBoosted && effectiveMargin > baseMargin) {
+      final baseStr = baseMargin % 1 == 0
+          ? '${baseMargin.toInt()}%'
+          : '${baseMargin.toStringAsFixed(1)}%';
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
           color: const Color(0xFF059669), // Vibrant emerald green 600
           borderRadius: BorderRadius.circular(4),
@@ -312,53 +357,63 @@ class MarginBoostBadge extends StatelessWidget {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle_rounded, size: 11, color: Colors.white),
-                const SizedBox(width: 4),
-                Text(
-                  '+${effectiveMargin.toStringAsFixed(1)}% Margin',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle_rounded, size: 11, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(
+                    'MARGIN: $marginStr',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 0.3,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            if (effectivePtr > 0) ...[
-              const SizedBox(height: 1),
-              Text(
-                '(Effective: ${AppFormatters.formatCurrency(effectivePtr)}/unit)',
+            const SizedBox(height: 1),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
+              child: Text(
+                baseStr,
                 style: const TextStyle(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFFD1FAE5), // Emerald 100
+                  color: Color(0xFFD1FAE5), // Mint tint
+                  decoration: TextDecoration.lineThrough,
+                  decorationColor: Color(0xFFD1FAE5),
                 ),
               ),
-            ],
+            ),
           ],
         ),
       );
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCFCE7), // Emerald 100
+        color: const Color(0xFFDCFCE7), // Mint / Emerald 100
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: const Color(0xFFA7F3D0), width: 0.6),
       ),
       child: Text(
-        '+${baseMargin.toStringAsFixed(1)}%',
+        'MARGIN: $marginStr',
         style: const TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
           color: Color(0xFF166534), // Emerald 800
+          letterSpacing: 0.3,
         ),
       ),
     );

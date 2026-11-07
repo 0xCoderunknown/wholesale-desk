@@ -10,6 +10,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.6.0] - 2026-11-07
 
 ### Added & Enhanced
+- **Component Consolidation & Zero-Duplication Refactoring (`ProductCardTile`)**:
+  - Extracted the unified product card implementation into a single canonical component (`ProductCardTile` in `lib/views/retailer/components/product_card_tile.dart`).
+  - Both `CatalogMobileList` and `CatalogCardGrid` now delegate to this canonical tile, eliminating ~250 lines of duplicate UI layout, stepper bindings, and scheme logic while preserving 100% test compatibility.
+- **Automatic Dynamic PTR & Margin Recalculation on Scheme Match (Shikhar Standard)**:
+  - Whenever product quantity satisfies scheme thresholds (whether via quantity stepper, `[Apply Scheme]`, or `[Buy 1 Box]`), the card automatically transitions:
+    - **PTR / Rate**: Renders discounted effective rate in emerald bold text (`₹110.91`), with original baseline PTR (`₹122.00`) displayed with strikethrough beneath it.
+    - **Margin Badge**: Renders unlocked boosted margin (`MARGIN: 20.8%`), with original baseline margin (`12.9%`) struck-through beneath it.
+    - **Scheme Button Pressed State**: Accordion turns emerald green (`✓ Scheme Active`), and the scheme action button appears active/pressed in solid emerald with checkmark (`✓ Scheme Applied (+N Units)`). Tapping it increments by another full scheme slab.
+- **Elimination of Redundant Card Stock Toggle Pills**:
+  - Removed top-right `[IN STOCK]` / `[OUT OF STOCK]` badges from both mobile list cards (`CatalogMobileList`) and grid cards (`CatalogCardGrid`). Item stock availability is already natively communicated by the action slot (`[ Add to Cart ]` vs disabled `[ Out of Stock ]`), decluttering card headers and giving 100% horizontal width to the product title and packaging variant.
+- **Unified Price & Margin Bar Layout (`[₹MRP_VALUE [MARGIN: XYZ%] ₹PTR_VALUE]`)**:
+  - Re-architected product card price row into a unified container enclosing MRP value on the left, `[MARGIN: XYZ%]` badge in the center, and PTR/Rate value on the right, matching industry-standard wholesale layout.
+- **Single Cart Button Policy (Zero Redundancy)**:
+  - Mobile (< 768px): Strictly shows the floating cart button (`FloatingActionButton.extended`); the top header cart button is completely hidden.
+  - Tablet & Desktop (>= 768px): Strictly shows the header cart button in the `AppBar` actions; the floating button is completely hidden.
+- **Scheme Action Single Lightning Sign**:
+  - Eliminated duplicate lightning bolt emoji from button label so only the single `Icons.bolt_rounded` icon renders on `[ ⚡ Apply Scheme (+N Units) ]`.
+- **Mobile Card Layout Refinements & Accordion Compaction**:
+  - **In-Place Action Replacement**: Eliminated layout shifts by preserving the price and margin column completely unaltered across idle and active cart states. When `qty > 0`, the `[ 🛒 Add to Cart ]` button seamlessly transitions into `[ - Qty + ]` stepper and `[ ✕ ]` direct zero-reset in the exact same slot, keeping `[ 📦 Buy 1 Box (N) ]` immediately adjacent.
+  - **Compact Accordion Drawer**: Combined scheme breakdown and effective price into a single compact line (`✓ Buy 12 units → 1 Free · Effective PTR: ₹263.08`), reduced container padding to 8px, and streamlined action triggers to compact 36px outline buttons.
+  - **Accordion Gating**: Restricted collapsible accordion functionality exclusively to volume/tiered schemes with quantifiable thresholds (`10+1`, `12+1 Free`, `Buy 24 Get ₹100 Off`). Continuous percentage and net rate discounts (`5% Cash Disc`, `Net Rate`) render as non-expandable, flat info badges (`🏷️ 5% Cash Disc auto-applied at checkout`).
+  - **Header Bar Space Optimization**: Merged Search Input and Stock Filter dropdown into a single 48px-high horizontal row on `< 768px` viewports, reclaiming ~55px of vertical screen real estate and pulling the first product card above the fold.
+- **Strict Mobile View Architecture & Elimination of View Switcher on Mobile**:
+  - The "Switch to Cards / Switch to List" toggle is now **strictly hidden** on mobile viewports (< 768px), uncluttering the mobile search bar and presenting a focused instant search + stock filter bar.
+  - Retailer catalog on mobile is always guaranteed to render the optimized single-column layout (`CatalogMobileList`) with zero horizontal multi-column fragmentation.
+  - The view toggle (Table List vs Thumbnail Cards) remains exclusively available on desktop and tablet viewports (>= 768px).
+- **Asset Manifest Safe Lookup in AppConfig**:
+  - Replaced blind `rootBundle.loadString('firebase-config.json')` with in-memory `AssetManifest` lookup, eliminating browser HTTP 404 console errors on web startup.
 - **Dynamic Margin Recalculation on Scheme Activation**:
   - Fully implemented verified domain math for Free Goods (`X+Y`), Percentage Discounts (`N%`), and Flat Slab Cash Rebates (`Buy X Get ₹Y Off`).
   - Active scheme highlight: Margin pill dynamically transitions to vibrant emerald green with an active indicator checkmark, displaying boosted margin (`+20.3% Margin`) and effective rate subtext (`(Effective: ₹263.08/unit)`).

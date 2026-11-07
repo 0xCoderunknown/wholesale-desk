@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../config/formatters.dart';
-import '../../config/theme.dart';
 import '../../models/product.dart';
 import '../../services/scheme_helper.dart';
 
@@ -41,21 +40,59 @@ class _SchemeCollapsibleAccordionState extends State<SchemeCollapsibleAccordion>
       mrp: p.mrp,
     );
 
+    final isTiered = details.threshold > 0;
     final hasBoost = details.maxMargin > p.marginPercent;
 
+    // Requirement 3: Static info strip for continuous/percentage schemes (no expansion, no arrow)
+    if (!isTiered) {
+      final schemeLabel = p.scheme.trim().toLowerCase().contains('net rate')
+          ? 'Net Rate auto-applied at checkout'
+          : '${p.scheme.trim()} auto-applied at checkout';
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEFCE8), // Amber 50
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: const Color(0xFFFDE047), // Amber 300
+            width: 0.8,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Text('🏷️ ', style: TextStyle(fontSize: 12)),
+            Expanded(
+              child: Text(
+                schemeLabel,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF92400E),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final isActive = widget.isAlreadyActive;
+
+    // Expandable accordion for tiered schemes (10+1, 12+1 Free, Buy 24 Get ₹100 Off)
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFEFCE8), // Amber 50
+        color: isActive ? const Color(0xFFECFDF5) : const Color(0xFFFEFCE8), // Emerald 50 when active, else Amber 50
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: const Color(0xFFFDE047), // Amber 300
+          color: isActive ? const Color(0xFF86EFAC) : const Color(0xFFFDE047), // Emerald 300 vs Amber 300
           width: 0.9,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Collapsed Header
+          // Header (Tappable to expand/collapse)
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
             borderRadius: BorderRadius.circular(6),
@@ -63,16 +100,18 @@ class _SchemeCollapsibleAccordionState extends State<SchemeCollapsibleAccordion>
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               child: Row(
                 children: [
-                  const Text('🏷️ ', style: TextStyle(fontSize: 12)),
+                  Text(isActive ? '✓ ' : '🏷️ ', style: const TextStyle(fontSize: 12)),
                   Expanded(
                     child: Text(
-                      hasBoost
-                          ? 'Scheme: ${p.scheme} (Get up to ${details.maxMargin.toStringAsFixed(1)}% Margin)'
-                          : 'Scheme: ${p.scheme}',
-                      style: const TextStyle(
+                      isActive
+                          ? 'Scheme Active: ${p.scheme} (${details.maxMargin.toStringAsFixed(1)}% Margin Unlocked)'
+                          : (hasBoost
+                              ? 'Scheme: ${p.scheme} (Get up to ${details.maxMargin.toStringAsFixed(1)}% Margin)'
+                              : 'Scheme: ${p.scheme}'),
+                      style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF92400E), // Amber 800
+                        color: isActive ? const Color(0xFF065F46) : const Color(0xFF92400E),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -83,80 +122,90 @@ class _SchemeCollapsibleAccordionState extends State<SchemeCollapsibleAccordion>
                         ? Icons.keyboard_arrow_up_rounded
                         : Icons.keyboard_arrow_down_rounded,
                     size: 16,
-                    color: const Color(0xFF92400E),
+                    color: isActive ? const Color(0xFF065F46) : const Color(0xFF92400E),
                   ),
                 ],
               ),
             ),
           ),
 
-          // Expanded Breakdown
+          // Compact Accordion Drawer (tight 8px padding, combined single-line info)
           if (_isExpanded) ...[
             Container(
               height: 1,
-              color: const Color(0xFFFEF08A), // Amber 200
+              color: isActive ? const Color(0xFFA7F3D0) : const Color(0xFFFEF08A),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              padding: const EdgeInsets.all(8),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (details.breakdownCopy.isNotEmpty) ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.check_circle_outline_rounded,
-                            size: 14, color: Color(0xFF15803D)),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            details.breakdownCopy,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                  ],
+                  // Single compact line: Breakdown + Effective PTR
                   Row(
                     children: [
-                      const Icon(Icons.trending_up_rounded,
-                          size: 14, color: Color(0xFF15803D)),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Effective PTR: ${AppFormatters.formatCurrency(details.effPtr)}/unit',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF15803D),
+                      const Icon(Icons.check_circle_rounded,
+                          size: 13, color: Color(0xFF15803D)),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          '${details.breakdownCopy}  ·  Effective PTR: ${AppFormatters.formatCurrency(details.effPtr)}',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
+                  // Action button: solid pressed emerald button if already qualified/active, or outline button
                   if (widget.inStock && details.threshold > 0 && widget.onApplyScheme != null) ...[
-                    const SizedBox(height: 8),
-                    ElevatedButton.icon(
-                      onPressed: widget.onApplyScheme,
-                      icon: const Icon(Icons.bolt_rounded, size: 14),
-                      label: Text(
-                        widget.isAlreadyActive
-                            ? 'Add Another Slab (+${details.threshold} Units)'
-                            : '⚡ Apply Scheme (+${details.threshold} Units)',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        minimumSize: const Size.fromHeight(32),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 36,
+                      child: isActive
+                          ? ElevatedButton.icon(
+                              onPressed: widget.onApplyScheme,
+                              icon: const Icon(Icons.check_circle_rounded, size: 15, color: Colors.white),
+                              label: Text(
+                                '✓ Scheme Applied (+${details.threshold} Units)',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF059669), // Solid pressed emerald
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                              ),
+                            )
+                          : OutlinedButton.icon(
+                              onPressed: widget.onApplyScheme,
+                              icon: const Icon(Icons.bolt_rounded, size: 15, color: Color(0xFF15803D)),
+                              label: Text(
+                                'Apply Scheme (+${details.threshold} Units)',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF15803D),
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                side: const BorderSide(color: Color(0xFF86EFAC), width: 1.1),
+                                backgroundColor: const Color(0xFFECFDF5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                              ),
+                            ),
                     ),
                   ],
                 ],

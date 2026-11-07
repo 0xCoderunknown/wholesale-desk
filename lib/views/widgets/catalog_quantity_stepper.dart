@@ -36,19 +36,19 @@ class CatalogQuantityStepper extends StatelessWidget {
 
     if (style == StepperStyle.fullWidth) {
       return Container(
+        height: 38,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: AppTheme.primary, width: 1.4),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             InkWell(
               onTap: onDecrement,
               onLongPress: onDirectDelete,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                 child: Icon(
                   isAtMinBound ? Icons.delete_outline_rounded : Icons.remove_rounded,
                   size: 16,
@@ -56,18 +56,22 @@ class CatalogQuantityStepper extends StatelessWidget {
                 ),
               ),
             ),
-            Text(
-              '$quantity Units',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.slate900,
+            Expanded(
+              child: Center(
+                child: Text(
+                  '$quantity',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.slate900,
+                  ),
+                ),
               ),
             ),
             InkWell(
               onTap: onIncrement,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                 child: const Icon(Icons.add_rounded, size: 16, color: AppTheme.primary),
               ),
             ),
@@ -75,7 +79,7 @@ class CatalogQuantityStepper extends StatelessWidget {
             InkWell(
               onTap: onDirectDelete,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                 decoration: const BoxDecoration(
                   border: Border(left: BorderSide(color: AppTheme.slate200)),
                 ),

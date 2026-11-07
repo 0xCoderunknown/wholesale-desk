@@ -86,23 +86,29 @@ class AppConfig {
       }
     }
 
-    // 2. Check if a dedicated 'firebase-config.json' was dropped into assets
+    // 2. Check if a dedicated 'firebase-config.json' was registered in assets
     try {
-      final fbString = await rootBundle.loadString('firebase-config.json');
-      final fbData = jsonDecode(fbString) as Map<String, dynamic>;
-      if (fbData['apiKey'] != null || fbData['api_key'] != null) {
-        _firebaseOptions = FirebaseOptions(
-          apiKey: (fbData['apiKey'] ?? fbData['api_key'])?.toString() ?? '',
-          appId: (fbData['appId'] ?? fbData['app_id'])?.toString() ?? '',
-          messagingSenderId: (fbData['messagingSenderId'] ?? fbData['messaging_sender_id'])?.toString() ?? '',
-          projectId: (fbData['projectId'] ?? fbData['project_id'])?.toString() ?? '',
-          authDomain: (fbData['authDomain'] ?? fbData['auth_domain'])?.toString() ?? '',
-          storageBucket: (fbData['storageBucket'] ?? fbData['storage_bucket'])?.toString() ?? '',
-        );
-        debugPrint('Loaded dedicated Firebase credentials from firebase-config.json!');
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final assetList = manifest.listAssets();
+      final hasFbConfig = assetList.any((a) => a.endsWith('firebase-config.json'));
+      if (hasFbConfig) {
+        final fbPath = assetList.firstWhere((a) => a.endsWith('firebase-config.json'));
+        final fbString = await rootBundle.loadString(fbPath);
+        final fbData = jsonDecode(fbString) as Map<String, dynamic>;
+        if (fbData['apiKey'] != null || fbData['api_key'] != null) {
+          _firebaseOptions = FirebaseOptions(
+            apiKey: (fbData['apiKey'] ?? fbData['api_key'])?.toString() ?? '',
+            appId: (fbData['appId'] ?? fbData['app_id'])?.toString() ?? '',
+            messagingSenderId: (fbData['messagingSenderId'] ?? fbData['messaging_sender_id'])?.toString() ?? '',
+            projectId: (fbData['projectId'] ?? fbData['project_id'])?.toString() ?? '',
+            authDomain: (fbData['authDomain'] ?? fbData['auth_domain'])?.toString() ?? '',
+            storageBucket: (fbData['storageBucket'] ?? fbData['storage_bucket'])?.toString() ?? '',
+          );
+          debugPrint('Loaded dedicated Firebase credentials from $fbPath!');
+        }
       }
     } catch (_) {
-      // No dedicated firebase-config.json dropped, config.json or defaults will be used
+      // Asset manifest check or parsing fallback
     }
 
     _isLoaded = true;
