@@ -340,9 +340,6 @@ class MarginBoostBadge extends StatelessWidget {
     }
 
     if (isBoosted && effectiveMargin > baseMargin) {
-      final baseStr = baseMargin % 1 == 0
-          ? '${baseMargin.toInt()}%'
-          : '${baseMargin.toStringAsFixed(1)}%';
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
@@ -356,46 +353,25 @@ class MarginBoostBadge extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.check_circle_rounded, size: 11, color: Colors.white),
-                  const SizedBox(width: 4),
-                  Text(
-                    'MARGIN: $marginStr',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 1),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.center,
-              child: Text(
-                baseStr,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle_rounded, size: 11, color: Colors.white),
+              const SizedBox(width: 4),
+              Text(
+                'MARGIN: $marginStr',
                 style: const TextStyle(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFFD1FAE5), // Mint tint
-                  decoration: TextDecoration.lineThrough,
-                  decorationColor: Color(0xFFD1FAE5),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }

@@ -9,190 +9,85 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.0] - 2026-11-07
 
-### Added & Enhanced
-- **Component Consolidation & Zero-Duplication Refactoring (`ProductCardTile`)**:
-  - Extracted the unified product card implementation into a single canonical component (`ProductCardTile` in `lib/views/retailer/components/product_card_tile.dart`).
-  - Both `CatalogMobileList` and `CatalogCardGrid` now delegate to this canonical tile, eliminating ~250 lines of duplicate UI layout, stepper bindings, and scheme logic while preserving 100% test compatibility.
-- **Automatic Dynamic PTR & Margin Recalculation on Scheme Match (Shikhar Standard)**:
-  - Whenever product quantity satisfies scheme thresholds (whether via quantity stepper, `[Apply Scheme]`, or `[Buy 1 Box]`), the card automatically transitions:
-    - **PTR / Rate**: Renders discounted effective rate in emerald bold text (`₹110.91`), with original baseline PTR (`₹122.00`) displayed with strikethrough beneath it.
-    - **Margin Badge**: Renders unlocked boosted margin (`MARGIN: 20.8%`), with original baseline margin (`12.9%`) struck-through beneath it.
-    - **Scheme Button Pressed State**: Accordion turns emerald green (`✓ Scheme Active`), and the scheme action button appears active/pressed in solid emerald with checkmark (`✓ Scheme Applied (+N Units)`). Tapping it increments by another full scheme slab.
-- **Elimination of Redundant Card Stock Toggle Pills**:
-  - Removed top-right `[IN STOCK]` / `[OUT OF STOCK]` badges from both mobile list cards (`CatalogMobileList`) and grid cards (`CatalogCardGrid`). Item stock availability is already natively communicated by the action slot (`[ Add to Cart ]` vs disabled `[ Out of Stock ]`), decluttering card headers and giving 100% horizontal width to the product title and packaging variant.
-- **Unified Price & Margin Bar Layout (`[₹MRP_VALUE [MARGIN: XYZ%] ₹PTR_VALUE]`)**:
-  - Re-architected product card price row into a unified container enclosing MRP value on the left, `[MARGIN: XYZ%]` badge in the center, and PTR/Rate value on the right, matching industry-standard wholesale layout.
-- **Single Cart Button Policy (Zero Redundancy)**:
-  - Mobile (< 768px): Strictly shows the floating cart button (`FloatingActionButton.extended`); the top header cart button is completely hidden.
-  - Tablet & Desktop (>= 768px): Strictly shows the header cart button in the `AppBar` actions; the floating button is completely hidden.
-- **Scheme Action Single Lightning Sign**:
-  - Eliminated duplicate lightning bolt emoji from button label so only the single `Icons.bolt_rounded` icon renders on `[ ⚡ Apply Scheme (+N Units) ]`.
-- **Mobile Card Layout Refinements & Accordion Compaction**:
-  - **In-Place Action Replacement**: Eliminated layout shifts by preserving the price and margin column completely unaltered across idle and active cart states. When `qty > 0`, the `[ 🛒 Add to Cart ]` button seamlessly transitions into `[ - Qty + ]` stepper and `[ ✕ ]` direct zero-reset in the exact same slot, keeping `[ 📦 Buy 1 Box (N) ]` immediately adjacent.
-  - **Compact Accordion Drawer**: Combined scheme breakdown and effective price into a single compact line (`✓ Buy 12 units → 1 Free · Effective PTR: ₹263.08`), reduced container padding to 8px, and streamlined action triggers to compact 36px outline buttons.
-  - **Accordion Gating**: Restricted collapsible accordion functionality exclusively to volume/tiered schemes with quantifiable thresholds (`10+1`, `12+1 Free`, `Buy 24 Get ₹100 Off`). Continuous percentage and net rate discounts (`5% Cash Disc`, `Net Rate`) render as non-expandable, flat info badges (`🏷️ 5% Cash Disc auto-applied at checkout`).
-  - **Header Bar Space Optimization**: Merged Search Input and Stock Filter dropdown into a single 48px-high horizontal row on `< 768px` viewports, reclaiming ~55px of vertical screen real estate and pulling the first product card above the fold.
-- **Strict Mobile View Architecture & Elimination of View Switcher on Mobile**:
-  - The "Switch to Cards / Switch to List" toggle is now **strictly hidden** on mobile viewports (< 768px), uncluttering the mobile search bar and presenting a focused instant search + stock filter bar.
-  - Retailer catalog on mobile is always guaranteed to render the optimized single-column layout (`CatalogMobileList`) with zero horizontal multi-column fragmentation.
-  - The view toggle (Table List vs Thumbnail Cards) remains exclusively available on desktop and tablet viewports (>= 768px).
-- **Asset Manifest Safe Lookup in AppConfig**:
-  - Replaced blind `rootBundle.loadString('firebase-config.json')` with in-memory `AssetManifest` lookup, eliminating browser HTTP 404 console errors on web startup.
-- **Dynamic Margin Recalculation on Scheme Activation**:
-  - Fully implemented verified domain math for Free Goods (`X+Y`), Percentage Discounts (`N%`), and Flat Slab Cash Rebates (`Buy X Get ₹Y Off`).
-  - Active scheme highlight: Margin pill dynamically transitions to vibrant emerald green with an active indicator checkmark, displaying boosted margin (`+20.3% Margin`) and effective rate subtext (`(Effective: ₹263.08/unit)`).
-- **Dual Action Row: "Add to Cart" + "1-Tap Carton/Box Buy"**:
-  - Primary action: `[ 🛒 Add to Cart ]`.
-  - Bulk quick-buy action: `[ 📦 Buy 1 Box (N) ]` outline pill (e.g., `Buy 1 Box (24)`).
-  - Tapping `Buy 1 Box` sets quantity directly to box pack count via `CartProvider.buyBox()`, instantly unlocking qualified schemes and dynamic margin without intermediate stepper clicks.
-- **Strict Single-Column Layout (< 768px)**:
-  - Catalog layout strictly enforces single-column (`1fr`) presentation on screens `< 768px`.
-  - Product titles have zero clipping or ellipsis, making end-of-title packaging sizes (`500gm`, `100ml`, `Pack of 12`) completely readable.
-- **Collapsible Scheme Accordion (Shikhar Style)**:
-  - Relocated scheme section directly below action buttons on mobile cards and list rows.
-  - Default (Collapsed): Clean single-line summary strip `🏷️ Scheme: 12+1 Free (Get up to 20.3% Margin) ▼`.
-  - Expanded: Itemized breakdown showing `"Buy 12 units → Get 1 unit FREE"`, `"Effective PTR: ₹263.08/unit"`, and 1-tap `[ ⚡ Apply Scheme (+12 Units) ]` trigger.
+### Added
+- **Dynamic Green Scheme Recalculation**: Live effective PTR and boosted margin pills transition directly to new values in vibrant emerald green without cluttering strikethroughs when volume thresholds are met.
+- **1-Tap Carton Quick-Buy**: Dedicated `[ Buy 1 Box (N) ]` action pill adjacent to the cart stepper to instantly order full box quantities.
+- **Collapsible Tiered Scheme Accordion**: Clean Shikhar-style collapsible deal drawer for volume/tiered schemes (`X+Y`, `Buy X Get ₹Y Off`) displaying direct deal rules and 1-tap slab increments.
+- **Single-Row Mobile Search & Filter**: Consolidated search input and stock filter into a compact, space-saving 48px header row on mobile viewports (< 768px).
+
+### Changed
+- **Unified Price Bar Layout**: Standardized all product listings to the wholesale format `[₹MRP  [MARGIN: XYZ%]  ₹PTR]` where MRP and PTR share identical font size (`14.5px`) and neutral color, with PTR dynamically transitioning to vibrant emerald green when its value changes.
+- **In-Place Stepper Replacement**: When added to cart, the quantity stepper and 1-tap delete (`✕`) replace the `[Add to Cart]` button in-place without causing price row layout shifts.
+- **Contextual Single Cart Button**: Exclusively shows the floating cart button on mobile screens (< 768px) and top app bar cart button on desktop/tablet (≥ 768px).
+- **Mobile-Locked Single Column**: Retailer catalog on mobile is locked to a clean single-column list with full product packaging visibility; view switcher (Table/Grid) is restricted to desktop and tablet.
+
+### Removed
+- **Redundant Card Elements**: Removed duplicate `[In Stock]` badges from product card headers and redundant price/margin text across scheme drawers to eliminate repetitive clutter on mobile screens.
+
+---
 
 ## [1.5.0] - 2026-11-07
 
-### Changed & Fixed
-- **Mobile View Single-Item-Per-Line & Pack-Size Legibility**:
-  - Enforced strictly **1 item/card per line** (`crossAxisCount: 1`) on mobile viewports (< 600px) in `CatalogCardGrid`, eliminating cramped 2-column squeezing on smartphones.
-  - Eliminated product name truncation and ellipsis clipping across mobile list and card tiles so product pack size, grammage, and volume variants (e.g., `Surf Excel Easy Wash Powder 500gm`, `Dettol 500ml`) remain 100% visible to retailers.
-  - Added `84px` bottom inset padding on mobile lists and grid views to guarantee the bottom product's action controls are never occluded by the floating cart button.
-  - Wrapped price row inside `Wrap` and `Expanded` to prevent horizontal overflow on narrow 360px mobile viewports.
-- **Mobile Responsive Search & Filter Toolbar**:
-  - Re-architected `CatalogFilterToolbar` into a responsive 2-tier layout for mobile screens: full-width search input for zero-fatigue typing, with view switcher (`List/Cards`) and stock filter chips cleanly grouped beneath.
-- **Dialog Keyboard Scroll Safety**:
-  - Wrapped `ProductEditDialog` and `RetailerManagementView`'s retailer dialog forms inside `SingleChildScrollView` to prevent virtual keyboard `RenderFlex` overflow errors on mobile screens.
-- **Cart Bottom Sheet Polish**:
-  - Replaced hardcoded width in `CartDrawer` with responsive `BoxConstraints(maxWidth: 440)`.
-  - Added a subtle mobile drag indicator pill at the top of the modal bottom sheet for intuitive downward swipe dismissal.
-- **Scheme Parser & 1-Tap Apply Logic Refinement**:
-  - Restamped `[Apply (+N)]` action buttons exclusively to Free Goods / Volume Tier Schemes with clear purchase thresholds (e.g. `10+1`, `12+1 Free`, `20 Bags + 1 Free`, `Buy 24 Get ₹100 Off`).
-  - Cash discounts, percentages, and net rates (e.g. `5% Cash Disc`, `3% Special Scheme`, `Net Rate`) are strictly rendered as static informational badges (`[ 🏷️ 5% Cash Disc ]`) with zero spurious `Apply` buttons.
-- **State-Driven Scheme Micro-Copy (Hidden at Qty = 0)**:
-  - Yellow micro-copy hint lines (`💡 ...`) are completely hidden by default when `qty == 0` across all views.
-  - Progressive distance guidance (`💡 Add X more to get +1 Free`) renders only when active `qty > 0 && qty < threshold`, and celebratory unlocked text when threshold is reached or exceeded.
-  - Non-tiered schemes (e.g. `Net Rate`, `5% Cash Disc`) omit micro-copy lines entirely.
-- **Out-of-Stock (OOS) Visual Lockdown**:
-  - Out-of-stock items (`in_stock: false`) completely suppress all `[Apply (+N)]` buttons and scheme micro-copy lines.
-  - Metadata badges (Scheme, MOQ, Box Pack) are dimmed (`opacity: 0.45`) and actions locked with disabled `[ Out of Stock ]` badge.
-  - Preserved identical fixed card heights between in-stock and out-of-stock cards in Grid view to prevent layout shift.
-- **Table & Grid Density Polish**:
-  - **Table View**: Cleaned Margin column to render concise emerald value chips (`+13.6%`) without redundant `Retailer Margin:` label. Side-by-side flex layout for Scheme badge and `Apply (+N)` button, keeping row height compact ($\le 64$px). Compact MOQ and Box pack layout (`MOQ: X · Box: Y`).
-  - **Grid View**: Clean metadata grouping beneath scheme tag (`MOQ: X | Box: Y`), enforcing uniform card heights across all row tiles.
-  - **Desktop Floating Cart Suppression**: Floating bottom-right cart bubble is automatically hidden on desktop viewports ($\ge 1024$px) in favor of the persistent top app bar cart button, retaining the floating pill exclusively on mobile/tablet screens ($< 1024$px).
+### Added
+- **Progressive Scheme Guidance**: Real-time contextual distance cues (`Add X more to get +1 Free`) when cart quantity approaches a deal threshold.
+
+### Changed
+- **Mobile Packing Legibility**: Ensured full display of end-of-title pack sizes and variants (e.g. `500gm`, `100ml`) across mobile listings without text truncation.
+- **Scheme Action Gating**: 1-tap apply actions are strictly gated to tiered/volume schemes; flat percentage and net-rate discounts render as clean static info tags.
+- **Out-of-Stock Visual Lockdown**: Out-of-stock items disable scheme actions, dim metadata badges, and present a locked `[Out of Stock]` indicator.
+
+---
 
 ## [1.4.0] - 2026-11-07
 
 ### Refactored
-- **Separation of Concerns (SoC) Architectural Decoupling**:
-  - **Pure Domain Model**: Decoupled `Product` from `cloud_firestore` SDK and `FieldValue.serverTimestamp()`, eliminating Firebase dependency leaks in WooCommerce mode.
-  - **Dependency Injection**: Refactored `AuthProvider` and `DeskProvider` constructors to accept optional repository instances (`RepositoryManager? repository`) for testability.
-  - **Centralized Formatters (`AppFormatters`)**: Created `lib/config/formatters.dart` single source of truth for Indian currency, rate formatting, percentage calculations, and carton pack representations across all UI layers.
-  - **Unified Stepper (`CatalogQuantityStepper`)**: Replaced 4 duplicate stepper implementations with a single canonical component supporting `.compact`, `.fullWidth`, and `.drawer` presentation layouts.
-  - **God-Widget Decomposition**: Decomposed the monolithic 1,111-line `RetailerCatalogScreen` into isolated, focused components:
-    - `CatalogFilterToolbar` (search text field, brand dropdown, stock filter, view mode toggle).
-    - `CatalogCardGrid` & `ProductCardTile` (isolated card grid with granular `context.select` cart listener).
-    - `CatalogDataTable` (isolated high-density desktop table).
-    - `CatalogMobileList` & `MobileProductListItem` (isolated mobile POS list).
-  - **Granular Rebuild Optimization**: Replaced coarse-grained root `context.watch<CartProvider>()` with granular tile-level `context.select` subscriptions and localized `Consumer<CartProvider>` wrappers, preventing unnecessary full-screen re-renders on counter web sessions.
+- **Domain & UI Architectural Decoupling**:
+  - Decoupled `Product` and core domain models from Firestore SDK dependencies for seamless dual-backend support.
+  - Decomposed monolithic catalog screens into focused, reusable components (`CatalogFilterToolbar`, `CatalogDataTable`, `CatalogMobileList`, `ProductCardTile`).
+  - Optimized Provider state subscriptions with granular selectors (`context.select`) to eliminate unnecessary full-screen re-renders on counter web sessions.
+  - Centralized Indian currency and rate formatting under `AppFormatters`.
 
+---
 
 ## [1.3.0] - 2026-11-07
 
 ### Added
-- **1-Tap Scheme Direct Auto-Fill (`SchemeApplyPill` & `CartProvider.applyScheme`)**:
-  - Automatically parses scheme trigger threshold integer ($X$) from `X+Y`, `X:Y%`, `Buy X`, and leading numeric patterns.
-  - Adds 1-tap `[ Apply Scheme (+X) ]` and `[ +X Units ]` pill directly next to scheme badges on both Cards and Table rows.
-  - Tapping immediately jumps item quantity to the exact qualifying threshold or increments by full slabs without intermediate step clicks.
-- **Direct Item Deletion & Zero-Reset (`✕` Tap Targets)**:
-  - Added direct 1-tap delete targets (`✕` icon) next to steppers in Table View, Grid Cards, Mobile List, and Cart Drawer.
-  - Any quantity (e.g. 50 units) can be zeroed out instantly in 1 tap, clearing scheme badges and restoring the `[Add to Cart]` button.
-  - Stepper minus button supports long-press to zero and drops to 0 when stepping down from MOQ / 1.
-- **Progressive Scheme Distance Micro-Copy**:
-  - Distance micro-copy updates dynamically with each quantity change:
-    - Below threshold: `Add N more to unlock +Y Free Unit(s)`
-    - Threshold reached: `✓ Active Scheme: X + Y Free Applied` (high-contrast emerald styling)
-    - Multiples calculated: `✓ Active Scheme: 20 + 2 Free Applied` for $2\times$ slabs.
-- **Dynamic Margin & Effective Unit Rate Boost (`MarginBoostBadge`)**:
-  - Computes `Effective Unit Cost = (Billed Qty * PTR) / Total Units Received`.
-  - Calculates boosted retailer margin when a scheme is active: `Margin: 12.6% → 17.1% (Eff: ₹395.0/u)`.
-- **WhatsApp B2B Order Bonus Itemization**:
-  - WhatsApp order string compilation itemizes billed units, free scheme bonus units (`🎁 Bonus: +2 Free Units (Total: 22u)`), effective rate, and total line PTR.
-- **Unit Test Coverage**:
-  - Expanded `test/scheme_and_moq_test.dart` to 21 automated tests covering threshold extraction, 1-tap auto-fill, direct zero-reset, effective margin math, and WhatsApp string formatting.
+- **1-Tap Scheme Auto-Fill**: Instant threshold fill (`[Apply Scheme (+N)]`) for tiered and free-goods schemes without manual stepping.
+- **Direct 1-Tap Item Zero-Reset**: Dedicated `✕` delete button next to quantity steppers to immediately clear an item from the cart.
+- **Dynamic Retailer Margin Math**: Domain engine calculating effective unit rates and boosted margins for active schemes.
+- **WhatsApp B2B Bonus Itemization**: Automatically formats and itemizes free bonus units and carton metrics into dispatchable WhatsApp order text.
 
+---
 
 ## [1.2.0] - 2026-11-07
 
 ### Added
-- **Floating Action Cart Button**:
-  - Persistent, high-visibility floating action cart button (`FloatingActionButton.extended`) displaying live item count and running total.
-- **Distributor MOQ Toggle (`enforceMoq`)**:
-  - Added "Enforce MOQ on Orders" toggle switch in Distributor Store Settings.
-  - When disabled by the distributor, retailers can order starting from 1 unit regardless of individual product MOQ values.
-- **Real-Time Scheme Upselling Nudges (`SchemeHelper`)**:
-  - Domain parser and nudge engine that analyzes B2B schemes (`6+1`, `10+1`, `12+2`, `5% CD`) against cart quantities.
-  - Generates live contextual prompts (e.g., `"Add 1 more to get 1 FREE!"`, `"🎉 Qualified for 1 FREE item!"`).
-  - Added `SchemeNudgePill` widget displaying nudges in both the product catalog and the cart drawer.
-- **View Mode Switcher & Letter Monogram Avatars**:
-  - Retailers can toggle between **Thumbnail Cards (Grid)** and **High-Density List/Table View**.
-  - Integrated `ProductAvatar` zero-overhead letter monogram avatars with deterministic palette selection based on brand/product name hash.
-- **Enhanced Add to Cart Button**:
-  - Replaced compact "Add (MOQ)" label with a prominent, touch-friendly `[Add to Cart]` button with icon.
-- **Test Suite**:
-  - Added `test/scheme_and_moq_test.dart` covering scheme nudge parsing, boundary conditions, and MOQ relaxation.
+- **Floating Cart Pill**: High-visibility floating cart action button displaying live item counts and running order totals.
+- **Configurable MOQ Enforcement**: Distributor toggle in store settings allowing optional relaxation of minimum order quantities.
+- **Deterministic Letter Monograms**: Lightweight avatar generator providing instant visual brand recognition without image download overhead.
 
 ### Changed
-- **Removed MRP Strikethrough**: Removed `TextDecoration.lineThrough` from all retailer catalog views, grid cards, and cart drawers for clean, standard Indian wholesale price presentation.
+- **Wholesale Price Typography**: Cleaned price displays by eliminating strikethrough decorations in favor of clear wholesale PTR/MRP presentation.
 
+---
 
 ## [1.1.0] - 2026-11-07
 
 ### Added
-- **Dual-Backend Provider Architecture**:
-  - Introduced `WholesaleRepository` abstract contract to unify backend interactions.
-  - Added `WooCommerceRestService` providing direct client integration with WordPress WooCommerce REST API (`/wp-json/swac/v1/`).
-  - Added `RepositoryManager` singleton to switch between Firebase Cloud Firestore and WooCommerce on the fly without changing UI state.
-- **Human-Configurable Root File (`config.json`)**:
-  - Placed human-editable `config.json` at root to configure store identity, WhatsApp dispatch number, PINs, and Firebase Web keys without modifying code.
-  - Added `AppConfig` service to load and apply `config.json` before app rendering.
-- **Carton Pack / Box Size (`box_size` / `carton_pack`)**:
-  - Added `cartonPack` field to `Product` model, serializing to both `carton_pack` and `box_size`.
-  - Added `BoxPackBadge` widget (`📦 Box: 24`) in distributor desk and retailer catalog.
-  - Added optional carton pack input in `ProductEditDialog`.
-  - Updated `WhatsAppService` to format and embed carton packing metrics in generated order strings.
-- **Retailer Self-Registration CTA**:
-  - Added "Apply for Retailer Account via WhatsApp" button on the retailer PIN authentication tab.
-- **Test Suites**:
-  - Added `test/app_config_test.dart` for root configuration parsing and fallback handling.
-  - Added `test/woocommerce_integration_test.dart` for WooCommerce payload parsing, carton packing, and backend switching.
-
-### Changed
-- Refactored `AuthProvider` and `DeskProvider` to delegate all data operations to `RepositoryManager`.
-- Updated `StoreSettingsDialog` with an active backend selector (Firebase vs WordPress WooCommerce REST) and WordPress site URL configuration.
-- Enhanced `README.md` and `AGENTS.md` with dual-backend documentation and root configuration standards.
+- **Dual-Backend Architecture**: Seamless switching between Cloud Firestore and WordPress WooCommerce REST API (`/wp-json/swac/v1/`) via `WholesaleRepository`.
+- **Root Configuration (`config.json`)**: Human-editable configuration file for store branding, WhatsApp dispatch numbers, and PIN credentials.
+- **Carton Pack Support**: Added box size metrics (`carton_pack` / `box_size`) across product models, editing dialogs, and WhatsApp order summaries.
+- **Retailer WhatsApp Self-Registration**: Quick CTA for new retail shops to request portal access directly via WhatsApp.
 
 ---
 
 ## [1.0.0] - 2026-11-07
 
 ### Added
-- **Initial Release of Wholesale Desk** (Flutter Web + Firebase).
-- **High-Speed Counter & POS Layout**:
-  - High-density desktop data table and touch-optimized mobile list.
-  - Zero image overhead in catalog for sub-millisecond scanning speed.
-- **Strict Binary Stock Model**:
-  - `in_stock: true | false` model where customer orders never decrement inventory counts.
-  - In-place Green/Red stock toggle pills for instant database updates without a "Save" button.
-- **3-Tier Role Guarding via 4-Digit PIN**:
-  - **Admin (Master PIN `5075`)**: Full Distributor Desk access (product CRUD, rates/schemes/MOQ edits, retailer PIN management, store settings).
-  - **Staff (Staff PIN `1122`)**: Restricted counter assistant; permitted only to toggle stock and search items.
-  - **Retailer (Mobile + 4-Digit PIN)**: Authenticated catalog view with route badge, MOQ steppers, and slide-out cart drawer.
-- **WhatsApp B2B Checkout**:
-  - Pure Dart order serialization compiling itemized B2B purchase orders directly into `https://wa.me/{phone}?text=...`.
-- **Database & Offline Fallback**:
-  - Cloud Firestore integration (`/settings/general`, `/retailers`, `/products`) with seamless in-memory offline fallback for zero-setup demo testing.
-
+- **Initial Release of Wholesale Desk**:
+  - High-speed B2B counter & POS web portal built with Flutter Web.
+  - Zero image overhead for sub-millisecond catalog browsing and search.
+  - Strict binary stock model (`in_stock: true | false`) with instant in-place toggle pills.
+  - 3-tier PIN authentication (Admin Master PIN, Staff Counter PIN, Retailer Mobile + PIN).
+  - WhatsApp B2B checkout with zero-gateway overhead.
+  - Cloud Firestore integration with offline in-memory fallback.

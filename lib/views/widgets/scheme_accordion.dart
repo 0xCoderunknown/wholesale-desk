@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../config/formatters.dart';
 import '../../models/product.dart';
 import '../../services/scheme_helper.dart';
 
@@ -41,13 +40,12 @@ class _SchemeCollapsibleAccordionState extends State<SchemeCollapsibleAccordion>
     );
 
     final isTiered = details.threshold > 0;
-    final hasBoost = details.maxMargin > p.marginPercent;
 
     // Requirement 3: Static info strip for continuous/percentage schemes (no expansion, no arrow)
     if (!isTiered) {
       final schemeLabel = p.scheme.trim().toLowerCase().contains('net rate')
-          ? 'Net Rate auto-applied at checkout'
-          : '${p.scheme.trim()} auto-applied at checkout';
+          ? 'Net Rate auto-applied'
+          : '${p.scheme.trim()} auto-applied';
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
@@ -104,10 +102,8 @@ class _SchemeCollapsibleAccordionState extends State<SchemeCollapsibleAccordion>
                   Expanded(
                     child: Text(
                       isActive
-                          ? 'Scheme Active: ${p.scheme} (${details.maxMargin.toStringAsFixed(1)}% Margin Unlocked)'
-                          : (hasBoost
-                              ? 'Scheme: ${p.scheme} (Get up to ${details.maxMargin.toStringAsFixed(1)}% Margin)'
-                              : 'Scheme: ${p.scheme}'),
+                          ? 'Scheme Active: ${p.scheme}'
+                          : 'Scheme: ${p.scheme}',
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
@@ -140,15 +136,18 @@ class _SchemeCollapsibleAccordionState extends State<SchemeCollapsibleAccordion>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Single compact line: Breakdown + Effective PTR
+                  // Clean single line: Breakdown rule
                   Row(
                     children: [
-                      const Icon(Icons.check_circle_rounded,
-                          size: 13, color: Color(0xFF15803D)),
+                      Icon(
+                        isActive ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+                        size: 13,
+                        color: const Color(0xFF15803D),
+                      ),
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
-                          '${details.breakdownCopy}  ·  Effective PTR: ${AppFormatters.formatCurrency(details.effPtr)}',
+                          details.breakdownCopy,
                           style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,

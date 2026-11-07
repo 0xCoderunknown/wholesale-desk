@@ -184,15 +184,25 @@ class CatalogDataTable extends StatelessWidget {
         DataCell(
           Text(
             AppFormatters.formatCurrency(p.mrp),
-            style: const TextStyle(fontSize: 12, color: AppTheme.slate600, fontWeight: FontWeight.w500),
+            style: const TextStyle(fontSize: 13, color: AppTheme.slate800, fontWeight: FontWeight.w700),
           ),
         ),
 
-        // PTR
+        // PTR (Same font size & color as MRP by default, green if value changes)
         DataCell(
           Text(
-            AppFormatters.formatCurrency(p.ptr),
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.primaryDark),
+            AppFormatters.formatCurrency(
+              (nudge.hasBoostedMargin && nudge.effectivePtr < p.ptr)
+                  ? nudge.effectivePtr
+                  : p.ptr,
+            ),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: (nudge.hasBoostedMargin && nudge.effectivePtr < p.ptr)
+                  ? const Color(0xFF059669)
+                  : AppTheme.slate800,
+            ),
           ),
         ),
 

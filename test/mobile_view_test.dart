@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:wholesale_desk/config/theme.dart';
 import 'package:wholesale_desk/models/product.dart';
 import 'package:wholesale_desk/services/scheme_helper.dart';
 import 'package:wholesale_desk/state/cart_provider.dart';
@@ -80,7 +81,7 @@ void main() {
 
       expect(cart.getQuantity(sampleProduct.id), equals(24));
       // Dynamic margin recalculation should highlight boosted margin
-      expect(find.textContaining('Margin'), findsWidgets);
+      expect(find.textContaining('MARGIN'), findsWidgets);
     });
 
     testWidgets('CatalogCardGrid adopts single-column on mobile (<768px) and multi-column on desktop',
@@ -249,7 +250,7 @@ void main() {
       );
 
       // Percentage scheme: flat static amber badge with no expansion arrow (Icons.keyboard_arrow_down)
-      expect(find.text('5% Cash Disc auto-applied at checkout'), findsOneWidget);
+      expect(find.text('5% Cash Disc auto-applied'), findsOneWidget);
       expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsNothing);
 
       // Tiered scheme: expandable accordion
@@ -272,9 +273,8 @@ void main() {
       await tester.tap(find.textContaining('Scheme: 10+1 Free'));
       await tester.pumpAndSettle();
 
-      // Drawer is expanded with compact 1-line breakdown
+      // Drawer is expanded with clean non-repetitive deal breakdown rule
       expect(find.textContaining('Buy 10 units → Get 1 unit FREE'), findsOneWidget);
-      expect(find.textContaining('Effective PTR:'), findsOneWidget);
       // Single lightning sign via Icon(Icons.bolt_rounded) without duplicate emoji in label
       expect(find.text('Apply Scheme (+10 Units)'), findsOneWidget);
       expect(find.byIcon(Icons.bolt_rounded), findsOneWidget);
@@ -338,9 +338,17 @@ void main() {
       expect(find.text('₹140.00'), findsOneWidget);
       expect(find.text('MARGIN: 12.9%'), findsOneWidget);
       expect(find.text('₹122.00'), findsOneWidget);
+
+      // Verify MRP and PTR have the exact same font size and color by default
+      final mrpWidget = tester.widget<Text>(find.text('₹140.00'));
+      final ptrWidget = tester.widget<Text>(find.text('₹122.00'));
+      expect(mrpWidget.style?.fontSize, equals(14.5));
+      expect(ptrWidget.style?.fontSize, equals(14.5));
+      expect(mrpWidget.style?.color, equals(AppTheme.slate800));
+      expect(ptrWidget.style?.color, equals(AppTheme.slate800));
     });
 
-    testWidgets('When scheme matches, PTR & Margin show boosted values with strikethrough and scheme button appears pressed',
+    testWidgets('When scheme matches, PTR & Margin show boosted new values only in vibrant green without strikethrough',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -371,15 +379,17 @@ void main() {
       }
 
       // Quantity is now 10: scheme threshold is satisfied!
-      // 1. Margin badge shows boosted margin: MARGIN: 20.8% with base 12.9% struck-through
+      // 1. Margin badge shows boosted margin (new value only, no old strikethrough!)
       expect(find.text('MARGIN: 20.8%'), findsOneWidget);
-      expect(find.text('12.9%'), findsOneWidget);
+      expect(find.text('12.9%'), findsNothing); // Old margin value is NOT shown
 
-      // 2. PTR shows effective discounted rate: (10 * 122) / 11 = ₹110.91, with base ₹122.00 struck-through
+      // 2. PTR shows effective discounted rate in vibrant emerald green (new value only, no old strikethrough!)
       expect(find.text('₹110.91'), findsOneWidget);
-      expect(find.text('₹122.00'), findsOneWidget);
+      expect(find.text('₹122.00'), findsNothing); // Old PTR is NOT shown
+      final ptrWidget = tester.widget<Text>(find.text('₹110.91'));
+      expect(ptrWidget.style?.color, equals(const Color(0xFF059669))); // Vibrant green highlight
 
-      // 3. Scheme accordion header turns green with active text
+      // 3. Scheme accordion header turns green with active text (clean, non-repetitive)
       expect(find.textContaining('Scheme Active: 10+1 Free'), findsOneWidget);
 
       // Expand accordion to verify button state

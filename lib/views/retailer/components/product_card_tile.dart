@@ -35,6 +35,13 @@ class ProductCardTile extends StatelessWidget {
       mrp: product.mrp,
     );
 
+    // MRP and PTR share the exact same font size and default color; PTR turns vibrant green when discounted.
+    final bool isPtrChanged = nudge.hasBoostedMargin && nudge.effectivePtr < product.ptr;
+    final double displayPtr = isPtrChanged ? nudge.effectivePtr : product.ptr;
+    const double priceFontSize = 14.5;
+    const FontWeight priceFontWeight = FontWeight.w700;
+    const Color basePriceColor = AppTheme.slate800;
+
     return Card(
       elevation: inCart ? 2 : 0,
       color: inCart ? AppTheme.primarySurface.withValues(alpha: 0.45) : Colors.white,
@@ -110,6 +117,7 @@ class ProductCardTile extends StatelessWidget {
             const SizedBox(height: 10),
 
             // Unified Price & Margin Bar: [₹MRP_VALUE  [MARGIN: XYZ%]  ₹PTR_VALUE]
+            // Note: MRP and PTR share the exact same font size and default color; PTR turns green when discounted.
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
@@ -125,9 +133,9 @@ class ProductCardTile extends StatelessWidget {
                   Text(
                     AppFormatters.formatCurrency(product.mrp),
                     style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.slate600,
+                      fontSize: priceFontSize,
+                      fontWeight: priceFontWeight,
+                      color: basePriceColor,
                     ),
                   ),
                   // Center: Margin Badge
@@ -139,40 +147,17 @@ class ProductCardTile extends StatelessWidget {
                       isBoosted: nudge.hasBoostedMargin,
                     ),
                   ),
-                  // Right: Wholesale Rate / PTR Value (Dynamic with strikethrough when scheme matches)
-                  nudge.hasBoostedMargin && nudge.effectivePtr < product.ptr
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              AppFormatters.formatCurrency(nudge.effectivePtr),
-                              style: const TextStyle(
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF059669), // Vibrant emerald
-                              ),
-                            ),
-                            Text(
-                              AppFormatters.formatCurrency(product.ptr),
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.slate400,
-                                decoration: TextDecoration.lineThrough,
-                                decorationColor: AppTheme.slate400,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          AppFormatters.formatCurrency(product.ptr),
-                          style: const TextStyle(
-                            fontSize: 15.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryDark,
-                          ),
-                        ),
+                  // Right: Wholesale Rate / PTR Value (Same font size & color as MRP by default, green when value changes)
+                  Text(
+                    AppFormatters.formatCurrency(displayPtr),
+                    style: TextStyle(
+                      fontSize: priceFontSize,
+                      fontWeight: priceFontWeight,
+                      color: isPtrChanged
+                          ? const Color(0xFF059669) // Vibrant emerald green when value changes
+                          : basePriceColor, // Exact same color as MRP by default
+                    ),
+                  ),
                 ],
               ),
             ),
