@@ -8,6 +8,7 @@ class Product {
   final double ptr; // Purchase To Retailer
   final String scheme; // e.g., "10+1", "5% CD", etc.
   final int moq; // Minimum Order Quantity
+  final int cartonPack; // Box size / Carton packing (0 if unspecified)
   final bool inStock;
   final String imageUrl; // Kept empty for zero-bloat
   final DateTime? updatedAt;
@@ -20,11 +21,13 @@ class Product {
     required this.ptr,
     this.scheme = '',
     this.moq = 1,
+    this.cartonPack = 0,
     this.inStock = true,
     this.imageUrl = '',
     this.updatedAt,
   });
 
+  bool get hasCartonPack => cartonPack > 0;
   double get margin => mrp - ptr;
   double get marginPercent => mrp > 0 ? ((mrp - ptr) / mrp) * 100 : 0.0;
 
@@ -47,6 +50,11 @@ class Product {
       updated = DateTime.fromMillisecondsSinceEpoch(rawDate);
     }
 
+    final rawCarton = map['carton_pack'] ?? map['box_size'];
+    final carton = (rawCarton is num)
+        ? rawCarton.toInt()
+        : int.tryParse(rawCarton?.toString() ?? '0') ?? 0;
+
     return Product(
       id: id,
       name: map['name']?.toString() ?? '',
@@ -55,6 +63,7 @@ class Product {
       ptr: (map['ptr'] is num) ? (map['ptr'] as num).toDouble() : double.tryParse(map['ptr']?.toString() ?? '0') ?? 0.0,
       scheme: map['scheme']?.toString() ?? '',
       moq: (map['moq'] is num) ? (map['moq'] as num).toInt() : int.tryParse(map['moq']?.toString() ?? '1') ?? 1,
+      cartonPack: carton,
       inStock: map['in_stock'] is bool ? map['in_stock'] as bool : true,
       imageUrl: map['image_url']?.toString() ?? '',
       updatedAt: updated,
@@ -69,6 +78,8 @@ class Product {
       'ptr': ptr,
       'scheme': scheme,
       'moq': moq,
+      'carton_pack': cartonPack,
+      'box_size': cartonPack,
       'in_stock': inStock,
       'image_url': imageUrl,
       'updated_at': FieldValue.serverTimestamp(),
@@ -83,6 +94,7 @@ class Product {
     double? ptr,
     String? scheme,
     int? moq,
+    int? cartonPack,
     bool? inStock,
     String? imageUrl,
     DateTime? updatedAt,
@@ -95,10 +107,10 @@ class Product {
       ptr: ptr ?? this.ptr,
       scheme: scheme ?? this.scheme,
       moq: moq ?? this.moq,
+      cartonPack: cartonPack ?? this.cartonPack,
       inStock: inStock ?? this.inStock,
       imageUrl: imageUrl ?? this.imageUrl,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
-

@@ -90,14 +90,37 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    auth.settings.storeName,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          auth.settings.storeName,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: auth.settings.isWooCommerce ? const Color(0xFF7C3AED) : AppTheme.slate700,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                        child: Text(
+                          auth.settings.isWooCommerce ? 'WOOCOMMERCE REST' : 'FIREBASE',
+                          style: const TextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   Row(
                     children: [
@@ -389,7 +412,7 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 960),
+            constraints: const BoxConstraints(minWidth: 1020),
             child: DataTable(
               headingRowHeight: 38,
               dataRowMinHeight: 46,
@@ -409,6 +432,9 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
                 ),
                 const DataColumn(
                   label: Text('MOQ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                ),
+                const DataColumn(
+                  label: Text('BOX PACK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
                 ),
                 const DataColumn(
                   label: Text('MRP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
@@ -463,6 +489,13 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
 
                     // MOQ
                     DataCell(MoqBadge(moq: p.moq)),
+
+                    // Box Pack / Carton
+                    DataCell(
+                      p.hasCartonPack
+                          ? BoxPackBadge(cartonPack: p.cartonPack)
+                          : const Text('-', style: TextStyle(color: AppTheme.slate400, fontSize: 12)),
+                    ),
 
                     // MRP
                     DataCell(
@@ -587,6 +620,10 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
                       const SizedBox(width: 6),
                     ],
                     MoqBadge(moq: p.moq),
+                    if (p.hasCartonPack) ...[
+                      const SizedBox(width: 6),
+                      BoxPackBadge(cartonPack: p.cartonPack),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 8),

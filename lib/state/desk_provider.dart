@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../models/product.dart';
-import '../services/database_service.dart';
+import '../services/repository_manager.dart';
 
 enum StockFilterType { all, inStock, outOfStock }
 
 class DeskProvider extends ChangeNotifier {
-  final DatabaseService _db = DatabaseService.instance;
+  final RepositoryManager _repo = RepositoryManager.instance;
 
   List<Product> _products = [];
   String _searchQuery = '';
@@ -64,10 +64,18 @@ class DeskProvider extends ChangeNotifier {
   }
 
   void _init() {
-    _db.getProductsStream().listen((list) {
+    _repo.getProductsStream().listen((list) {
       _products = list;
       _isLoading = false;
       notifyListeners();
+    });
+    // Trigger initial fetch
+    _repo.getProducts().then((list) {
+      if (list.isNotEmpty && _products.isEmpty) {
+        _products = list;
+        _isLoading = false;
+        notifyListeners();
+      }
     });
   }
 
@@ -93,26 +101,25 @@ class DeskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// In-place instant toggle for stock (Optimistic UI update + Cloud sync)
+  /// In-place instant toggle for stock (Optimistic UI update + Backend sync)
   Future<void> toggleStock(String productId, bool newStatus) async {
     final index = _products.indexWhere((p) => p.id == productId);
     if (index >= 0) {
       _products[index] = _products[index].copyWith(inStock: newStatus);
       notifyListeners();
     }
-    await _db.toggleStock(productId, newStatus);
+    await _repo.toggleStock(productId, newStatus);
   }
 
   Future<void> saveProduct(Product product) async {
-    await _db.saveProduct(product);
+    await _repo.saveProduct(product);
   }
 
   Future<void> deleteProduct(String id) async {
-    await _db.deleteProduct(id);
+    await _repo.deleteProduct(id);
   }
 
   Future<void> seedInitialData() async {
-    await _db.seedInitialData();
+    await _repo.seedInitialData();
   }
 }
-

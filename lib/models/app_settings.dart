@@ -3,13 +3,20 @@ class AppSettings {
   final String storeName;
   final String masterPin;
   final String staffPin;
+  final String backendType; // 'firebase' | 'woocommerce'
+  final String wpBaseUrl; // e.g. 'https://mywholesalestore.com'
 
   const AppSettings({
     required this.whatsappPhone,
     required this.storeName,
     required this.masterPin,
     required this.staffPin,
+    this.backendType = 'firebase',
+    this.wpBaseUrl = '',
   });
+
+  bool get isWooCommerce => backendType.toLowerCase() == 'woocommerce';
+  bool get isFirebase => backendType.toLowerCase() == 'firebase';
 
   factory AppSettings.defaults() {
     return const AppSettings(
@@ -17,6 +24,8 @@ class AppSettings {
       storeName: 'Apex Wholesale Distributors',
       masterPin: '5075',
       staffPin: '1122',
+      backendType: 'firebase',
+      wpBaseUrl: '',
     );
   }
 
@@ -26,6 +35,8 @@ class AppSettings {
       storeName: map['store_name']?.toString() ?? 'Apex Wholesale Distributors',
       masterPin: map['master_pin']?.toString() ?? '5075',
       staffPin: map['staff_pin']?.toString() ?? '1122',
+      backendType: map['backend_type']?.toString() ?? 'firebase',
+      wpBaseUrl: map['wp_base_url']?.toString() ?? '',
     );
   }
 
@@ -35,6 +46,8 @@ class AppSettings {
       'store_name': storeName,
       'master_pin': masterPin,
       'staff_pin': staffPin,
+      'backend_type': backendType,
+      'wp_base_url': wpBaseUrl,
     };
   }
 
@@ -43,13 +56,16 @@ class AppSettings {
     String? storeName,
     String? masterPin,
     String? staffPin,
+    String? backendType,
+    String? wpBaseUrl,
   }) {
     return AppSettings(
       whatsappPhone: whatsappPhone ?? this.whatsappPhone,
       storeName: storeName ?? this.storeName,
       masterPin: masterPin ?? this.masterPin,
       staffPin: staffPin ?? this.staffPin,
+      backendType: backendType ?? this.backendType,
+      wpBaseUrl: wpBaseUrl ?? this.wpBaseUrl,
     );
   }
 }
-

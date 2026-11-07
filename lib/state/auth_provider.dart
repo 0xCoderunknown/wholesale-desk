@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/app_settings.dart';
 import '../models/retailer.dart';
-import '../services/database_service.dart';
+import '../services/repository_manager.dart';
 
 enum UserRole {
   unauthenticated,
@@ -11,7 +11,7 @@ enum UserRole {
 }
 
 class AuthProvider extends ChangeNotifier {
-  final DatabaseService _db = DatabaseService.instance;
+  final RepositoryManager _repo = RepositoryManager.instance;
 
   UserRole _role = UserRole.unauthenticated;
   Retailer? _currentRetailer;
@@ -35,7 +35,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void _init() {
-    _db.getSettingsStream().listen((settings) {
+    _repo.getSettingsStream().listen((settings) {
       _settings = settings;
       notifyListeners();
     });
@@ -52,26 +52,20 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    // Fetch latest settings if needed
-    final currentSettings = await _db.getSettings();
-    _settings = currentSettings;
+    // Fetch latest settings
+    _settings = await _repo.getSettings();
 
-    final trimmedPin = pin.trim();
-    if (trimmedPin == _settings.masterPin.trim()) {
-      _role = UserRole.admin;
+    final result = await _repo.verifyDeskPin(pin);
+
+    _isLoading = false;
+    if (result['success'] == true) {
+      final roleStr = result['role']?.toString();
+      _role = (roleStr == 'owner' || roleStr == 'admin') ? UserRole.admin : UserRole.staff;
       _currentRetailer = null;
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    } else if (trimmedPin == _settings.staffPin.trim()) {
-      _role = UserRole.staff;
-      _currentRetailer = null;
-      _isLoading = false;
       notifyListeners();
       return true;
     } else {
-      _isLoading = false;
-      _errorMessage = 'Invalid 4-digit Desk PIN';
+      _errorMessage = result['message']?.toString() ?? 'Invalid 4-digit Desk PIN';
       notifyListeners();
       return false;
     }
@@ -81,37 +75,21 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> loginRetailer({
     required String mobile,
     required String pin,
-    required List<Retailer> retailers,
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    final cleanMobile = mobile.replaceAll(RegExp(r'\D'), '').trim();
-    final cleanPin = pin.trim();
+    final result = await _repo.verifyRetailer(mobile: mobile, pin: pin);
 
-    try {
-      final matching = retailers.firstWhere(
-        (r) =>
-            r.mobile.replaceAll(RegExp(r'\D'), '').trim() == cleanMobile &&
-            r.pin.trim() == cleanPin,
-      );
-
-      if (!matching.isActive) {
-        _isLoading = false;
-        _errorMessage = 'Your retailer account is currently suspended. Please contact distributor.';
-        notifyListeners();
-        return false;
-      }
-
+    _isLoading = false;
+    if (result['success'] == true && result['retailer'] is Retailer) {
       _role = UserRole.retailer;
-      _currentRetailer = matching;
-      _isLoading = false;
+      _currentRetailer = result['retailer'] as Retailer;
       notifyListeners();
       return true;
-    } catch (_) {
-      _isLoading = false;
-      _errorMessage = 'Invalid Mobile Number or 4-digit PIN';
+    } else {
+      _errorMessage = result['message']?.toString() ?? 'Invalid Mobile Number or 4-digit PIN';
       notifyListeners();
       return false;
     }
@@ -124,4 +102,3 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-

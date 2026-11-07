@@ -1,0 +1,19 @@
+{
+  "_comment": "Human-configurable setup for Wholesale Desk. Update values as your business information changes.",
+  "store_name": "Apex Wholesale Distributors",
+  "whatsapp_phone": "917002796068",
+  "master_pin": "5075",
+  "staff_pin": "1122",
+  "backend_type": "firebase",
+  "woocommerce_base_url": "https://mywholesalestore.com",
+  "firebase": {
+    "_comment": "Optional: Place your Firebase Web credentials here if using Cloud Firestore.",
+    "api_key": "demo-api-key",
+    "project_id": "wholesale-desk-demo",
+    "app_id": "1:1234567890:web:abcdef123456",
+    "messaging_sender_id": "1234567890",
+    "auth_domain": "wholesale-desk-demo.firebaseapp.com",
+    "storage_bucket": "wholesale-desk-demo.appspot.com"
+  }
+}
+

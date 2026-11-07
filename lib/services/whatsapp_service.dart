@@ -29,7 +29,9 @@ class WhatsAppService {
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('🏪 *Retailer:* ${retailer.storeName}');
     buffer.writeln('📱 *Mobile:* ${retailer.mobile}');
-    buffer.writeln('📍 *Route:* ${retailer.route}');
+    if (retailer.route.isNotEmpty) {
+      buffer.writeln('📍 *Route:* ${retailer.route}');
+    }
     buffer.writeln('📅 *Time:* $dateStr');
     buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
     buffer.writeln('*ORDER ITEMS (${items.length}):*');
@@ -41,7 +43,12 @@ class WhatsAppService {
       final rate = _currencyFormat.format(p.ptr);
 
       buffer.writeln('${i + 1}. *${p.name}*');
-      buffer.write('   • Qty: *${item.quantity}* units (MOQ: ${p.moq})');
+      buffer.write('   • Qty: *${item.quantity}* units (MOQ: ${p.moq}');
+      if (p.hasCartonPack) {
+        final boxes = (item.quantity / p.cartonPack).toStringAsFixed(1).replaceAll('.0', '');
+        buffer.write(' | Box: ${p.cartonPack}u ≈ ${boxes}b');
+      }
+      buffer.write(')');
       if (item.hasScheme) {
         buffer.write(' | Scheme: *${p.scheme}*');
       }
@@ -75,4 +82,3 @@ class WhatsAppService {
     }
   }
 }
-

@@ -2,9 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'config/firebase_options.dart';
+import 'config/app_config.dart';
 import 'config/theme.dart';
-import 'services/database_service.dart';
+import 'services/repository_manager.dart';
 import 'state/auth_provider.dart';
 import 'state/cart_provider.dart';
 import 'state/desk_provider.dart';
@@ -15,17 +15,20 @@ import 'views/retailer/retailer_catalog_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase (safely catch if credentials are placeholders)
+  // 1. Load human-editable config.json from project root
+  await AppConfig.load();
+
+  // 2. Initialize Firebase using options from config.json (with demo fallback)
   try {
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+      options: AppConfig.firebaseOptions,
     );
   } catch (e) {
     debugPrint('Firebase initialization notice: $e (Using resilient offline/demo fallback mode)');
   }
 
-  // Initialize database service
-  await DatabaseService.instance.initialize();
+  // 3. Initialize repository manager (supports both Firestore and WooCommerce REST API)
+  await RepositoryManager.instance.initialize();
 
   runApp(const WholesaleDeskApp());
 }

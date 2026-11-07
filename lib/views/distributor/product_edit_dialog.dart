@@ -20,6 +20,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   late TextEditingController _ptrController;
   late TextEditingController _schemeController;
   late TextEditingController _moqController;
+  late TextEditingController _cartonPackController;
   late bool _inStock;
 
   bool get isEditing => widget.product != null;
@@ -34,6 +35,9 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     _ptrController = TextEditingController(text: p != null ? p.ptr.toString() : '');
     _schemeController = TextEditingController(text: p?.scheme ?? '');
     _moqController = TextEditingController(text: p != null ? p.moq.toString() : '1');
+    _cartonPackController = TextEditingController(
+      text: (p != null && p.cartonPack > 0) ? p.cartonPack.toString() : '',
+    );
     _inStock = p?.inStock ?? true;
   }
 
@@ -45,6 +49,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     _ptrController.dispose();
     _schemeController.dispose();
     _moqController.dispose();
+    _cartonPackController.dispose();
     super.dispose();
   }
 
@@ -55,6 +60,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     final mrp = double.tryParse(_mrpController.text.trim()) ?? 0.0;
     final ptr = double.tryParse(_ptrController.text.trim()) ?? 0.0;
     final moq = int.tryParse(_moqController.text.trim()) ?? 1;
+    final cartonPack = int.tryParse(_cartonPackController.text.trim()) ?? 0;
 
     final product = Product(
       id: id,
@@ -64,6 +70,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
       ptr: ptr,
       scheme: _schemeController.text.trim(),
       moq: moq,
+      cartonPack: cartonPack,
       inStock: _inStock,
       imageUrl: '', // Binary zero-bloat, image empty
       updatedAt: DateTime.now(),
@@ -172,7 +179,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
               ),
               const SizedBox(height: 12),
 
-              // MRP & PTR & MOQ Row
+              // MRP & PTR Row
               Row(
                 children: [
                   Expanded(
@@ -212,7 +219,13 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // MOQ & Box Size / Carton Pack Row
+              Row(
+                children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,6 +240,24 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                           keyboardType: TextInputType.number,
                           validator: (v) => v == null || int.tryParse(v) == null ? 'Valid MOQ' : null,
                           decoration: const InputDecoration(hintText: '1'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Box Size / Carton Pack (Optional)',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.slate700),
+                        ),
+                        const SizedBox(height: 4),
+                        TextFormField(
+                          controller: _cartonPackController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(hintText: 'e.g. 24 or 144'),
                         ),
                       ],
                     ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../models/retailer.dart';
-import '../../services/database_service.dart';
+import '../../services/repository_manager.dart';
 
 class RetailerManagementView extends StatefulWidget {
   const RetailerManagementView({super.key});
@@ -11,7 +11,7 @@ class RetailerManagementView extends StatefulWidget {
 }
 
 class _RetailerManagementViewState extends State<RetailerManagementView> {
-  final DatabaseService _db = DatabaseService.instance;
+  final RepositoryManager _repo = RepositoryManager.instance;
   String _searchQuery = '';
 
   void _showRetailerDialog([Retailer? retailer]) {
@@ -163,7 +163,7 @@ class _RetailerManagementViewState extends State<RetailerManagementView> {
                             route: routeController.text.trim(),
                             status: status,
                           );
-                          await _db.saveRetailer(newRetailer);
+                          await _repo.saveRetailer(newRetailer);
                           if (ctx.mounted) Navigator.of(ctx).pop();
                         },
                         child: Text(retailer == null ? 'Create Account' : 'Save Changes'),
@@ -182,7 +182,7 @@ class _RetailerManagementViewState extends State<RetailerManagementView> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Retailer>>(
-      stream: _db.getRetailersStream(),
+      stream: _repo.getRetailersStream(),
       builder: (context, snapshot) {
         final retailers = snapshot.data ?? [];
         final filtered = retailers.where((r) {
@@ -332,7 +332,7 @@ class _RetailerManagementViewState extends State<RetailerManagementView> {
                                           ),
                                         );
                                         if (confirm == true) {
-                                          await _db.deleteRetailer(r.id);
+                                          await _repo.deleteRetailer(r.id);
                                         }
                                       },
                                     ),

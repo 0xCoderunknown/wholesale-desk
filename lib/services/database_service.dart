@@ -4,8 +4,9 @@ import 'package:firebase_core/firebase_core.dart';
 import '../models/app_settings.dart';
 import '../models/product.dart';
 import '../models/retailer.dart';
+import 'wholesale_repository.dart';
 
-class DatabaseService {
+class DatabaseService implements WholesaleRepository {
   static final DatabaseService instance = DatabaseService._internal();
   DatabaseService._internal();
 
@@ -23,7 +24,10 @@ class DatabaseService {
   final _retailersController = StreamController<List<Retailer>>.broadcast();
   final _productsController = StreamController<List<Product>>.broadcast();
 
-  Future<void> initialize() async {
+  Future<void> initialize({AppSettings? initialSettings}) async {
+    if (initialSettings != null) {
+      _fallbackSettings = initialSettings;
+    }
     try {
       if (Firebase.apps.isNotEmpty) {
         _firestore = FirebaseFirestore.instance;
@@ -34,11 +38,11 @@ class DatabaseService {
     }
 
     // Initialize sample fallback data in case Firestore is not connected or empty
-    _initFallbackData();
+    _initFallbackData(initialSettings: initialSettings);
   }
 
-  void _initFallbackData() {
-    _fallbackSettings = AppSettings.defaults();
+  void _initFallbackData({AppSettings? initialSettings}) {
+    _fallbackSettings = initialSettings ?? AppSettings.defaults();
     _fallbackRetailers.clear();
     _fallbackRetailers.addAll([
       const Retailer(
@@ -77,6 +81,7 @@ class DatabaseService {
         ptr: 285.0,
         scheme: '12+1 Free',
         moq: 12,
+        cartonPack: 24,
         inStock: true,
         updatedAt: DateTime.now(),
       ),
@@ -88,6 +93,7 @@ class DatabaseService {
         ptr: 1220.0,
         scheme: '5% Cash Disc',
         moq: 5,
+        cartonPack: 12,
         inStock: true,
         updatedAt: DateTime.now(),
       ),
@@ -99,6 +105,7 @@ class DatabaseService {
         ptr: 112.0,
         scheme: '10+1 Free',
         moq: 20,
+        cartonPack: 72,
         inStock: true,
         updatedAt: DateTime.now(),
       ),
@@ -110,6 +117,7 @@ class DatabaseService {
         ptr: 142.0,
         scheme: 'Buy 24 Get ₹100 Off',
         moq: 10,
+        cartonPack: 24,
         inStock: false,
         updatedAt: DateTime.now(),
       ),
@@ -121,6 +129,7 @@ class DatabaseService {
         ptr: 268.0,
         scheme: '10+1 Free',
         moq: 10,
+        cartonPack: 20,
         inStock: true,
         updatedAt: DateTime.now(),
       ),
@@ -132,6 +141,7 @@ class DatabaseService {
         ptr: 1650.0,
         scheme: '3% Special Scheme',
         moq: 2,
+        cartonPack: 8,
         inStock: true,
         updatedAt: DateTime.now(),
       ),
@@ -143,6 +153,7 @@ class DatabaseService {
         ptr: 128.0,
         scheme: 'Net Rate',
         moq: 15,
+        cartonPack: 15,
         inStock: true,
         updatedAt: DateTime.now(),
       ),
@@ -154,6 +165,7 @@ class DatabaseService {
         ptr: 415.0,
         scheme: '20 Bags + 1 Free',
         moq: 5,
+        cartonPack: 5,
         inStock: true,
         updatedAt: DateTime.now(),
       ),
@@ -165,6 +177,7 @@ class DatabaseService {
         ptr: 96.0,
         scheme: '12+1 Free',
         moq: 12,
+        cartonPack: 48,
         inStock: false,
         updatedAt: DateTime.now(),
       ),
@@ -176,6 +189,7 @@ class DatabaseService {
         ptr: 148.0,
         scheme: '5% Scheme',
         moq: 10,
+        cartonPack: 36,
         inStock: true,
         updatedAt: DateTime.now(),
       ),
@@ -188,6 +202,7 @@ class DatabaseService {
 
   // ================= SETTINGS =================
 
+  @override
   Stream<AppSettings> getSettingsStream() {
     if (_isFirebaseAvailable && _firestore != null) {
       return _firestore!
@@ -206,6 +221,7 @@ class DatabaseService {
     return _settingsController.stream;
   }
 
+  @override
   Future<AppSettings> getSettings() async {
     if (_isFirebaseAvailable && _firestore != null) {
       try {
@@ -218,6 +234,7 @@ class DatabaseService {
     return _fallbackSettings;
   }
 
+  @override
   Future<void> updateSettings(AppSettings settings) async {
     _fallbackSettings = settings;
     _settingsController.add(_fallbackSettings);
@@ -228,14 +245,13 @@ class DatabaseService {
               settings.toMap(),
               SetOptions(merge: true),
             );
-      } catch (e) {
-        // Fallback state already updated
-      }
+      } catch (_) {}
     }
   }
 
   // ================= RETAILERS =================
 
+  @override
   Stream<List<Retailer>> getRetailersStream() {
     if (_isFirebaseAvailable && _firestore != null) {
       return _firestore!.collection('retailers').snapshots().map((snapshot) {
@@ -253,6 +269,25 @@ class DatabaseService {
     return _retailersController.stream;
   }
 
+  @override
+  Future<List<Retailer>> getRetailers() async {
+    if (_isFirebaseAvailable && _firestore != null) {
+      try {
+        final snap = await _firestore!.collection('retailers').get();
+        if (snap.docs.isNotEmpty) {
+          final list = snap.docs
+              .map((doc) => Retailer.fromMap(doc.id, doc.data()))
+              .toList();
+          _fallbackRetailers.clear();
+          _fallbackRetailers.addAll(list);
+          return list;
+        }
+      } catch (_) {}
+    }
+    return _fallbackRetailers;
+  }
+
+  @override
   Future<void> saveRetailer(Retailer retailer) async {
     final index = _fallbackRetailers.indexWhere((r) => r.id == retailer.id);
     if (index >= 0) {
@@ -270,6 +305,7 @@ class DatabaseService {
     }
   }
 
+  @override
   Future<void> deleteRetailer(String id) async {
     _fallbackRetailers.removeWhere((r) => r.id == id);
     _retailersController.add(List.unmodifiable(_fallbackRetailers));
@@ -283,6 +319,7 @@ class DatabaseService {
 
   // ================= PRODUCTS =================
 
+  @override
   Stream<List<Product>> getProductsStream() {
     if (_isFirebaseAvailable && _firestore != null) {
       return _firestore!.collection('products').snapshots().map((snapshot) {
@@ -300,7 +337,26 @@ class DatabaseService {
     return _productsController.stream;
   }
 
+  @override
+  Future<List<Product>> getProducts() async {
+    if (_isFirebaseAvailable && _firestore != null) {
+      try {
+        final snap = await _firestore!.collection('products').get();
+        if (snap.docs.isNotEmpty) {
+          final list = snap.docs
+              .map((doc) => Product.fromMap(doc.id, doc.data()))
+              .toList();
+          _fallbackProducts.clear();
+          _fallbackProducts.addAll(list);
+          return list;
+        }
+      } catch (_) {}
+    }
+    return _fallbackProducts;
+  }
+
   /// In-place toggle for stock status (binary stock model)
+  @override
   Future<void> toggleStock(String productId, bool inStock) async {
     final index = _fallbackProducts.indexWhere((p) => p.id == productId);
     if (index >= 0) {
@@ -321,6 +377,7 @@ class DatabaseService {
     }
   }
 
+  @override
   Future<void> saveProduct(Product product) async {
     final index = _fallbackProducts.indexWhere((p) => p.id == product.id);
     if (index >= 0) {
@@ -340,6 +397,7 @@ class DatabaseService {
     }
   }
 
+  @override
   Future<void> deleteProduct(String id) async {
     _fallbackProducts.removeWhere((p) => p.id == id);
     _productsController.add(List.unmodifiable(_fallbackProducts));
@@ -352,6 +410,7 @@ class DatabaseService {
   }
 
   /// One-click cloud seed to populate Firestore with sample data
+  @override
   Future<void> seedInitialData() async {
     if (_isFirebaseAvailable && _firestore != null) {
       // 1. Settings
@@ -372,4 +431,3 @@ class DatabaseService {
     }
   }
 }
-

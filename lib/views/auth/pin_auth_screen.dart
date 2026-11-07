@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
-import '../../services/database_service.dart';
 import '../../state/auth_provider.dart';
 import '../widgets/numeric_keypad.dart';
 
@@ -75,18 +75,26 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
       }
     } else {
       // Retailer login (Mobile + 4-Digit PIN)
-      final retailersStream = DatabaseService.instance.getRetailersStream();
-      final retailers = await retailersStream.first;
       final success = await auth.loginRetailer(
         mobile: _mobileController.text.trim(),
         pin: _enteredPin,
-        retailers: retailers,
       );
       if (!success && mounted) {
         setState(() {
           _enteredPin = '';
         });
       }
+    }
+  }
+
+  Future<void> _applyViaWhatsApp(String phone, String storeName) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+    final msg = Uri.encodeComponent(
+      'Hello $storeName, I would like to register my store for wholesale orders. Please provide my 4-digit PIN.',
+    );
+    final url = Uri.parse('https://wa.me/$cleanPhone?text=$msg');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -193,12 +201,18 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const Text(
-                                'B2B Wholesale Portal & Counter Desk',
-                                style: TextStyle(
-                                  color: AppTheme.slate400,
-                                  fontSize: 11,
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    auth.settings.isWooCommerce
+                                        ? 'Connected: WooCommerce REST'
+                                        : 'Connected: Firebase Cloud',
+                                    style: const TextStyle(
+                                      color: AppTheme.slate400,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -384,6 +398,28 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
                             minimumSize: const Size.fromHeight(42),
                           ),
                         ),
+
+                        // Retailer Apply via WhatsApp CTA (matching login-modal.php)
+                        if (_selectedTab == 0) ...[
+                          const SizedBox(height: 12),
+                          Center(
+                            child: TextButton.icon(
+                              onPressed: () => _applyViaWhatsApp(
+                                auth.settings.whatsappPhone,
+                                auth.settings.storeName,
+                              ),
+                              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 14, color: AppTheme.whatsappGreen),
+                              label: const Text(
+                                'Apply for Retailer Account via WhatsApp',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.slate600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

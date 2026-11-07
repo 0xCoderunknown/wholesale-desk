@@ -433,7 +433,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 900),
+            constraints: const BoxConstraints(minWidth: 980),
             child: DataTable(
               headingRowHeight: 38,
               dataRowMinHeight: 46,
@@ -457,6 +457,12 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                 DataColumn(
                   label: Text(
                     'MOQ',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'BOX PACK',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700),
                   ),
                 ),
@@ -504,7 +510,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                     // Product & Brand (NO images rendered for zero-bloat)
                     DataCell(
                       Container(
-                        constraints: const BoxConstraints(maxWidth: 260),
+                        constraints: const BoxConstraints(maxWidth: 240),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -539,6 +545,13 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                     // MOQ
                     DataCell(
                       MoqBadge(moq: p.moq),
+                    ),
+
+                    // Box Pack
+                    DataCell(
+                      p.hasCartonPack
+                          ? BoxPackBadge(cartonPack: p.cartonPack)
+                          : const Text('-', style: TextStyle(color: AppTheme.slate400, fontSize: 12)),
                     ),
 
                     // MRP
@@ -724,7 +737,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Scheme & MOQ Badges
+                // Scheme, MOQ & Box Pack Badges
                 Row(
                   children: [
                     if (p.scheme.trim().isNotEmpty) ...[
@@ -732,6 +745,10 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                       const SizedBox(width: 6),
                     ],
                     MoqBadge(moq: p.moq),
+                    if (p.hasCartonPack) ...[
+                      const SizedBox(width: 6),
+                      BoxPackBadge(cartonPack: p.cartonPack),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 10),

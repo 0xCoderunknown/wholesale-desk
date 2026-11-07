@@ -55,7 +55,8 @@ Any code or proposal that violates these invariants will be rejected:
 | **Framework** | Flutter Web (Target: Chrome / Modern Web) | High-density responsive web target. Clean typography and zero bloat. |
 | **Domain Logic** | Pure Dart Services & Models (`lib/models/`, `lib/services/`) | Business logic, scheme calculations, savings math, and WhatsApp order formatters must remain pure and testable. |
 | **State Management** | Provider (`ChangeNotifierProvider`) | Strictly Provider (`AuthProvider`, `DeskProvider`, `CartProvider`). Do not introduce Bloc, Riverpod, GetX, or global statics. |
-| **Backend & DB** | Cloud Firestore | Collections: `/settings/general`, `/retailers`, `/products`. Field names use `snake_case` or `camelCase` adhering to existing conventions. |
+| **Backend & DB** | Dual Backend (Cloud Firestore or WordPress WooCommerce REST via `WholesaleRepository`) | Collections: `/settings/general`, `/retailers`, `/products`. In WooCommerce mode: `/wp-json/swac/v1/desk/...`. |
+| **Configuration** | Human-editable `config.json` at root + UI Store Settings | Root `config.json` defines store identity, WhatsApp phone, PINs, and Firebase Web keys. Never hardcode phone numbers. |
 | **Messaging** | WhatsApp Deep Links via `url_launcher` | Clean URL-encoded B2B order breakdown. |
 
 ---

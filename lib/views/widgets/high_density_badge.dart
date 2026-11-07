@@ -74,6 +74,48 @@ class MoqBadge extends StatelessWidget {
   }
 }
 
+class BoxPackBadge extends StatelessWidget {
+  final int cartonPack;
+
+  const BoxPackBadge({super.key, required this.cartonPack});
+
+  @override
+  Widget build(BuildContext context) {
+    if (cartonPack <= 0) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF), // Blue 50
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: const Color(0xFF93C5FD), // Blue 300
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.inventory_rounded,
+            size: 11,
+            color: Color(0xFF1D4ED8), // Blue 700
+          ),
+          const SizedBox(width: 3),
+          Text(
+            'Box: $cartonPack',
+            style: const TextStyle(
+              color: Color(0xFF1D4ED8),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class RouteBadge extends StatelessWidget {
   final String route;
 

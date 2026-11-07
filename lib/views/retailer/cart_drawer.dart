@@ -227,6 +227,10 @@ class _CartDrawerState extends State<CartDrawer> {
                                           const SizedBox(width: 6),
                                           SchemeBadge(scheme: p.scheme),
                                         ],
+                                        if (p.hasCartonPack) ...[
+                                          const SizedBox(width: 6),
+                                          BoxPackBadge(cartonPack: p.cartonPack),
+                                        ],
                                       ],
                                     ),
                                   ],
