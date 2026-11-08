@@ -14,6 +14,7 @@ class DeskProvider extends ChangeNotifier {
   bool _isLoading = true;
 
   List<Product> get allProducts => _products;
+  List<Product> get products => _products;
   String get searchQuery => _searchQuery;
   String get selectedBrand => _selectedBrand;
   StockFilterType get stockFilter => _stockFilter;
@@ -121,5 +122,12 @@ class DeskProvider extends ChangeNotifier {
 
   Future<void> seedInitialData() async {
     await _repo.seedInitialData();
+  }
+
+  @visibleForTesting
+  void setProductsForTesting(List<Product> products) {
+    _products = List.from(products);
+    _isLoading = false;
+    notifyListeners();
   }
 }

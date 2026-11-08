@@ -101,4 +101,10 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+
+  @visibleForTesting
+  void setRoleForTesting(UserRole role) {
+    _role = role;
+    notifyListeners();
+  }
 }
