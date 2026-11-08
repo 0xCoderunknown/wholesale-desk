@@ -266,7 +266,12 @@ class DatabaseService implements WholesaleRepository {
         return _fallbackRetailers;
       });
     }
-    return _retailersController.stream;
+    return _buildRetailersStream();
+  }
+
+  Stream<List<Retailer>> _buildRetailersStream() async* {
+    yield List<Retailer>.unmodifiable(_fallbackRetailers);
+    yield* _retailersController.stream;
   }
 
   @override

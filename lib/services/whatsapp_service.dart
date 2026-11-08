@@ -14,6 +14,7 @@ class WhatsAppService {
     required double totalMrp,
     String? orderNotes,
     DateTime? timestamp,
+    String? bookedBy,
   }) {
     final totalUnits = items.fold<int>(0, (sum, item) => sum + item.quantity);
     final buffer = StringBuffer();
@@ -25,9 +26,12 @@ class WhatsAppService {
         ? rawRadix.substring(rawRadix.length - 4)
         : rawRadix.padLeft(4, '0');
 
-    // Compressed 2-Line Identity Header (No heavy emojis for URL safety & ERP compatibility)
+    // Compressed Identity Header (No heavy emojis for URL safety & ERP compatibility)
     buffer.writeln('*ORDER: ${retailer.storeName}$routePart*');
     buffer.writeln('Ref: #$shortRefId | Reg: ${retailer.phone}');
+    if (bookedBy != null && bookedBy.trim().isNotEmpty) {
+      buffer.writeln('Booked by: ${bookedBy.trim()}');
+    }
     buffer.writeln('--------------------------------');
 
     for (int i = 0; i < items.length; i++) {
@@ -67,6 +71,7 @@ class WhatsAppService {
     required double totalMrp,
     String? orderNotes,
     DateTime? timestamp,
+    String? bookedBy,
   }) {
     return buildOrderMessage(
       storeName: storeName,
@@ -76,6 +81,7 @@ class WhatsAppService {
       totalMrp: totalMrp,
       orderNotes: orderNotes,
       timestamp: timestamp,
+      bookedBy: bookedBy,
     );
   }
 
@@ -88,6 +94,7 @@ class WhatsAppService {
     required double totalPtr,
     required double totalMrp,
     String? orderNotes,
+    String? bookedBy,
   }) async {
     final message = buildOrderMessage(
       storeName: storeName,
@@ -96,6 +103,7 @@ class WhatsAppService {
       totalPtr: totalPtr,
       totalMrp: totalMrp,
       orderNotes: orderNotes,
+      bookedBy: bookedBy,
     );
 
     // Clean phone number: remove any non-digit chars

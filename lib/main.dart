@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'config/app_config.dart';
 import 'config/theme.dart';
+import 'models/retailer.dart';
 import 'services/repository_manager.dart';
 import 'state/auth_provider.dart';
 import 'state/cart_provider.dart';
@@ -67,6 +68,19 @@ class AppRootRouter extends StatelessWidget {
 
     if (auth.isRetailer && auth.currentRetailer != null) {
       return RetailerCatalogScreen(retailer: auth.currentRetailer!);
+    }
+
+    if (auth.isSalesman) {
+      final retailer = auth.currentRetailer ??
+          const Retailer(
+            id: 'temp_retailer',
+            storeName: 'Select Retailer',
+            mobile: '',
+            pin: '',
+            route: '',
+            status: 'active',
+          );
+      return RetailerCatalogScreen(retailer: retailer);
     }
 
     if (auth.isAdmin || auth.isStaff) {

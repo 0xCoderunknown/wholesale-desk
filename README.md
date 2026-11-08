@@ -8,14 +8,15 @@ A high-speed, zero-bloat **B2B Wholesale Order & Distributor Desk** built for Fl
 1. **Web-Only Target**: Zero mobile/desktop bloat (`flutter run -d chrome`). High-density Tally/POS responsive layout for both desktop monitors and mobile browsers.
 2. **Binary Stock Model**: Strictly binary stock (`in_stock: true | false`). Customer orders **never** reduce inventory counts; stock status is flipped instantly in-place via green/red pills by Staff or Admin without a "Save" button.
 3. **No Image Overhead**: Zero media/image rendering in the catalog for maximum counter speed and low bandwidth usage.
-4. **WhatsApp B2B Checkout**: Zero payment gateway or checkout server sessions. Itemized, structured B2B orders compile into clean WhatsApp URL messages (`https://wa.me/{phone}?text=...`) launched via `url_launcher`.
+4. **WhatsApp B2B Checkout & Clipboard Fallback**: Zero payment gateway or checkout server sessions. Itemized, structured B2B orders compile into clean WhatsApp URL messages (`https://wa.me/{phone}?text=...`) launched via `url_launcher`, with 2-line order reference watermark and 1-tap clipboard fallback (`[ 📋 Copy ]`).
 5. **Dual Backend Provider (Pluggable Repository)**:
    - **Cloud Firestore**: Serverless, realtime Firestore collections (`/settings/general`, `/retailers`, `/products`).
    - **WordPress + WooCommerce**: Direct REST API integration with `woocommerce-whatsapp-commerce` (`/wp-json/swac/v1/`).
 6. **Role-Based 4-Digit PIN Access**:
    - **Admin (Master PIN `5075`)**: Full Distributor Desk with catalog management, in-place rate/scheme/MOQ/box size editing, stock toggle, Retailer PIN management, and Store Settings.
    - **Staff (Staff PIN `1122`)**: Restricted Counter Desk. Can search catalog with 0ms latency; **only** permitted action is toggling `in_stock` (true/false). Rates and settings are hidden/read-only.
-   - **Retailer (Mobile + 4-Digit PIN, e.g. `9876543210` / `1234`)**: Authenticates into verified Retailer Catalog with store name & route banner, in-memory instant search, MOQ-enforcing quantity steppers, live savings calculator, and dedicated Wholesale Order Desk.
+   - **Salesman (Salesman PIN `3344`)**: Field Order Booker. Route & beat dropdown filter, 0ms searchable shop selector with Cart Isolation Guard, and WhatsApp watermark tagging (`Booked by: Salesman`).
+   - **Retailer (Mobile + 4-Digit PIN, e.g. `9876543210` / `1234`)**: Authenticates into verified Retailer Catalog with read-only ERP ledger profile card, in-memory instant search, MOQ-enforcing quantity steppers, live savings calculator, and dedicated Wholesale Order Desk.
 
 ---
 
@@ -29,6 +30,7 @@ To prevent hardcoding of business details (such as phone numbers or store identi
   "whatsapp_phone": "917002796068",
   "master_pin": "5075",
   "staff_pin": "1122",
+  "salesman_pin": "3344",
   "backend_type": "firebase",
   "woocommerce_base_url": "https://mywholesalestore.com",
   "firebase": {
@@ -70,6 +72,7 @@ To prevent hardcoding of business details (such as phone numbers or store identi
   "whatsapp_phone": "917002796068",
   "master_pin": "5075",
   "staff_pin": "1122",
+  "salesman_pin": "3344",
   "backend_type": "firebase",
   "wp_base_url": ""
 }
@@ -113,6 +116,7 @@ Experience the high-speed B2B Wholesale Desk live in your browser:
 ### Test Credentials (1-Click Chips on Login):
 - **Admin Desk (Master)**: PIN `5075` — full catalog CRUD, schemes, retailer PIN management, and 1-click `[⚡ Reset Demo]`
 - **Staff Counter (Restricted)**: PIN `1122` — 0ms catalog search and in-place stock toggle pills
+- **Field Salesman**: PIN `3344` — route/beat dropdown, 0ms shop picker with cart isolation, and WhatsApp watermark
 - **Retailer Order Desk**: Mobile `9876543210`, PIN `1234` — high-density catalog, MOQ steppers, and dedicated Wholesale Order & Dispatch Desk
 
 ---

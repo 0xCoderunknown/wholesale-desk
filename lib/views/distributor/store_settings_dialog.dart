@@ -19,6 +19,7 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
   late TextEditingController _phoneController;
   late TextEditingController _masterPinController;
   late TextEditingController _staffPinController;
+  late TextEditingController _salesmanPinController;
   late TextEditingController _wpUrlController;
   late String _backendType; // 'firebase' | 'woocommerce'
   late bool _enforceMoq;
@@ -32,6 +33,7 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
     _phoneController = TextEditingController(text: widget.settings.whatsappPhone);
     _masterPinController = TextEditingController(text: widget.settings.masterPin);
     _staffPinController = TextEditingController(text: widget.settings.staffPin);
+    _salesmanPinController = TextEditingController(text: widget.settings.salesmanPin);
     _wpUrlController = TextEditingController(text: widget.settings.wpBaseUrl);
     _backendType = widget.settings.backendType;
     _enforceMoq = widget.settings.enforceMoq;
@@ -43,6 +45,7 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
     _phoneController.dispose();
     _masterPinController.dispose();
     _staffPinController.dispose();
+    _salesmanPinController.dispose();
     _wpUrlController.dispose();
     super.dispose();
   }
@@ -56,6 +59,7 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
       whatsappPhone: _phoneController.text.replaceAll(RegExp(r'\D'), '').trim(),
       masterPin: _masterPinController.text.trim(),
       staffPin: _staffPinController.text.trim(),
+      salesmanPin: _salesmanPinController.text.trim(),
       backendType: _backendType,
       wpBaseUrl: _wpUrlController.text.trim(),
       enforceMoq: _enforceMoq,
@@ -313,14 +317,14 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
                 ),
                 const SizedBox(height: 12),
 
-                // Master PIN & Staff PIN
+                // Master PIN, Staff PIN, and Salesman PIN
                 Row(
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Master PIN (Admin) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                          const Text('Master PIN *', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
                           TextFormField(
                             controller: _masterPinController,
@@ -332,12 +336,12 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Staff PIN (Counter) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                          const Text('Staff PIN *', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
                           TextFormField(
                             controller: _staffPinController,
@@ -345,6 +349,23 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
                             maxLength: 4,
                             validator: (v) => v == null || v.trim().length != 4 ? '4 digits' : null,
                             decoration: const InputDecoration(counterText: '', hintText: '1122'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Salesman PIN *', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          TextFormField(
+                            controller: _salesmanPinController,
+                            keyboardType: TextInputType.number,
+                            maxLength: 4,
+                            validator: (v) => v == null || v.trim().length != 4 ? '4 digits' : null,
+                            decoration: const InputDecoration(counterText: '', hintText: '3344'),
                           ),
                         ],
                       ),

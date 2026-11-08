@@ -8,6 +8,7 @@ enum UserRole {
   admin,
   staff,
   retailer,
+  salesman,
 }
 
 class AuthProvider extends ChangeNotifier {
@@ -15,12 +16,14 @@ class AuthProvider extends ChangeNotifier {
 
   UserRole _role = UserRole.unauthenticated;
   Retailer? _currentRetailer;
+  String? _activeSalesmanName;
   AppSettings _settings = AppSettings.defaults();
   String? _errorMessage;
   bool _isLoading = false;
 
   UserRole get role => _role;
   Retailer? get currentRetailer => _currentRetailer;
+  String? get activeSalesmanName => _activeSalesmanName;
   AppSettings get settings => _settings;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
@@ -29,6 +32,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isAdmin => _role == UserRole.admin;
   bool get isStaff => _role == UserRole.staff;
   bool get isRetailer => _role == UserRole.retailer;
+  bool get isSalesman => _role == UserRole.salesman;
 
   AuthProvider({RepositoryManager? repository}) : _repo = repository ?? RepositoryManager.instance {
     _init();
@@ -60,8 +64,22 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = false;
     if (result['success'] == true) {
       final roleStr = result['role']?.toString();
-      _role = (roleStr == 'owner' || roleStr == 'admin') ? UserRole.admin : UserRole.staff;
-      _currentRetailer = null;
+      if (roleStr == 'owner' || roleStr == 'admin') {
+        _role = UserRole.admin;
+        _currentRetailer = null;
+        _activeSalesmanName = null;
+      } else if (roleStr == 'salesman') {
+        _role = UserRole.salesman;
+        _activeSalesmanName = 'Salesman';
+        final retailers = await _repo.getRetailers();
+        if (retailers.isNotEmpty) {
+          _currentRetailer = retailers.firstWhere((r) => r.isActive, orElse: () => retailers.first);
+        }
+      } else {
+        _role = UserRole.staff;
+        _currentRetailer = null;
+        _activeSalesmanName = null;
+      }
       notifyListeners();
       return true;
     } else {
@@ -69,6 +87,18 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  /// Sets custom salesman name/label for the active session
+  void setSalesmanName(String name) {
+    _activeSalesmanName = name;
+    notifyListeners();
+  }
+
+  /// Switches active retailer being booked by the salesman without losing session
+  void switchSalesmanRetailer(Retailer retailer) {
+    _currentRetailer = retailer;
+    notifyListeners();
   }
 
   /// Retailer Authentication (Mobile + 4-digit PIN)
@@ -98,6 +128,7 @@ class AuthProvider extends ChangeNotifier {
   void logout() {
     _role = UserRole.unauthenticated;
     _currentRetailer = null;
+    _activeSalesmanName = null;
     _errorMessage = null;
     notifyListeners();
   }

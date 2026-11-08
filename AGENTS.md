@@ -26,11 +26,12 @@ Any code or proposal that violates these invariants will be rejected:
    - Cart checkout compiles an itemized, cleanly formatted B2B order string directly into a WhatsApp URL (`https://wa.me/{phone}?text=...`) and dispatches via `url_launcher`.
    - Calculations (MRP, PTR/Rate, Scheme savings, Total Bill) must be mathematically verified in domain logic before string compilation.
 
-4. **3-Tier Role Guarding & PIN Authentication:**
+4. **4-Tier Role Guarding & PIN Authentication:**
    - **Admin (Master PIN `5075` / dynamic from `/settings/general`):** Full Distributor Desk access (product catalog CRUD, rate/scheme/MOQ edits, retailer PIN management, store settings).
    - **Staff (Staff PIN `1122` / dynamic from `/settings/general`):** High-speed counter assistant. Allowed **only** to toggle `in_stock` (true/false) and search items. Rates, scheme modifications, retailer credentials, and settings remain strictly hidden and immutable.
-   - **Retailer (Mobile + 4-Digit PIN):** Authenticates against `/retailers/{id}`. Views authenticated catalog with route badge, applies MOQ quantity steppers, reviews savings, and submits WhatsApp orders.
-   - Never bypass role guards or expose admin tools to Staff or Retailer views.
+   - **Salesman (Salesman PIN `3344` / dynamic from `/settings/general`):** High-speed field order booker. Operates the authenticated catalog with a sticky beat/route filter (`SalesmanRouteBar`), 0ms shop picker, Cart Isolation Guard, and WhatsApp order watermarking (`Booked by: Salesman`).
+   - **Retailer (Mobile + 4-Digit PIN):** Authenticates against `/retailers/{id}`. Views authenticated catalog with immutable ERP ledger profile card, applies MOQ quantity steppers, reviews savings, and submits WhatsApp orders with clipboard copy fallback.
+   - Never bypass role guards or expose admin tools to Staff, Salesman, or Retailer views.
 
 5. **Responsive Counter & Mobile Layout Standards:**
    - **Counter Desktop Monitors (1080p / 1366x768):** High-density split panels, compact toolbars, keyboard-friendly search, and zero vertical margin waste.
@@ -86,6 +87,7 @@ lib/
 │   ├── auth/         -> PIN keypad login and session guards
 │   ├── distributor/  -> Admin distributor desk, product edit, retailer management, store settings
 │   ├── retailer/     -> Retailer catalog, MOQ steppers, slide-out cart drawer
+│   ├── salesman/     -> Sticky beat/route switcher bar and shop picker with cart isolation
 │   └── widgets/      -> Shared high-density widgets (badges, stock pill, numeric keypad)
 test/             -> Automated unit and widget tests
 ```

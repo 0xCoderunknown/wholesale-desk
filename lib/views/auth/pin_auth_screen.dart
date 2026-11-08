@@ -114,6 +114,14 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
     _handleLogin();
   }
 
+  void _quickFillSalesman() {
+    setState(() {
+      _selectedTab = 1;
+      _enteredPin = '3344';
+    });
+    _handleLogin();
+  }
+
   void _quickFillRetailer() {
     setState(() {
       _selectedTab = 0;
@@ -316,7 +324,7 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
                         ] else ...[
                           const Center(
                             child: Text(
-                              'Enter 4-Digit Master / Staff Desk PIN:',
+                              'Enter 4-Digit Master / Staff / Salesman PIN:',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -465,6 +473,11 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
                               label: 'Staff (PIN 1122)',
                               color: AppTheme.slate700,
                               onTap: _quickFillStaff,
+                            ),
+                            _buildQuickChip(
+                              label: 'Salesman (PIN 3344)',
+                              color: const Color(0xFFD97706),
+                              onTap: _quickFillSalesman,
                             ),
                             _buildQuickChip(
                               label: 'Retailer (PIN 1234)',

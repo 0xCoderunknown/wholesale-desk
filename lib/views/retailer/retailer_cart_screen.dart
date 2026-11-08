@@ -46,6 +46,12 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
       _isSending = true;
     });
 
+    final bookedBy = auth.isSalesman
+        ? (auth.activeSalesmanName?.isNotEmpty == true
+            ? '${auth.activeSalesmanName} (Salesman)'
+            : 'Salesman')
+        : null;
+
     final success = await WhatsAppService.sendWholesaleOrder(
       targetPhone: auth.settings.whatsappPhone,
       storeName: auth.settings.storeName,
@@ -54,6 +60,7 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
       totalPtr: cart.subtotalPtr,
       totalMrp: cart.totalMrp,
       orderNotes: _notesController.text.trim(),
+      bookedBy: bookedBy,
     );
 
     if (mounted) {
@@ -86,6 +93,12 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
 
     if (cart.items.isEmpty) return;
 
+    final bookedBy = auth.isSalesman
+        ? (auth.activeSalesmanName?.isNotEmpty == true
+            ? '${auth.activeSalesmanName} (Salesman)'
+            : 'Salesman')
+        : null;
+
     final message = WhatsAppService.buildOrderMessage(
       storeName: auth.settings.storeName,
       retailer: widget.retailer,
@@ -93,6 +106,7 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
       totalPtr: cart.subtotalPtr,
       totalMrp: cart.totalMrp,
       orderNotes: _notesController.text.trim(),
+      bookedBy: bookedBy,
     );
 
     await Clipboard.setData(ClipboardData(text: message));

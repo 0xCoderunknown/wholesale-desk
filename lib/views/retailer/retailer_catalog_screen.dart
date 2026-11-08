@@ -12,6 +12,7 @@ import 'components/catalog_card_grid.dart';
 import 'components/catalog_data_table.dart';
 import 'components/catalog_filter_toolbar.dart';
 import 'components/retailer_profile_dialog.dart';
+import '../salesman/salesman_route_bar.dart';
 
 class RetailerCatalogScreen extends StatefulWidget {
   final Retailer retailer;
@@ -67,10 +68,10 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
     }
   }
 
-  void _openCartDesk(BuildContext context) {
+  void _openCartDesk(BuildContext context, Retailer activeRetailer) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => RetailerCartScreen(retailer: widget.retailer),
+        builder: (_) => RetailerCartScreen(retailer: activeRetailer),
       ),
     );
   }
@@ -79,6 +80,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final desk = context.watch<DeskProvider>();
+    final activeRetailer = auth.currentRetailer ?? widget.retailer;
     final isMobile = AppBreakpoints.isMobile(context);
     final isDesktop = AppBreakpoints.isDesktop(context);
     final hasMultiColumnCatalog = !isMobile;
@@ -92,7 +94,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
           : Consumer<CartProvider>(
               builder: (context, cart, _) {
                 return FloatingActionButton.extended(
-                  onPressed: () => _openCartDesk(context),
+                  onPressed: () => _openCartDesk(context, activeRetailer),
                   backgroundColor: cart.itemCount > 0 ? AppTheme.whatsappGreen : AppTheme.slate800,
                   foregroundColor: Colors.white,
                   elevation: 5,
@@ -149,7 +151,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                     child: Tooltip(
                       message: 'View Store Profile & Ledger',
                       child: InkWell(
-                        onTap: () => RetailerProfileDialog.show(context, widget.retailer, auth),
+                        onTap: () => RetailerProfileDialog.show(context, activeRetailer, auth),
                         borderRadius: BorderRadius.circular(6),
                         child: Container(
                           height: 36,
@@ -165,13 +167,13 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                             children: [
                               const Icon(Icons.verified_user_rounded, size: 15, color: AppTheme.primaryLight),
                               const SizedBox(width: 6),
-                              const Text(
-                                'Retailer: ',
-                                style: TextStyle(fontSize: 12, color: AppTheme.slate400),
+                              Text(
+                                auth.isSalesman ? 'Shop: ' : 'Retailer: ',
+                                style: const TextStyle(fontSize: 12, color: AppTheme.slate400),
                               ),
                               Flexible(
                                 child: Text(
-                                  widget.retailer.storeName,
+                                  activeRetailer.storeName,
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
@@ -201,14 +203,16 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: InkWell(
-                      onTap: () => RetailerProfileDialog.show(context, widget.retailer, auth),
+                      onTap: () => RetailerProfileDialog.show(context, activeRetailer, auth),
                       borderRadius: BorderRadius.circular(6),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            auth.settings.storeName,
+                            auth.isSalesman
+                                ? (auth.activeSalesmanName != null ? 'Field Salesman: ${auth.activeSalesmanName}' : 'Field Salesman Mode')
+                                : auth.settings.storeName,
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -218,13 +222,13 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                           ),
                           Row(
                             children: [
-                              const Text(
-                                'Verified: ',
-                                style: TextStyle(fontSize: 11, color: AppTheme.slate400),
+                              Text(
+                                auth.isSalesman ? 'Booking: ' : 'Verified: ',
+                                style: const TextStyle(fontSize: 11, color: AppTheme.slate400),
                               ),
                               Flexible(
                                 child: Text(
-                                  widget.retailer.storeName,
+                                  activeRetailer.storeName,
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
@@ -233,11 +237,11 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (isMobile && widget.retailer.route.isNotEmpty) ...[
+                              if (isMobile && activeRetailer.route.isNotEmpty) ...[
                                 const SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
-                                    '• ${widget.retailer.route}',
+                                    '• ${activeRetailer.route}',
                                     style: const TextStyle(
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w600,
@@ -257,7 +261,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
               ),
         actions: [
           // 3. Route Badge Pill on tablet/desktop (Height 36)
-          if (!isMobile && widget.retailer.route.isNotEmpty) ...[
+          if (!isMobile && activeRetailer.route.isNotEmpty) ...[
             Container(
               height: 36,
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -273,7 +277,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                   const Icon(Icons.location_on_outlined, size: 14, color: AppTheme.slate400),
                   const SizedBox(width: 5),
                   Text(
-                    widget.retailer.route,
+                    activeRetailer.route,
                     style: const TextStyle(fontSize: 12, color: AppTheme.slate200, fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -289,7 +293,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                 return SizedBox(
                   height: 36,
                   child: ElevatedButton.icon(
-                    onPressed: () => _openCartDesk(context),
+                    onPressed: () => _openCartDesk(context, activeRetailer),
                     icon: Badge(
                       label: Text('${cart.itemCount}'),
                       isLabelVisible: cart.itemCount > 0,
@@ -322,7 +326,7 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
           IconButton(
             icon: const Icon(Icons.account_circle_outlined, size: 21, color: AppTheme.slate300),
             tooltip: 'Store Profile & Ledger',
-            onPressed: () => RetailerProfileDialog.show(context, widget.retailer, auth),
+            onPressed: () => RetailerProfileDialog.show(context, activeRetailer, auth),
           ),
 
           // 5. Logout / Exit Button (36px on tablet/desktop, icon on mobile, both guarded by _confirmLogout)
@@ -355,6 +359,10 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
       ),
       body: Column(
         children: [
+          // Persistent Route & Shop Switcher Bar (44px) in Field Salesman Mode
+          if (auth.isSalesman)
+            const SalesmanRouteBar(),
+
           // Isolated Search & Filter Bar Component
           CatalogFilterToolbar(
             searchController: _searchController,

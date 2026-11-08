@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.0] - 2026-11-08
+
+### Added
+- **Field Salesman Role (`UserRole.salesman`)**: Dedicated in-memory ordering mode for field order bookers (PIN: `3344` configurable in Store Settings). Reuses the high-density retailer catalog with instantaneous shop switching and zero backend bloat.
+- **Sticky 44px Salesman Route Bar (`SalesmanRouteBar`)**:
+  - Embedded beneath the AppBar in salesman mode with a Route filter dropdown (`📍 All Routes` or specific beats) and 1-tap Shop selector bottom sheet.
+  - Sub-millisecond in-memory search across store name, phone, and route.
+- **Cart Isolation Guard**:
+  - Tapping a new shop switches immediately when the cart is empty.
+  - When the cart contains items, prompts confirmation (`"Switch Active Shop? Active Cart has items for [Shop Name]"`) to prevent cross-retailer order contamination.
+- **Salesman Order Watermark**: Compiles `Booked by: Salesman Name (Salesman)` into the WhatsApp order header line 3, while preserving clean direct order formatting for self-ordering retailers.
+
+---
+
 ## [1.7.0] - 2026-11-08
 
 ### Added

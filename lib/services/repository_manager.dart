@@ -71,6 +71,8 @@ class RepositoryManager implements WholesaleRepository {
       return {'success': true, 'role': 'owner'};
     } else if (trimmedPin == _settings.staffPin.trim()) {
       return {'success': true, 'role': 'staff'};
+    } else if (trimmedPin == _settings.salesmanPin.trim()) {
+      return {'success': true, 'role': 'salesman'};
     } else {
       return {'success': false, 'message': 'Invalid 4-digit Desk PIN'};
     }
