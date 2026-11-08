@@ -16,6 +16,7 @@ class Retailer {
   });
 
   bool get isActive => status.toLowerCase() == 'active';
+  String get phone => mobile;
 
   factory Retailer.fromMap(String id, Map<String, dynamic> map) {
     return Retailer(

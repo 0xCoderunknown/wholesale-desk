@@ -254,11 +254,12 @@ void main() {
 
       // Verify Compressed WhatsApp Spec format
       expect(message, contains('*ORDER: Guwahati Kirana Store (Fancy Bazaar)*'));
+      expect(message, contains('Ref: #'));
+      expect(message, contains('Reg: 9876543210'));
       expect(message, contains('--------------------------------'));
       expect(message, contains('1. Tata Tea Gold 500g'));
       expect(message, contains('20 pcs (+2 Free) @ ₹250.00 = ₹5,000.00'));
-      expect(message, contains('*Total Payable: ₹5,000.00*'));
-      expect(message, contains('*Items: 1 (20 units)*'));
+      expect(message, contains('*Total: ₹5,000.00 (20 units)*'));
     });
   });
 

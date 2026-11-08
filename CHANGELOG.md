@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.7.0] - 2026-11-08
 
 ### Added
+- **Retailer Profile & ERP Ledger Guardrails**: Added read-only `RetailerProfileDialog` displaying immutable party ledger credentials (Store Name, Party Code, Assigned Route, Registered Phone) with `🔒 Managed by Distributor ERP` lock indicator, distributor dispute contact footer, and `[ Sign Out / Switch Store ]` counter session handoff.
+- **WhatsApp Order Identity Watermark**: Strict 2-line header in `WhatsAppService.buildOrderMessage` embedding a 4-character reference hash (`Ref: #XXXX`) and registered phone (`Reg: XXXXXXXXXX`) without emoji clutter for instant ERP ledger matching.
+- **Order Text Clipboard Fallback**: Added a secondary `[ 📋 Copy ]` button adjacent to the WhatsApp CTA across mobile sticky bar and desktop valuation dock, enabling instant copy-paste fallback for desktop or web environments.
 - **Compressed WhatsApp Order Payload**: Ultra-compact, clean plaintext format (`*ORDER: Store (Route)*`, itemized lines with `@ PTR = ₹Total`, and summary grand totals) preventing URL query string truncation on large multi-item orders.
 - **1-Tap Scheme Undo ([REMOVE])**: Applied schemes in catalog listings can be reversed in 1 tap with the red `[REMOVE]` button, restoring base quantities or clearing the lot.
 - **Quick-Buy 1 Box Action in Desktop Table**: Added adjacent `[1 Box (N)]` quick-add button in the desktop catalog table for instant carton ordering.

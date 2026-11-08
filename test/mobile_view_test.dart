@@ -12,6 +12,7 @@ import 'package:wholesale_desk/views/retailer/retailer_cart_screen.dart';
 import 'package:wholesale_desk/views/retailer/components/catalog_card_grid.dart';
 import 'package:wholesale_desk/views/retailer/components/catalog_filter_toolbar.dart';
 import 'package:wholesale_desk/views/retailer/retailer_catalog_screen.dart';
+import 'package:wholesale_desk/views/retailer/components/retailer_profile_dialog.dart';
 import 'package:wholesale_desk/views/widgets/catalog_quantity_stepper.dart';
 import 'package:wholesale_desk/views/widgets/scheme_inline_strip.dart';
 
@@ -617,6 +618,81 @@ void main() {
       await tester.pumpAndSettle();
       expect(cart.items.isEmpty, isTrue);
       expect(find.text('Your wholesale cart is empty'), findsOneWidget);
+    });
+  });
+
+  group('Retailer Profile Guardrails & Account State Control', () {
+    final sampleRetailer = Retailer(
+      id: 'ret_1',
+      storeName: 'Guwahati General Store',
+      mobile: '9876543210',
+      pin: '1234',
+      route: 'North Corridor',
+      status: 'active',
+    );
+
+    testWidgets('Opens read-only Profile & Ledger Guardrail with zero editable inputs',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final auth = AuthProvider();
+      final desk = DeskProvider();
+      final cart = CartProvider();
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          authProvider: auth,
+          deskProvider: desk,
+          cartProvider: cart,
+          surfaceSize: const Size(390, 844),
+          child: RetailerCatalogScreen(retailer: sampleRetailer),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap Store Profile & Ledger action
+      await tester.tap(find.byTooltip('Store Profile & Ledger'));
+      await tester.pumpAndSettle();
+
+      // Verify read-only modal header and lock badge
+      expect(find.text('Store Profile & Ledger'), findsOneWidget);
+      expect(find.text('🔒 Managed by Distributor ERP'), findsOneWidget);
+
+      // Verify read-only ledger details
+      expect(find.text('Store Name:'), findsOneWidget);
+      expect(find.text('Guwahati General Store'), findsWidgets);
+      expect(find.text('Party Code:'), findsOneWidget);
+      expect(find.text('Assigned Route:'), findsOneWidget);
+      expect(find.text('North Corridor'), findsWidgets);
+      expect(find.text('Registered Phone:'), findsOneWidget);
+      expect(find.text('9876543210'), findsOneWidget);
+
+      // Verify dispute / help footer
+      expect(find.textContaining('To update store address, route, or reset PIN, contact your distributor desk'), findsOneWidget);
+
+      // Verify strictly NO input fields exist inside the profile view
+      expect(
+        find.descendant(
+          of: find.byType(RetailerProfileDialog),
+          matching: find.byType(TextField),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(RetailerProfileDialog),
+          matching: find.byType(TextFormField),
+        ),
+        findsNothing,
+      );
+
+      // Verify Sign Out / Switch Store button logs out
+      expect(find.text('Sign Out / Switch Store'), findsOneWidget);
+      await tester.tap(find.text('Sign Out / Switch Store'));
+      await tester.pumpAndSettle();
+
+      expect(auth.isAuthenticated, isFalse);
     });
   });
 }

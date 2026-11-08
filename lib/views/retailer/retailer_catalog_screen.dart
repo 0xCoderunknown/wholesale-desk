@@ -11,6 +11,7 @@ import 'retailer_cart_screen.dart';
 import 'components/catalog_card_grid.dart';
 import 'components/catalog_data_table.dart';
 import 'components/catalog_filter_toolbar.dart';
+import 'components/retailer_profile_dialog.dart';
 
 class RetailerCatalogScreen extends StatefulWidget {
   final Retailer retailer;
@@ -143,38 +144,45 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                   ),
                   const SizedBox(width: 8),
 
-                  // 2. Retailer Name Pill (Height 36)
+                  // 2. Retailer Name Pill (Height 36, Tappable for Profile & Ledger details)
                   Flexible(
-                    child: Container(
-                      height: 36,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.slate800,
+                    child: Tooltip(
+                      message: 'View Store Profile & Ledger',
+                      child: InkWell(
+                        onTap: () => RetailerProfileDialog.show(context, widget.retailer, auth),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppTheme.slate700),
-                      ),
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.verified_user_rounded, size: 15, color: AppTheme.primaryLight),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'Retailer: ',
-                            style: TextStyle(fontSize: 12, color: AppTheme.slate400),
+                        child: Container(
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.slate800,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppTheme.slate700),
                           ),
-                          Flexible(
-                            child: Text(
-                              widget.retailer.storeName,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                          alignment: Alignment.center,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.verified_user_rounded, size: 15, color: AppTheme.primaryLight),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Retailer: ',
+                                style: TextStyle(fontSize: 12, color: AppTheme.slate400),
                               ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              Flexible(
+                                child: Text(
+                                  widget.retailer.storeName,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -192,53 +200,57 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          auth.settings.storeName,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                    child: InkWell(
+                      onTap: () => RetailerProfileDialog.show(context, widget.retailer, auth),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            auth.settings.storeName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Row(
-                          children: [
-                            const Text(
-                              'Verified: ',
-                              style: TextStyle(fontSize: 11, color: AppTheme.slate400),
-                            ),
-                            Flexible(
-                              child: Text(
-                                widget.retailer.storeName,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primaryLight,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              const Text(
+                                'Verified: ',
+                                style: TextStyle(fontSize: 11, color: AppTheme.slate400),
                               ),
-                            ),
-                            if (isMobile && widget.retailer.route.isNotEmpty) ...[
-                              const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
-                                  '• ${widget.retailer.route}',
+                                  widget.retailer.storeName,
                                   style: const TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.slate300,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primaryLight,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              if (isMobile && widget.retailer.route.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    '• ${widget.retailer.route}',
+                                    style: const TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.slate300,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -305,6 +317,13 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
             ),
             const SizedBox(width: 8),
           ],
+
+          // Store Profile & Ledger Guardrail Action
+          IconButton(
+            icon: const Icon(Icons.account_circle_outlined, size: 21, color: AppTheme.slate300),
+            tooltip: 'Store Profile & Ledger',
+            onPressed: () => RetailerProfileDialog.show(context, widget.retailer, auth),
+          ),
 
           // 5. Logout / Exit Button (36px on tablet/desktop, icon on mobile, both guarded by _confirmLogout)
           if (!isMobile)

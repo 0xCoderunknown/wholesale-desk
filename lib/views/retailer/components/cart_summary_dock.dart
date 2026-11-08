@@ -12,6 +12,7 @@ class CartSummaryDock extends StatelessWidget {
   final TextEditingController notesController;
   final bool isSending;
   final VoidCallback onSendOrder;
+  final VoidCallback? onCopyOrder;
   final bool showCheckoutButton;
 
   const CartSummaryDock({
@@ -21,6 +22,7 @@ class CartSummaryDock extends StatelessWidget {
     required this.notesController,
     required this.isSending,
     required this.onSendOrder,
+    this.onCopyOrder,
     this.showCheckoutButton = true,
   });
 
@@ -122,27 +124,47 @@ class CartSummaryDock extends StatelessWidget {
           if (showCheckoutButton) ...[
             const SizedBox(height: 14),
 
-            // Primary WhatsApp CTA
-            ElevatedButton.icon(
-              onPressed: isSending ? null : onSendOrder,
-              icon: isSending
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('🚀', style: TextStyle(fontSize: 15)),
-              label: Text(
-                isSending ? 'Launching WhatsApp...' : 'Send Order on WhatsApp',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.whatsappGreen,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+            // Action Row: [ 📋 Copy ] + [ 🚀 Send Order on WhatsApp ]
+            Row(
+              children: [
+                if (onCopyOrder != null) ...[
+                  OutlinedButton.icon(
+                    onPressed: onCopyOrder,
+                    icon: const Icon(Icons.copy_rounded, size: 15),
+                    label: const Text('Copy', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.slate700,
+                      side: const BorderSide(color: AppTheme.slate300),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: isSending ? null : onSendOrder,
+                    icon: isSending
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('🚀', style: TextStyle(fontSize: 15)),
+                    label: Text(
+                      isSending ? 'Launching WhatsApp...' : 'Send Order on WhatsApp',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.whatsappGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             const Center(

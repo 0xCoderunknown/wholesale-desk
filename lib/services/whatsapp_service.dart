@@ -19,7 +19,15 @@ class WhatsAppService {
     final buffer = StringBuffer();
 
     final routePart = retailer.route.isNotEmpty ? ' (${retailer.route})' : '';
+    final ts = timestamp ?? DateTime.now();
+    final rawRadix = ts.millisecondsSinceEpoch.toRadixString(36).toUpperCase();
+    final shortRefId = rawRadix.length >= 4
+        ? rawRadix.substring(rawRadix.length - 4)
+        : rawRadix.padLeft(4, '0');
+
+    // Compressed 2-Line Identity Header (No heavy emojis for URL safety & ERP compatibility)
     buffer.writeln('*ORDER: ${retailer.storeName}$routePart*');
+    buffer.writeln('Ref: #$shortRefId | Reg: ${retailer.phone}');
     buffer.writeln('--------------------------------');
 
     for (int i = 0; i < items.length; i++) {
@@ -41,8 +49,7 @@ class WhatsAppService {
     }
 
     buffer.writeln('--------------------------------');
-    buffer.writeln('*Total Payable: ${AppFormatters.formatCurrency(totalPtr)}*');
-    buffer.writeln('*Items: ${items.length} ($totalUnits units)*');
+    buffer.writeln('*Total: ${AppFormatters.formatCurrency(totalPtr)} ($totalUnits units)*');
 
     if (orderNotes != null && orderNotes.trim().isNotEmpty) {
       buffer.writeln('Note: ${orderNotes.trim()}');

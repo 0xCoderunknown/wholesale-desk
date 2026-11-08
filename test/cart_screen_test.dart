@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:wholesale_desk/config/theme.dart';
@@ -36,6 +37,18 @@ Widget buildTestableWidget({
 }
 
 void main() {
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          return null;
+        }
+        return null;
+      },
+    );
+  });
+
   final retailer = Retailer(
     id: 'ret_101',
     storeName: 'Guwahati Supermart',
@@ -114,11 +127,12 @@ void main() {
       );
 
       expect(message, contains('*ORDER: Guwahati Supermart (Central Market)*'));
+      expect(message, contains('Ref: #'));
+      expect(message, contains('Reg: 9876543210'));
       expect(message, contains('--------------------------------'));
       expect(message, contains('1. Surf Excel Detergent Powder 1kg'));
       expect(message, contains('48 pcs (+4 Free) @ ₹150.00 = ₹7,200.00'));
-      expect(message, contains('*Total Payable: ₹7,200.00*'));
-      expect(message, contains('*Items: 1 (48 units)*'));
+      expect(message, contains('*Total: ₹7,200.00 (48 units)*'));
       expect(message, contains('Note: Deliver by 10 AM sharp via tempo'));
     });
   });
@@ -168,7 +182,15 @@ void main() {
       expect(find.text('Total Items:'), findsOneWidget);
       expect(find.text('1 (9 billed)'), findsOneWidget);
       expect(find.text('Total Payable (PTR):'), findsOneWidget);
+      expect(find.text('Copy'), findsOneWidget);
       expect(find.text('Send Order on WhatsApp'), findsOneWidget);
+
+      // Verify Copy Order fallback button copies and shows snackbar
+      await tester.tap(find.text('Copy'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Order text copied to clipboard!'), findsOneWidget);
+      await tester.pumpAndSettle(); // Settle remaining snackbar animations
 
       // Verify Clear Cart confirmation dialog
       await tester.tap(find.text('Clear'));
@@ -205,10 +227,18 @@ void main() {
       expect(find.text('PTR: ₹150.00'), findsOneWidget);
       expect(find.text('₹3,600.00'), findsWidgets);
 
-      // Sticky bottom action dock is the sole checkout button (inner CTA removed)
+      // Sticky bottom action dock has Copy fallback and WhatsApp CTA
+      expect(find.text('Copy'), findsOneWidget);
       expect(find.text('Send on WhatsApp'), findsOneWidget);
       expect(find.text('Send Order on WhatsApp'), findsNothing);
       expect(find.text('Total Payable'), findsWidgets);
+
+      // Verify Copy on mobile triggers clipboard copy and snackbar
+      await tester.tap(find.text('Copy'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Order text copied to clipboard!'), findsOneWidget);
+      await tester.pumpAndSettle();
 
       // Verify ListView bottom padding is 90px for scroll safety above sticky bottom bar
       final listView = tester.widget<ListView>(find.byType(ListView));

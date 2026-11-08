@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../config/formatters.dart';
 import '../../config/theme.dart';
@@ -10,6 +11,7 @@ import 'components/cart_invoice_table.dart';
 import 'components/cart_mobile_card.dart';
 import 'components/cart_scheme_maximizer.dart';
 import 'components/cart_summary_dock.dart';
+import 'components/retailer_profile_dialog.dart';
 
 /// Streamlined Wholesale Order & Dispatch Desk.
 /// Enforces minimal top navigation, single-line identity header,
@@ -74,6 +76,37 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _handleCopyOrderText(BuildContext context) async {
+    final cart = context.read<CartProvider>();
+    final auth = context.read<AuthProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    if (cart.items.isEmpty) return;
+
+    final message = WhatsAppService.buildOrderMessage(
+      storeName: auth.settings.storeName,
+      retailer: widget.retailer,
+      items: cart.items,
+      totalPtr: cart.subtotalPtr,
+      totalMrp: cart.totalMrp,
+      orderNotes: _notesController.text.trim(),
+    );
+
+    await Clipboard.setData(ClipboardData(text: message));
+
+    if (mounted) {
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Order text copied to clipboard!'),
+          backgroundColor: AppTheme.slate800,
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -178,22 +211,25 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
           ? _buildEmptyState(context)
           : Column(
               children: [
-                // Single Identity Header (No phone number)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-                  color: const Color(0xFFE2E8F0),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1240),
-                      child: Text(
-                        identityText,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.slate700,
+                // Single Identity Header (Tappable for Profile & Ledger details)
+                InkWell(
+                  onTap: () => RetailerProfileDialog.show(context, widget.retailer, auth),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                    color: const Color(0xFFE2E8F0),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1240),
+                        child: Text(
+                          identityText,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.slate700,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
@@ -332,6 +368,7 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
                           notesController: _notesController,
                           isSending: _isSending,
                           onSendOrder: () => _handleWhatsAppCheckout(context),
+                          onCopyOrder: () => _handleCopyOrderText(context),
                         ),
                       ),
                     ),
@@ -375,6 +412,7 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
                 notesController: _notesController,
                 isSending: _isSending,
                 onSendOrder: () => _handleWhatsAppCheckout(context),
+                onCopyOrder: () => _handleCopyOrderText(context),
               ),
             ],
           ),
@@ -444,7 +482,19 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
                 ),
               ],
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
+            OutlinedButton.icon(
+              onPressed: () => _handleCopyOrderText(context),
+              icon: const Icon(Icons.copy_rounded, size: 14),
+              label: const Text('Copy', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.slate700,
+                side: const BorderSide(color: AppTheme.slate300),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: _isSending ? null : () => _handleWhatsAppCheckout(context),
