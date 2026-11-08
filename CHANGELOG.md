@@ -14,9 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Sticky 44px Salesman Route Bar (`SalesmanRouteBar`)**:
   - Embedded beneath the AppBar in salesman mode with a Route filter dropdown (`📍 All Routes` or specific beats) and 1-tap Shop selector bottom sheet.
   - Sub-millisecond in-memory search across store name, phone, and route.
-- **Cart Isolation Guard**:
+- **Cart Isolation Guard & Dynamic Route Synchronization**:
   - Tapping a new shop switches immediately when the cart is empty.
   - When the cart contains items, prompts confirmation (`"Switch Active Shop? Active Cart has items for [Shop Name]"`) to prevent cross-retailer order contamination.
+  - Changing the route dropdown dynamically switches the active retailer to the first shop on the new route (with Cart Isolation Guard protection if cart has items) to prevent route-shop desynchronization.
+  - Shop picker selection synchronizes the route bar filter bidirectionally.
+- **Mobile Warehouse Staff Card Optimization**: Compacted warehouse mobile staff card to a single horizontal action row featuring the interactive Box Pack Badge / Calculator and Stock Toggle Pill side-by-side, maximizing vertical scanning density.
 - **Salesman Order Watermark**: Compiles `Booked by: Salesman Name (Salesman)` into the WhatsApp order header line 3, while preserving clean direct order formatting for self-ordering retailers.
 - **WooCommerce Dual-Backend Parity**:
   - Whitelisted `X-SWAC-Master-Token` and `X-SWAC-Retailer-Token` in WordPress `rest_allowed_cors_headers` to resolve cross-origin preflight (`OPTIONS`) blocks on Flutter Web.

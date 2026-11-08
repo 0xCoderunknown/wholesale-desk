@@ -253,5 +253,105 @@ void main() {
       expect(auth.currentRetailer?.id, equals('ret_2'));
       expect(cart.itemCount, equals(0));
     });
+
+    testWidgets('Changing route dropdown auto-switches active retailer when cart is empty',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final auth = AuthProvider();
+      await auth.loginWithPin('3344');
+      auth.switchSalesmanRetailer(retailerA); // Gupta Provision Store (Central Market Route)
+
+      final cart = CartProvider();
+      final desk = DeskProvider();
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          authProvider: auth,
+          cartProvider: cart,
+          deskProvider: desk,
+          child: RetailerCatalogScreen(retailer: retailerA),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(auth.currentRetailer?.id, equals('ret_1'));
+      expect(find.textContaining('Gupta Provision Store'), findsWidgets);
+
+      // Open route dropdown
+      await tester.tap(find.text('📍 All Routes'));
+      await tester.pumpAndSettle();
+
+      // Tap '📍 Station Road Route'
+      await tester.tap(find.text('📍 Station Road Route').last);
+      await tester.pumpAndSettle();
+
+      // Active retailer must be auto-switched to New Bharat Traders (which belongs to Station Road Route)
+      expect(auth.currentRetailer?.id, equals('ret_2'));
+      expect(auth.currentRetailer?.storeName, equals('New Bharat Traders'));
+      expect(find.textContaining('New Bharat Traders'), findsWidgets);
+    });
+
+    testWidgets('Changing route dropdown triggers Cart Isolation Guard when cart has items',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final auth = AuthProvider();
+      await auth.loginWithPin('3344');
+      auth.switchSalesmanRetailer(retailerA); // Central Market Route
+
+      final cart = CartProvider();
+      cart.addItem(sampleProduct); // 6 units in cart for Shop A
+      expect(cart.itemCount, equals(1));
+
+      final desk = DeskProvider();
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          authProvider: auth,
+          cartProvider: cart,
+          deskProvider: desk,
+          child: RetailerCatalogScreen(retailer: retailerA),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Open route dropdown
+      await tester.tap(find.text('📍 All Routes'));
+      await tester.pumpAndSettle();
+
+      // Tap '📍 Station Road Route'
+      await tester.tap(find.text('📍 Station Road Route').last);
+      await tester.pumpAndSettle();
+
+      // Dialog should appear
+      expect(find.text('Switch Route & Shop?'), findsOneWidget);
+      expect(find.textContaining('Active Cart has 1 item(s) for Gupta Provision Store'), findsOneWidget);
+
+      // Tap 'Keep Cart'
+      await tester.tap(find.text('Keep Cart'));
+      await tester.pumpAndSettle();
+
+      // State remains unchanged
+      expect(auth.currentRetailer?.id, equals('ret_1'));
+      expect(cart.itemCount, equals(1));
+
+      // Try changing route again and choose 'Clear & Switch'
+      await tester.tap(find.text('📍 All Routes'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('📍 Station Road Route').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Switch Route & Shop?'), findsOneWidget);
+      await tester.tap(find.text('Clear & Switch'));
+      await tester.pumpAndSettle();
+
+      // Switched to Shop B on Station Road Route, cart cleared
+      expect(auth.currentRetailer?.id, equals('ret_2'));
+      expect(cart.itemCount, equals(0));
+    });
   });
 }

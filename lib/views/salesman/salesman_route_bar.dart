@@ -53,6 +53,9 @@ class _SalesmanRouteBarState extends State<SalesmanRouteBar> {
     // If cart has items, prompt the salesman to prevent cross-shop corruption.
     if (cart.itemCount == 0) {
       auth.switchSalesmanRetailer(selectedRetailer);
+      if (mounted && selectedRetailer.route.trim().isNotEmpty && _selectedRoute != 'All Routes') {
+        setState(() => _selectedRoute = selectedRetailer.route.trim());
+      }
     } else {
       final currentShop = auth.currentRetailer?.storeName ?? 'Current Shop';
       final confirmed = await showDialog<bool>(
@@ -81,10 +84,98 @@ class _SalesmanRouteBarState extends State<SalesmanRouteBar> {
         ),
       );
 
+      if (!mounted) return;
+
       if (confirmed == true) {
         cart.clear();
         auth.switchSalesmanRetailer(selectedRetailer);
+        if (selectedRetailer.route.trim().isNotEmpty && _selectedRoute != 'All Routes') {
+          setState(() => _selectedRoute = selectedRetailer.route.trim());
+        }
       }
+    }
+  }
+
+  Future<void> _handleRouteChanged(
+    BuildContext context,
+    String newRoute,
+    List<Retailer> allRetailers,
+  ) async {
+    if (newRoute == _selectedRoute) return;
+
+    final auth = context.read<AuthProvider>();
+    final cart = context.read<CartProvider>();
+    final currentRetailer = auth.currentRetailer;
+
+    // If 'All Routes' is selected, keep active retailer and update dropdown filter
+    if (newRoute == 'All Routes') {
+      setState(() => _selectedRoute = newRoute);
+      return;
+    }
+
+    // If current shop already belongs to the newly selected route, just update route filter
+    final currentBelongsToRoute = currentRetailer != null &&
+        currentRetailer.route.trim().toLowerCase() == newRoute.toLowerCase();
+
+    if (currentBelongsToRoute) {
+      setState(() => _selectedRoute = newRoute);
+      return;
+    }
+
+    // Shop does not belong to new route: Cart Isolation Guard
+    if (cart.itemCount > 0) {
+      final currentShop = currentRetailer?.storeName ?? 'Current Shop';
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          title: const Text('Switch Route & Shop?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          content: Text(
+            'Active Cart has ${cart.itemCount} item(s) for $currentShop. Switching route will change shop and clear the cart. Proceed?',
+            style: const TextStyle(fontSize: 13, color: AppTheme.slate600),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Keep Cart', style: TextStyle(color: AppTheme.slate600)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.outOfStockRed,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Clear & Switch'),
+            ),
+          ],
+        ),
+      );
+
+      if (!mounted) return;
+
+      if (confirmed != true) {
+        // User cancelled; retain existing route and active shop
+        return;
+      }
+
+      cart.clear();
+    }
+
+    // Find shops belonging to the newly selected route
+    final routeShops = allRetailers
+        .where((r) => r.route.trim().toLowerCase() == newRoute.toLowerCase())
+        .toList();
+
+    if (routeShops.isNotEmpty) {
+      final targetShop = routeShops.firstWhere(
+        (r) => r.isActive,
+        orElse: () => routeShops.first,
+      );
+      auth.switchSalesmanRetailer(targetShop);
+    }
+
+    if (mounted) {
+      setState(() => _selectedRoute = newRoute);
     }
   }
 
@@ -146,7 +237,7 @@ class _SalesmanRouteBarState extends State<SalesmanRouteBar> {
                     }).toList(),
                     onChanged: (val) {
                       if (val != null) {
-                        setState(() => _selectedRoute = val);
+                        _handleRouteChanged(context, val, retailers);
                       }
                     },
                   ),

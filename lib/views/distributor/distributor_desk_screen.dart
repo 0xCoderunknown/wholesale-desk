@@ -826,7 +826,7 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
         final p = desk.filteredProducts[index];
 
         if (!isAdmin) {
-          // Staff Warehouse Mobile Card: Rate Shielded & Full-Width Thumb Target
+          // Staff Warehouse Mobile Card: Rate Shielded & 1-Line Action Row (Box Calculator & Stock Toggle)
           return Card(
             elevation: 1,
             shape: RoundedRectangleBorder(
@@ -836,7 +836,7 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -849,45 +849,47 @@ class _DistributorDeskScreenState extends State<DistributorDeskScreen>
                   Text(p.brand, style: const TextStyle(fontSize: 11.5, color: AppTheme.slate500)),
                   const SizedBox(height: 10),
 
-                  // Row 2: Prominent Box Pack Badge (Tap to calculate breakdown)
-                  InkWell(
-                    onTap: () => _openBoxCalculator(context, p),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                  // Row 2: Box Pack Badge & Stock Toggle in 1 Single Line
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Box Pack Badge (Tap to calculate breakdown)
+                      InkWell(
+                        onTap: () => _openBoxCalculator(context, p),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            p.hasCartonPack ? '📦 Box of ${p.cartonPack}' : '📦 Loose Only',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800,
-                              color: p.hasCartonPack ? const Color(0xFF1E40AF) : AppTheme.slate500,
-                            ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
                           ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.calculate_outlined, size: 14, color: Color(0xFF2563EB)),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                p.hasCartonPack ? '📦 Box of ${p.cartonPack}' : '📦 Loose Only',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: p.hasCartonPack ? const Color(0xFF1E40AF) : AppTheme.slate500,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              const Icon(Icons.calculate_outlined, size: 14, color: Color(0xFF2563EB)),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                      const SizedBox(width: 8),
 
-                  // Row 3: Comfortable Full-Width Stock Toggle Target for Walking Godown Aisles
-                  SizedBox(
-                    width: double.infinity,
-                    height: 42,
-                    child: StockTogglePill(
-                      inStock: p.inStock,
-                      enabled: true,
-                      onToggle: () => desk.toggleStock(p.id, !p.inStock),
-                    ),
+                      // Stock Toggle Pill
+                      StockTogglePill(
+                        inStock: p.inStock,
+                        enabled: true,
+                        onToggle: () => desk.toggleStock(p.id, !p.inStock),
+                      ),
+                    ],
                   ),
                 ],
               ),
