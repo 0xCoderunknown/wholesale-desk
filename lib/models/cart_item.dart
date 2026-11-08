@@ -16,12 +16,18 @@ class CartItem {
 
   bool get hasScheme => product.scheme.trim().isNotEmpty;
 
-  /// Carton box equivalent display (e.g. "≈ 2 Box(es)")
-  String get boxCountDisplay {
-    if (!product.hasCartonPack) return '';
-    final boxes = (quantity / product.cartonPack).toStringAsFixed(1).replaceAll('.0', '');
-    return '≈ $boxes Box(es)';
+  /// Packaging trade nomenclature display (e.g. "12 Loose", "1 Box", "1 Box + 4 Loose")
+  String get packagingDisplay {
+    if (!product.hasCartonPack) return '$quantity Loose';
+    final fullBoxes = quantity ~/ product.cartonPack;
+    final loose = quantity % product.cartonPack;
+    if (fullBoxes == 0) return '$loose Loose';
+    if (loose == 0) return '$fullBoxes ${fullBoxes == 1 ? 'Box' : 'Boxes'}';
+    return '$fullBoxes ${fullBoxes == 1 ? 'Box' : 'Boxes'} + $loose Loose';
   }
+
+  /// Carton box equivalent display (clean trade nomenclature)
+  String get boxCountDisplay => packagingDisplay;
 
   /// Real-time scheme nudge and margin boost calculations
   SchemeNudge get nudge => SchemeHelper.calculateNudge(

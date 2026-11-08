@@ -423,16 +423,24 @@ void main() {
       final ptrWidget = tester.widget<Text>(find.text('₹110.91'));
       expect(ptrWidget.style?.color, equals(const Color(0xFF059669))); // Vibrant green highlight
 
-      // 3. Scheme inline banner turns green with active text and APPLIED button
+      // 3. Scheme inline banner turns green with active text and REMOVE button
       expect(find.textContaining('Scheme Active: 10+1 Free'), findsOneWidget);
-      expect(find.text('APPLIED'), findsOneWidget);
+      expect(find.text('REMOVE'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(SchemeInlineStrip),
-          matching: find.byIcon(Icons.check_circle_rounded),
+          matching: find.byIcon(Icons.close_rounded),
         ),
         findsOneWidget,
       );
+
+      // 4. Tapping REMOVE undoes the scheme / removes the whole lot from cart
+      await tester.tap(find.text('REMOVE'));
+      await tester.pumpAndSettle();
+
+      expect(cart.getQuantity(sampleProduct.id), equals(0));
+      expect(find.text('Add to Cart'), findsOneWidget);
+      expect(find.text('APPLY'), findsOneWidget);
     });
   });
 
@@ -517,8 +525,9 @@ void main() {
       expect(find.text('Guwahati General Store'), findsOneWidget);
       expect(find.textContaining('North Corridor'), findsOneWidget);
 
-      // Top Bar Cart Action is visible
-      expect(find.byTooltip('View Cart'), findsOneWidget);
+      // Mobile uses bottom FloatingActionButton; top bar does not duplicate cart button
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.byTooltip('View Cart'), findsNothing);
 
       // Tapping Logout triggers confirmation dialog
       await tester.tap(find.byTooltip('Exit Order Desk'));
@@ -585,7 +594,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Populated State: item visible with line totals and Send Order on WhatsApp
-      expect(find.text(sampleProduct.name), findsOneWidget);
+      expect(find.textContaining(sampleProduct.name), findsOneWidget);
       expect(find.text('Send Order on WhatsApp'), findsOneWidget);
 
       // Clear button triggers confirmation dialog
@@ -593,7 +602,7 @@ void main() {
       await tester.tap(find.text('Clear'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Clear Wholesale Cart?'), findsOneWidget);
+      expect(find.text('Clear Cart?'), findsOneWidget);
       expect(find.text('Cancel'), findsOneWidget);
 
       // Cancel keeps item

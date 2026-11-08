@@ -8,7 +8,6 @@ import '../../../state/cart_provider.dart';
 import '../../widgets/catalog_quantity_stepper.dart';
 import '../../widgets/high_density_badge.dart';
 import '../../widgets/product_avatar.dart';
-import '../../widgets/stock_toggle_pill.dart';
 
 class CatalogDataTable extends StatelessWidget {
   final List<Product> products;
@@ -22,7 +21,7 @@ class CatalogDataTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.read<CartProvider>();
+    final cart = context.watch<CartProvider>();
 
     return Scrollbar(
       thumbVisibility: true,
@@ -30,38 +29,35 @@ class CatalogDataTable extends StatelessWidget {
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 1040),
+            constraints: const BoxConstraints(minWidth: 960),
             child: DataTable(
               headingRowHeight: 38,
-              dataRowMinHeight: 52,
-              dataRowMaxHeight: 64,
-              horizontalMargin: 16,
-              columnSpacing: 14,
+              dataRowMinHeight: 54,
+              dataRowMaxHeight: 70,
+              horizontalMargin: 12,
+              columnSpacing: 10,
               headingRowColor: WidgetStateProperty.all(AppTheme.slate100),
               columns: const [
                 DataColumn(
                   label: Text('PRODUCT / BRAND', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
                 ),
                 DataColumn(
-                  label: Text('SCHEME & 1-TAP APPLY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
+                  label: Text('SCHEME & APPLY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
                 ),
                 DataColumn(
                   label: Text('MOQ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
                 ),
                 DataColumn(
-                  label: Text('BOX PACK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
+                  label: Text('BOX', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
                 ),
                 DataColumn(
                   label: Text('MRP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
                 ),
                 DataColumn(
-                  label: Text('PTR (RATE)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
+                  label: Text('PTR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
                 ),
                 DataColumn(
                   label: Text('MARGIN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
-                ),
-                DataColumn(
-                  label: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
                 ),
                 DataColumn(
                   label: Text('ACTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.slate700)),
@@ -97,7 +93,7 @@ class CatalogDataTable extends StatelessWidget {
         // Product & Brand with Letter Monogram Avatar (Zero media overhead)
         DataCell(
           Container(
-            constraints: const BoxConstraints(maxWidth: 300),
+            constraints: const BoxConstraints(maxWidth: 220),
             child: Row(
               children: [
                 ProductAvatar(name: p.name, brand: p.brand, size: 34, fontSize: 14),
@@ -145,6 +141,7 @@ class CatalogDataTable extends StatelessWidget {
                         threshold: schemeThreshold,
                         isAlreadyActive: inCart && qty >= schemeThreshold,
                         onApply: () => cart.applyScheme(p, schemeThreshold, enforceMoq: enforceMoq),
+                        onRemove: () => cart.removeItem(p.id),
                       ),
                     ],
                   ],
@@ -217,36 +214,63 @@ class CatalogDataTable extends StatelessWidget {
           ),
         ),
 
-        // Stock Pill (read-only for Retailer)
-        DataCell(
-          StockTogglePill(inStock: p.inStock, enabled: false, compact: true),
-        ),
-
-        // Action Column: Add/Stepper or disabled Out of Stock
+        // Action Column: Add/Stepper + Buy 1 Box or disabled Out of Stock
         DataCell(
           p.inStock
-              ? inCart
-                  ? CatalogQuantityStepper(
-                      product: p,
-                      quantity: qty,
-                      enforceMoq: enforceMoq,
-                      style: StepperStyle.compact,
-                      onIncrement: () => cart.increment(p.id),
-                      onDecrement: () => cart.decrement(p.id, enforceMoq: enforceMoq),
-                      onDirectDelete: () => cart.removeItem(p.id),
-                      onQuantityChanged: (newQty) => cart.updateQuantity(p.id, newQty, enforceMoq: enforceMoq),
-                    )
-                  : ElevatedButton.icon(
-                      onPressed: () => cart.addItem(p, enforceMoq: enforceMoq),
-                      icon: const Icon(Icons.add_shopping_cart_rounded, size: 15),
-                      label: const Text('Add to Cart'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    inCart
+                        ? CatalogQuantityStepper(
+                            product: p,
+                            quantity: qty,
+                            enforceMoq: enforceMoq,
+                            style: StepperStyle.compact,
+                            onIncrement: () => cart.increment(p.id),
+                            onDecrement: () => cart.decrement(p.id, enforceMoq: enforceMoq),
+                            onDirectDelete: () => cart.removeItem(p.id),
+                            onQuantityChanged: (newQty) => cart.updateQuantity(p.id, newQty, enforceMoq: enforceMoq),
+                          )
+                        : SizedBox(
+                            height: 32,
+                            child: ElevatedButton.icon(
+                              onPressed: () => cart.addItem(p, enforceMoq: enforceMoq),
+                              icon: const Icon(Icons.add_shopping_cart_rounded, size: 14),
+                              label: const Text('Add to Cart'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                                textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5),
+                              ),
+                            ),
+                          ),
+                    if (p.hasCartonPack) ...[
+                      const SizedBox(width: 6),
+                      SizedBox(
+                        height: 32,
+                        child: OutlinedButton.icon(
+                          onPressed: () => cart.buyBox(p, enforceMoq: enforceMoq),
+                          icon: const Icon(Icons.inventory_2_outlined, size: 13, color: Color(0xFF2563EB)),
+                          label: Text(
+                            '1 Box (${p.cartonPack})',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                              color: Color(0xFF1E40AF),
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                            side: const BorderSide(color: Color(0xFF93C5FD), width: 1),
+                            backgroundColor: const Color(0xFFEFF6FF),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                          ),
+                        ),
                       ),
-                    )
+                    ],
+                  ],
+                )
               : const Text(
                   'Out of Stock',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.slate400),

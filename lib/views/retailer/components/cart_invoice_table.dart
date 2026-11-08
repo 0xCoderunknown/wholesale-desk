@@ -4,9 +4,8 @@ import '../../../config/theme.dart';
 import '../../../models/cart_item.dart';
 import '../../../state/cart_provider.dart';
 import '../../widgets/catalog_quantity_stepper.dart';
-import '../../widgets/high_density_badge.dart';
 
-/// High-density proforma invoice data table for desktop wholesale order review.
+/// Streamlined proforma invoice table for desktop wholesale order review.
 class CartInvoiceTable extends StatelessWidget {
   final List<CartItem> items;
   final CartProvider cart;
@@ -21,52 +20,45 @@ class CartInvoiceTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.slate200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.slate200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Table(
+        columnWidths: const {
+          0: FixedColumnWidth(36), // #
+          1: FlexColumnWidth(3.0), // Product & Brand · Box
+          2: FixedColumnWidth(95), // PTR Rate
+          3: FlexColumnWidth(2.6), // Order Quantity & Scheme
+          4: FlexColumnWidth(2.0), // Line Total + Delete
+        },
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        children: [
+          TableRow(
+            decoration: const BoxDecoration(
+              color: AppTheme.slate100,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
             ),
-          ],
-        ),
-        child: Table(
-          columnWidths: const {
-            0: FixedColumnWidth(36), // #
-            1: FlexColumnWidth(3.0), // Product & Brand
-            2: FixedColumnWidth(110), // Rate (PTR/MRP)
-            3: FixedColumnWidth(160), // Billed Qty Stepper
-            4: FlexColumnWidth(1.8), // Schemes & Bonus
-            5: FixedColumnWidth(110), // Line Total
-            6: FixedColumnWidth(44), // Action
-          },
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          children: [
-            TableRow(
-              decoration: const BoxDecoration(
-                color: AppTheme.slate100,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-              ),
-              children: [
-                _th('#', align: TextAlign.center),
-                _th('Product & Specification'),
-                _th('Wholesale Rate', align: TextAlign.right),
-                _th('Billed Qty', align: TextAlign.center),
-                _th('Scheme Status'),
-                _th('Line Total (PTR)', align: TextAlign.right),
-                _th(''),
-              ],
-            ),
-            for (int i = 0; i < items.length; i++)
-              _buildTableRow(items[i], i + 1, isLast: i == items.length - 1),
-          ],
-        ),
+            children: [
+              _th('#', align: TextAlign.center),
+              _th('Product & Brand'),
+              _th('PTR Rate', align: TextAlign.right),
+              _th('Order Quantity & Scheme', align: TextAlign.center),
+              _th('Line Total', align: TextAlign.right),
+            ],
+          ),
+          for (int i = 0; i < items.length; i++)
+            _buildTableRow(items[i], i + 1, isLast: i == items.length - 1),
+        ],
       ),
     );
   }
@@ -94,8 +86,7 @@ class CartInvoiceTable extends StatelessWidget {
   }) {
     final p = item.product;
     final nudge = item.nudge;
-    final schemeThreshold = item.schemeThreshold;
-    final boxDisplay = item.boxCountDisplay;
+    final hasScheme = p.scheme.trim().isNotEmpty;
 
     return TableRow(
       decoration: BoxDecoration(
@@ -105,7 +96,7 @@ class CartInvoiceTable extends StatelessWidget {
       children: [
         // 0. Row Index
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
           child: Text(
             '$index',
             textAlign: TextAlign.center,
@@ -113,155 +104,121 @@ class CartInvoiceTable extends StatelessWidget {
           ),
         ),
 
-        // 1. Product & Specification
+        // 1. Product Details: Name, Brand · Box Pack
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 p.name,
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900),
               ),
-              const SizedBox(height: 3),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    p.brand,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppTheme.slate500),
-                  ),
-                  if (p.hasCartonPack) BoxPackBadge(cartonPack: p.cartonPack),
-                  if (enforceMoq && p.moq > 1)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: AppTheme.slate100,
-                        borderRadius: BorderRadius.circular(3),
-                        border: Border.all(color: AppTheme.slate300),
-                      ),
-                      child: Text('MOQ: ${p.moq}', style: const TextStyle(fontSize: 10, color: AppTheme.slate600)),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        // 2. Rate (Wholesale PTR / MRP)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                AppFormatters.formatCurrency(p.ptr),
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900),
-              ),
-              Text(
-                'MRP: ${AppFormatters.formatCurrency(p.mrp)}',
-                style: const TextStyle(fontSize: 10.5, color: AppTheme.slate500),
-              ),
-              if (nudge.hasBoostedMargin)
-                Text(
-                  'Eff: ${AppFormatters.formatCurrency(nudge.effectivePtr)}',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
-                ),
-            ],
-          ),
-        ),
-
-        // 3. Billed Quantity Stepper
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CatalogQuantityStepper(
-                product: p,
-                quantity: item.quantity,
-                enforceMoq: enforceMoq,
-                style: StepperStyle.drawer,
-                onIncrement: () => cart.increment(p.id),
-                onDecrement: () => cart.decrement(p.id, enforceMoq: enforceMoq),
-                onDirectDelete: () => cart.removeItem(p.id),
-                onQuantityChanged: (newQty) => cart.updateQuantity(p.id, newQty, enforceMoq: enforceMoq),
-              ),
-              if (boxDisplay.isNotEmpty) ...[
+              if (p.brand.isNotEmpty || p.cartonPack > 1) ...[
                 const SizedBox(height: 3),
                 Text(
-                  boxDisplay,
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF1D4ED8)),
+                  [
+                    if (p.brand.isNotEmpty) p.brand,
+                    if (p.cartonPack > 1) 'Box: ${p.cartonPack}',
+                  ].join(' · '),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppTheme.slate500),
                 ),
               ],
             ],
           ),
         ),
 
-        // 4. Scheme & Bonus Status
+        // 2. PTR Rate: ₹285.00 (prefix removed)
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (item.hasScheme) SchemeBadge(scheme: p.scheme),
-              if (nudge.earnedFreeUnits > 0) ...[
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFF86EFAC)),
-                  ),
-                  child: Text(
-                    '🎁 +${nudge.earnedFreeUnits} Free (${item.quantity + nudge.earnedFreeUnits}u total)',
-                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFF166534)),
-                  ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          child: Text(
+            AppFormatters.formatCurrency(p.ptr),
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.slate800),
+          ),
+        ),
+
+        // 3. Action: Center aligned [ - 12 + ] stepper | Compact badge: 12+1 Free 🎁
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Center(
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                CatalogQuantityStepper(
+                  product: p,
+                  quantity: item.quantity,
+                  enforceMoq: enforceMoq,
+                  style: StepperStyle.drawer,
+                  onIncrement: () => cart.increment(p.id),
+                  onDecrement: () => cart.decrement(p.id, enforceMoq: enforceMoq),
+                  onDirectDelete: () => cart.removeItem(p.id),
+                  onQuantityChanged: (newQty) => cart.updateQuantity(p.id, newQty, enforceMoq: enforceMoq),
                 ),
-              ] else if (item.hasScheme && schemeThreshold > item.quantity) ...[
-                const SizedBox(height: 4),
-                SchemeApplyPill(
-                  threshold: schemeThreshold,
-                  isAlreadyActive: false,
-                  onApply: () => cart.applyScheme(p, schemeThreshold, enforceMoq: enforceMoq),
-                ),
+                if (hasScheme)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: nudge.earnedFreeUnits > 0
+                          ? const Color(0xFFDCFCE7)
+                          : const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: nudge.earnedFreeUnits > 0
+                            ? const Color(0xFF86EFAC)
+                            : const Color(0xFFFCD34D),
+                      ),
+                    ),
+                    child: Text(
+                      '${p.scheme}${nudge.earnedFreeUnits > 0 ? ' 🎁' : ''}',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: nudge.earnedFreeUnits > 0
+                            ? const Color(0xFF166534)
+                            : const Color(0xFF92400E),
+                      ),
+                    ),
+                  ),
               ],
-            ],
+            ),
           ),
         ),
 
-        // 5. Line Total (PTR) & Margin
+        // 4. Line Total: ₹3,420.00 (prefix removed) | [ 🗑 ]
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          padding: const EdgeInsets.only(left: 6, top: 8, bottom: 8, right: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                AppFormatters.formatCurrency(item.lineTotalPtr),
-                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.primaryDark),
+              Flexible(
+                child: Text(
+                  AppFormatters.formatCurrency(item.lineTotalPtr),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.slate900),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              Text(
-                '+ ${AppFormatters.formatCurrency(item.lineSavings)} margin',
-                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF15803D)),
+              const SizedBox(width: 6),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => cart.removeItem(p.id),
+                  borderRadius: BorderRadius.circular(4),
+                  child: const Padding(
+                    padding: EdgeInsets.all(5),
+                    child: Icon(Icons.delete_outline_rounded, size: 17, color: AppTheme.outOfStockRed),
+                  ),
+                ),
               ),
             ],
-          ),
-        ),
-
-        // 6. Action: 1-Tap Delete
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-          child: IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.outOfStockRed),
-            tooltip: 'Remove product',
-            onPressed: () => cart.removeItem(p.id),
           ),
         ),
       ],
     );
   }
 }
-

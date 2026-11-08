@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../config/breakpoints.dart';
 import '../../config/formatters.dart';
 import '../../config/theme.dart';
-import '../../models/cart_item.dart';
 import '../../models/retailer.dart';
 import '../../services/whatsapp_service.dart';
 import '../../state/auth_provider.dart';
@@ -13,8 +11,9 @@ import 'components/cart_mobile_card.dart';
 import 'components/cart_scheme_maximizer.dart';
 import 'components/cart_summary_dock.dart';
 
-/// Full-screen Wholesale Order & Dispatch Desk.
-/// Orchestrates desktop 2-panel proforma invoice review and mobile high-density dispatch flow.
+/// Streamlined Wholesale Order & Dispatch Desk.
+/// Enforces minimal top navigation, single-line identity header,
+/// high-density line items, and compressed valuation summary.
 class RetailerCartScreen extends StatefulWidget {
   final Retailer retailer;
 
@@ -25,14 +24,11 @@ class RetailerCartScreen extends StatefulWidget {
 }
 
 class _RetailerCartScreenState extends State<RetailerCartScreen> {
-  final TextEditingController _searchController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-  String _searchQuery = '';
   bool _isSending = false;
 
   @override
   void dispose() {
-    _searchController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -86,7 +82,7 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        title: const Text('Clear Wholesale Cart?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        title: const Text('Clear Cart?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         content: const Text(
           'Are you sure you want to remove all items from your order?',
           style: TextStyle(fontSize: 13, color: AppTheme.slate600),
@@ -116,85 +112,106 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final cart = context.watch<CartProvider>();
-    final isDesktop = AppBreakpoints.isDesktop(context);
-    final isTablet = AppBreakpoints.isTablet(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 1024;
+    final isTablet = screenWidth >= 768 && screenWidth < 1024;
+    final isMobile = screenWidth < 768;
     final enforceMoq = auth.settings.enforceMoq;
 
-    // Filter cart items by in-cart search query
-    final filteredItems = cart.items.where((it) {
-      if (_searchQuery.isEmpty) return true;
-      final q = _searchQuery.toLowerCase();
-      return it.product.name.toLowerCase().contains(q) ||
-          it.product.brand.toLowerCase().contains(q);
-    }).toList();
+    final routePart = widget.retailer.route.isNotEmpty ? ' · ${widget.retailer.route}' : '';
+    final identityText = 'Ordering for: ${widget.retailer.storeName}$routePart';
 
     return Scaffold(
       backgroundColor: AppTheme.slate100,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          tooltip: 'Back to Catalog',
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
         titleSpacing: 0,
-        title: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 8,
-                    runSpacing: 2,
-                    children: [
-                      const Text(
-                        'Wholesale Order Desk',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryLight.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.primaryLight.withValues(alpha: 0.4)),
-                        ),
-                        child: Text(
-                          '${cart.itemCount} items • ${cart.totalUnits}u',
-                          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    '${widget.retailer.storeName} (${widget.retailer.route})',
-                    style: const TextStyle(fontSize: 11, color: AppTheme.slate300),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+        leadingWidth: 90,
+        leading: Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: TextButton.icon(
+              onPressed: () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.arrow_back_rounded, size: 16, color: Colors.white),
+              label: const Text(
+                'Back',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
               ),
             ),
-          ],
+          ),
         ),
+        title: Text(
+          'Cart (${cart.itemCount})',
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+        centerTitle: true,
         actions: [
           if (cart.items.isNotEmpty)
-            TextButton.icon(
-              onPressed: () => _confirmClearCart(context, cart),
-              icon: const Icon(Icons.delete_sweep_outlined, size: 18, color: AppTheme.slate300),
-              label: const Text(
-                'Clear',
-                style: TextStyle(color: AppTheme.slate300, fontSize: 13, fontWeight: FontWeight.w600),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: TextButton.icon(
+                onPressed: () => _confirmClearCart(context, cart),
+                icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Color(0xFFFCA5A5)),
+                label: const Text(
+                  'Clear',
+                  style: TextStyle(
+                    color: Color(0xFFFCA5A5),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                ),
               ),
             ),
-          const SizedBox(width: 8),
         ],
       ),
       body: cart.items.isEmpty
           ? _buildEmptyState(context)
-          : isDesktop || isTablet
-              ? _buildDesktopLayout(context, cart, filteredItems, enforceMoq, isTablet)
-              : _buildMobileLayout(context, cart, filteredItems, enforceMoq),
+          : Column(
+              children: [
+                // Single Identity Header (No phone number)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                  color: const Color(0xFFE2E8F0),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1240),
+                      child: Text(
+                        identityText,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.slate700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Main Cart Body
+                Expanded(
+                  child: isDesktop
+                      ? _buildDesktopLayout(context, cart, enforceMoq)
+                      : isTablet
+                          ? _buildTabletLayout(context, cart, enforceMoq)
+                          : _buildMobileLayout(context, cart, enforceMoq),
+                ),
+              ],
+            ),
+      bottomNavigationBar: (isMobile && cart.items.isNotEmpty)
+          ? _buildMobileStickyBottomBar(context, cart)
+          : null,
     );
   }
 
@@ -272,331 +289,187 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
   }
 
   // =========================================================================
-  // DESKTOP & TABLET 2-PANEL LAYOUT
+  // DESKTOP 2-COLUMN SPLIT (>= 1024px, max-width: 1240px, centered)
   // =========================================================================
   Widget _buildDesktopLayout(
     BuildContext context,
     CartProvider cart,
-    List<CartItem> items,
     bool enforceMoq,
-    bool isTablet,
   ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left Panel: Search + Scheme Maximizer + Invoice Table
-        Expanded(
-          flex: isTablet ? 6 : 7,
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1240),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Top Controls Bar (Search + Add More)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(bottom: BorderSide(color: AppTheme.slate200)),
-                ),
+              CartSchemeMaximizer(cart: cart, enforceMoq: enforceMoq),
+              const SizedBox(height: 16),
+              Expanded(
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Left (Items Table): flex: 1 (approx. 68% to 70% width)
                     Expanded(
-                      child: SizedBox(
-                        height: 38,
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                          decoration: InputDecoration(
-                            hintText: 'Search items in order...',
-                            hintStyle: const TextStyle(fontSize: 13, color: AppTheme.slate400),
-                            prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppTheme.slate400),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.close_rounded, size: 16, color: AppTheme.slate400),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _searchQuery = '');
-                                    },
-                                  )
-                                : null,
-                            filled: true,
-                            fillColor: AppTheme.slate50,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: AppTheme.slate300),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-                            ),
-                          ),
+                      child: SingleChildScrollView(
+                        child: CartInvoiceTable(
+                          items: cart.items,
+                          cart: cart,
+                          enforceMoq: enforceMoq,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      icon: const Icon(Icons.add_shopping_cart_rounded, size: 15),
-                      label: const Text('Add More Products'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primaryDark,
-                        side: const BorderSide(color: AppTheme.primary),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    const SizedBox(width: 28),
+                    // Right (Valuation Card): Fixed width 350px (approx. 30% to 32% width), pinned at top
+                    SizedBox(
+                      width: 350,
+                      child: SingleChildScrollView(
+                        child: CartSummaryDock(
+                          retailer: widget.retailer,
+                          cart: cart,
+                          notesController: _notesController,
+                          isSending: _isSending,
+                          onSendOrder: () => _handleWhatsAppCheckout(context),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              // Real-time Scheme Maximizer Strip
+  // =========================================================================
+  // TABLET SINGLE-COLUMN STACK (768px - 1023px, max-width: 1240px, centered)
+  // =========================================================================
+  Widget _buildTabletLayout(
+    BuildContext context,
+    CartProvider cart,
+    bool enforceMoq,
+  ) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1240),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               CartSchemeMaximizer(cart: cart, enforceMoq: enforceMoq),
-
-              // Invoice Data Table
-              Expanded(
-                child: items.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No items match "$_searchQuery"',
-                          style: const TextStyle(fontSize: 14, color: AppTheme.slate500),
-                        ),
-                      )
-                    : CartInvoiceTable(
-                        items: items,
-                        cart: cart,
-                        enforceMoq: enforceMoq,
-                      ),
+              const SizedBox(height: 12),
+              CartInvoiceTable(
+                items: cart.items,
+                cart: cart,
+                enforceMoq: enforceMoq,
+              ),
+              const SizedBox(height: 16),
+              CartSummaryDock(
+                retailer: widget.retailer,
+                cart: cart,
+                notesController: _notesController,
+                isSending: _isSending,
+                onSendOrder: () => _handleWhatsAppCheckout(context),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
 
-        // Right Panel: Sticky Bill Summary & WhatsApp Dispatch Dock
-        Container(
-          width: isTablet ? 320 : 380,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(left: BorderSide(color: AppTheme.slate200)),
-          ),
-          child: CartSummaryDock(
-            retailer: widget.retailer,
+  // =========================================================================
+  // MOBILE ADAPTATION (< 768px)
+  // =========================================================================
+  Widget _buildMobileLayout(
+    BuildContext context,
+    CartProvider cart,
+    bool enforceMoq,
+  ) {
+    return ListView(
+      padding: const EdgeInsets.only(left: 12, right: 12, top: 10, bottom: 90),
+      children: [
+        CartSchemeMaximizer(cart: cart, enforceMoq: enforceMoq),
+        const SizedBox(height: 8),
+        for (final item in cart.items)
+          CartMobileCard(
+            item: item,
             cart: cart,
-            notesController: _notesController,
-            isSending: _isSending,
-            onSendOrder: () => _handleWhatsAppCheckout(context),
+            enforceMoq: enforceMoq,
           ),
+        const SizedBox(height: 12),
+        CartSummaryDock(
+          retailer: widget.retailer,
+          cart: cart,
+          notesController: _notesController,
+          isSending: _isSending,
+          onSendOrder: () => _handleWhatsAppCheckout(context),
+          showCheckoutButton: false,
         ),
       ],
     );
   }
 
-  // =========================================================================
-  // MOBILE REVIEW FLOW (< 768px)
-  // =========================================================================
-  Widget _buildMobileLayout(
-    BuildContext context,
-    CartProvider cart,
-    List<CartItem> items,
-    bool enforceMoq,
-  ) {
-    return Column(
-      children: [
-        // Scheme Maximizer Alert Strip
-        CartSchemeMaximizer(cart: cart, enforceMoq: enforceMoq),
-
-        // Scrollable Items List + Notes
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            children: [
-              // In-Cart Search Bar
-              SizedBox(
-                height: 38,
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                  decoration: InputDecoration(
-                    hintText: 'Search items in order...',
-                    hintStyle: const TextStyle(fontSize: 12, color: AppTheme.slate400),
-                    prefixIcon: const Icon(Icons.search_rounded, size: 16, color: AppTheme.slate400),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 14, color: AppTheme.slate400),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: AppTheme.slate300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-                    ),
-                  ),
+  // Sticky bottom action bar on mobile
+  Widget _buildMobileStickyBottomBar(BuildContext context, CartProvider cart) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppTheme.slate200)),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -1)),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Total Payable',
+                  style: TextStyle(fontSize: 10.5, color: AppTheme.slate500, fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  AppFormatters.formatCurrency(cart.subtotalPtr),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.primaryDark),
+                ),
+              ],
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _isSending ? null : () => _handleWhatsAppCheckout(context),
+                icon: _isSending
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('🚀', style: TextStyle(fontSize: 14)),
+                label: Text(
+                  _isSending ? 'Launching...' : 'Send on WhatsApp',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.whatsappGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
-
-              const SizedBox(height: 10),
-
-              // Modular Item Cards
-              for (final item in items)
-                CartMobileCard(
-                  item: item,
-                  cart: cart,
-                  enforceMoq: enforceMoq,
-                ),
-
-              const SizedBox(height: 10),
-
-              // Packaging & Notes Card
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.slate200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.inventory_2_outlined, size: 16, color: Color(0xFF1D4ED8)),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Packaging: ${cart.totalBoxes} Cartons + ${cart.totalLooseUnits} Loose Units',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1D4ED8)),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Delivery Remarks / Instructions (Optional):',
-                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.slate700),
-                    ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: _notesController,
-                      maxLines: 2,
-                      style: const TextStyle(fontSize: 12),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. Deliver before 11 AM, pack detergent in sacks...',
-                        hintStyle: const TextStyle(fontSize: 11.5, color: AppTheme.slate400),
-                        filled: true,
-                        fillColor: AppTheme.slate50,
-                        contentPadding: const EdgeInsets.all(8),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: AppTheme.slate300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: const Icon(Icons.add_shopping_cart_rounded, size: 15),
-                label: const Text('Back to Catalog to Add More Items'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primary,
-                  side: const BorderSide(color: AppTheme.primary),
-                  padding: const EdgeInsets.symmetric(vertical: 11),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+          ],
         ),
-
-        // Sticky Bottom Dispatch Dock
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 10,
-                offset: const Offset(0, -3),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Total: ${cart.itemCount} items (${cart.totalUnits}u)',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.slate500),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (cart.totalSavings > 0)
-                          Text(
-                            'Savings: +${AppFormatters.formatCurrency(cart.totalSavings)}',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    AppFormatters.formatCurrency(cart.subtotalPtr),
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.primaryDark),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isSending ? null : () => _handleWhatsAppCheckout(context),
-                  icon: _isSending
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.send_rounded, size: 18),
-                  label: Text(
-                    _isSending ? 'Launching WhatsApp...' : 'Send Order on WhatsApp',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.whatsappGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

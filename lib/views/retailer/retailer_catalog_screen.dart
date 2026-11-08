@@ -270,51 +270,41 @@ class _RetailerCatalogScreenState extends State<RetailerCatalogScreen> {
             const SizedBox(width: 8),
           ],
 
-          // 4. Cart Action (Button on tablet/desktop, compact icon with badge on mobile)
-          Consumer<CartProvider>(
-            builder: (context, cart, _) {
-              if (isMobile) {
-                return IconButton(
-                  icon: Badge(
-                    label: Text('${cart.itemCount}'),
-                    isLabelVisible: cart.itemCount > 0,
-                    backgroundColor: AppTheme.outOfStockRed,
-                    child: const Icon(Icons.shopping_cart_outlined, size: 20, color: Colors.white),
-                  ),
-                  tooltip: 'View Cart',
-                  onPressed: () => _openCartDesk(context),
-                );
-              }
-              return SizedBox(
-                height: 36,
-                child: ElevatedButton.icon(
-                  onPressed: () => _openCartDesk(context),
-                  icon: Badge(
-                    label: Text('${cart.itemCount}'),
-                    isLabelVisible: cart.itemCount > 0,
-                    backgroundColor: AppTheme.outOfStockRed,
-                    child: const Icon(Icons.shopping_cart_outlined, size: 16),
-                  ),
-                  label: Text(
-                    cart.subtotalPtr > 0 ? AppFormatters.formatCurrency(cart.subtotalPtr) : 'Cart',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate800,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      side: BorderSide(
-                        color: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate700,
+          // 4. Cart Action (Tablet/Desktop only; Mobile uses FloatingActionButton exclusively)
+          if (!isMobile) ...[
+            Consumer<CartProvider>(
+              builder: (context, cart, _) {
+                return SizedBox(
+                  height: 36,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openCartDesk(context),
+                    icon: Badge(
+                      label: Text('${cart.itemCount}'),
+                      isLabelVisible: cart.itemCount > 0,
+                      backgroundColor: AppTheme.outOfStockRed,
+                      child: const Icon(Icons.shopping_cart_outlined, size: 16),
+                    ),
+                    label: Text(
+                      cart.subtotalPtr > 0 ? AppFormatters.formatCurrency(cart.subtotalPtr) : 'Cart',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate800,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: BorderSide(
+                          color: cart.itemCount > 0 ? AppTheme.primary : AppTheme.slate700,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
 
           // 5. Logout / Exit Button (36px on tablet/desktop, icon on mobile, both guarded by _confirmLogout)
           if (!isMobile)

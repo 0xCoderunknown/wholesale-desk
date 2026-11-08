@@ -50,12 +50,14 @@ class SchemeBadge extends StatelessWidget {
 class SchemeApplyPill extends StatelessWidget {
   final int threshold;
   final VoidCallback onApply;
+  final VoidCallback? onRemove;
   final bool isAlreadyActive;
 
   const SchemeApplyPill({
     super.key,
     required this.threshold,
     required this.onApply,
+    this.onRemove,
     this.isAlreadyActive = false,
   });
 
@@ -66,14 +68,14 @@ class SchemeApplyPill extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onApply,
+        onTap: isAlreadyActive ? (onRemove ?? onApply) : onApply,
         borderRadius: BorderRadius.circular(4),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: isAlreadyActive
-                ? const Color(0xFF065F46)
-                : const Color(0xFF047857), // Emerald
+                ? const Color(0xFFDC2626) // Crimson Red
+                : const Color(0xFF047857), // Emerald Green
             borderRadius: BorderRadius.circular(4),
             boxShadow: [
               BoxShadow(
@@ -88,19 +90,19 @@ class SchemeApplyPill extends StatelessWidget {
             children: [
               Icon(
                 isAlreadyActive
-                    ? Icons.check_circle_rounded
+                    ? Icons.close_rounded
                     : Icons.bolt_rounded,
-                size: 11,
+                size: 12,
                 color: Colors.white,
               ),
               const SizedBox(width: 3),
               Text(
-                isAlreadyActive ? 'APPLIED' : 'APPLY',
+                isAlreadyActive ? 'REMOVE' : 'APPLY',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 0.2,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],
@@ -246,6 +248,10 @@ class SchemeNudgePill extends StatelessWidget {
         : const Color(0xFF92400E); // Amber 800
     final iconColor = isQualified ? Colors.white : const Color(0xFFB45309);
 
+    final cleanMessage = message.trim().startsWith('✓')
+        ? message.trim().replaceFirst(RegExp(r'^✓\s*'), '')
+        : message.trim();
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -266,7 +272,7 @@ class SchemeNudgePill extends StatelessWidget {
           const SizedBox(width: 5),
           Flexible(
             child: Text(
-              message,
+              cleanMessage,
               style: TextStyle(
                 color: textColor,
                 fontSize: 11,

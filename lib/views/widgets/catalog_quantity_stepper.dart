@@ -215,29 +215,25 @@ class _CatalogQuantityStepperState extends State<CatalogQuantityStepper> {
                 ),
               ),
             ),
-            Container(
-              constraints: const BoxConstraints(minWidth: 34),
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: IntrinsicWidth(
-                child: TextField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.slate900,
-                  ),
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  onSubmitted: _commitQuantity,
+            SizedBox(
+              width: 36,
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.slate900,
                 ),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onSubmitted: _commitQuantity,
               ),
             ),
             InkWell(

@@ -9,6 +9,7 @@ class SchemeInlineStrip extends StatefulWidget {
   final bool inStock;
   final bool isAlreadyActive;
   final VoidCallback? onApplyScheme;
+  final VoidCallback? onRemoveScheme;
   final bool isDesktop;
 
   const SchemeInlineStrip({
@@ -17,6 +18,7 @@ class SchemeInlineStrip extends StatefulWidget {
     required this.inStock,
     this.isAlreadyActive = false,
     this.onApplyScheme,
+    this.onRemoveScheme,
     this.isDesktop = false,
   });
 
@@ -108,18 +110,20 @@ class _SchemeInlineStripState extends State<SchemeInlineStrip> {
           ),
           const SizedBox(width: 8),
 
-          // Sized [APPLY] Action Button
-          if (widget.inStock && details.threshold > 0 && widget.onApplyScheme != null)
+          // Sized [APPLY] / [REMOVE] Action Button
+          if (widget.inStock && details.threshold > 0 && (widget.onApplyScheme != null || widget.onRemoveScheme != null))
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: widget.onApplyScheme,
+                onTap: isActive
+                    ? (widget.onRemoveScheme ?? widget.onApplyScheme)
+                    : widget.onApplyScheme,
                 borderRadius: BorderRadius.circular(5),
                 child: Container(
                   height: 28,
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   decoration: BoxDecoration(
-                    color: isActive ? const Color(0xFF059669) : const Color(0xFF15803D),
+                    color: isActive ? const Color(0xFFDC2626) : const Color(0xFF15803D),
                     borderRadius: BorderRadius.circular(5),
                     boxShadow: [
                       BoxShadow(
@@ -134,13 +138,13 @@ class _SchemeInlineStripState extends State<SchemeInlineStrip> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isActive ? Icons.check_circle_rounded : Icons.bolt_rounded,
+                        isActive ? Icons.close_rounded : Icons.bolt_rounded,
                         size: 13,
                         color: Colors.white,
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        isActive ? 'APPLIED' : 'APPLY',
+                        isActive ? 'REMOVE' : 'APPLY',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,

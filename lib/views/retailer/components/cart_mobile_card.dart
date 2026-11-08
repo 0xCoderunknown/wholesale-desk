@@ -4,9 +4,9 @@ import '../../../config/theme.dart';
 import '../../../models/cart_item.dart';
 import '../../../state/cart_provider.dart';
 import '../../widgets/catalog_quantity_stepper.dart';
-import '../../widgets/high_density_badge.dart';
 
-/// Single item card component for mobile cart review flow.
+/// Streamlined mobile cart card.
+/// Renders: Title & Brand, Rate, Action Row ([ - 12 + ] | Scheme Badge 🎁 | Line: ₹... | [ 🗑 ]).
 class CartMobileCard extends StatelessWidget {
   final CartItem item;
   final CartProvider cart;
@@ -23,123 +23,44 @@ class CartMobileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = item.product;
     final nudge = item.nudge;
-    final schemeThreshold = item.schemeThreshold;
-    final boxDisplay = item.boxCountDisplay;
+    final titleBrand = p.brand.isNotEmpty ? '${p.name} (${p.brand})' : p.name;
+    final hasScheme = p.scheme.trim().isNotEmpty;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppTheme.slate200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1: Title, Line Total & Delete Target
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      p.name,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900),
-                    ),
-                    const SizedBox(height: 2),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          p.brand,
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppTheme.slate500),
-                        ),
-                        if (p.hasCartonPack) BoxPackBadge(cartonPack: p.cartonPack),
-                        if (item.hasScheme) SchemeBadge(scheme: p.scheme),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    AppFormatters.formatCurrency(item.lineTotalPtr),
-                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.primaryDark),
-                  ),
-                  Text(
-                    'MRP: ${AppFormatters.formatCurrency(item.lineTotalMrp)}',
-                    style: const TextStyle(fontSize: 10, color: AppTheme.slate400),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 4),
-              IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.outOfStockRed),
-                tooltip: 'Remove',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                onPressed: () => cart.removeItem(p.id),
-              ),
-            ],
+          // 1. Title & Brand
+          Text(
+            titleBrand,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900),
           ),
+          const SizedBox(height: 3),
 
-          // Bonus Free Goods indicator
-          if (nudge.earnedFreeUnits > 0) ...[
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFDCFCE7),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0xFF86EFAC)),
-              ),
-              child: Text(
-                '🎁 +${nudge.earnedFreeUnits} Free Units (Total: ${item.quantity + nudge.earnedFreeUnits}u)',
-                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFF166534)),
-              ),
-            ),
-          ] else if (item.hasScheme && schemeThreshold > item.quantity) ...[
-            const SizedBox(height: 6),
-            SchemeApplyPill(
-              threshold: schemeThreshold,
-              isAlreadyActive: false,
-              onApply: () => cart.applyScheme(p, schemeThreshold, enforceMoq: enforceMoq),
-            ),
-          ],
+          // 2. Rate: PTR
+          Text(
+            'PTR: ${AppFormatters.formatCurrency(p.ptr)}',
+            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.slate600),
+          ),
+          const SizedBox(height: 8),
 
-          const Divider(height: 14),
-
-          // Bottom Stepper & Rate row
+          // 3. Action Row: [ - 12 + ] stepper | Compact badge: 12+1 Free 🎁 | Line: ₹3,420.00 | [ 🗑 ]
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      enforceMoq ? 'PTR: ${AppFormatters.formatCurrency(p.ptr)} (MOQ: ${p.moq})' : 'PTR: ${AppFormatters.formatCurrency(p.ptr)}',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.slate600),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (boxDisplay.isNotEmpty)
-                      Text(
-                        boxDisplay,
-                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF1D4ED8)),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
               CatalogQuantityStepper(
                 product: p,
                 quantity: item.quantity,
@@ -150,6 +71,72 @@ class CartMobileCard extends StatelessWidget {
                 onDirectDelete: () => cart.removeItem(p.id),
                 onQuantityChanged: (newQty) => cart.updateQuantity(p.id, newQty, enforceMoq: enforceMoq),
               ),
+              if (hasScheme) ...[
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: nudge.earnedFreeUnits > 0
+                          ? const Color(0xFFDCFCE7)
+                          : const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: nudge.earnedFreeUnits > 0
+                            ? const Color(0xFF86EFAC)
+                            : const Color(0xFFFCD34D),
+                      ),
+                    ),
+                    child: Text(
+                      '${p.scheme}${nudge.earnedFreeUnits > 0 ? ' 🎁' : ''}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: nudge.earnedFreeUnits > 0
+                            ? const Color(0xFF166534)
+                            : const Color(0xFF92400E),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(width: 6),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        AppFormatters.formatCurrency(item.lineTotalPtr),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.slate900),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => cart.removeItem(p.id),
+                        borderRadius: BorderRadius.circular(6),
+                        child: const SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Center(
+                            child: Icon(
+                              Icons.delete_outline_rounded,
+                              size: 18,
+                              color: AppTheme.outOfStockRed,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
@@ -157,4 +144,3 @@ class CartMobileCard extends StatelessWidget {
     );
   }
 }
-

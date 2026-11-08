@@ -23,9 +23,9 @@ class ProductCardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final qty = context.select<CartProvider, int>((c) => c.getQuantity(product.id));
+    final cart = context.watch<CartProvider>();
+    final qty = cart.getQuantity(product.id);
     final inCart = qty > 0;
-    final cart = context.read<CartProvider>();
 
     final schemeThreshold = SchemeHelper.parseThreshold(product.scheme);
     final nudge = SchemeHelper.calculateNudge(
@@ -251,6 +251,7 @@ class ProductCardTile extends StatelessWidget {
                 inStock: product.inStock,
                 isAlreadyActive: nudge.isQualified,
                 onApplyScheme: () => cart.applyScheme(product, schemeThreshold, enforceMoq: enforceMoq),
+                onRemoveScheme: () => cart.removeItem(product.id),
                 isDesktop: isDesktop,
               ),
             ],

@@ -82,7 +82,7 @@ void main() {
       expect(nudge.hasScheme, isTrue);
       expect(nudge.isQualified, isTrue);
       expect(nudge.earnedFreeUnits, equals(1));
-      expect(nudge.message, equals('✓ Scheme Unlocked: 1 Free Unit Applied'));
+      expect(nudge.message, equals('Scheme Unlocked: 1 Free Unit Applied'));
     });
 
     test('Progressive micro-copy: Multiples calculation (10+1, qty=20)', () {
@@ -96,7 +96,7 @@ void main() {
       expect(nudge.hasScheme, isTrue);
       expect(nudge.isQualified, isTrue);
       expect(nudge.earnedFreeUnits, equals(2));
-      expect(nudge.message, equals('✓ Scheme Unlocked: 2 Free Units Applied'));
+      expect(nudge.message, equals('Scheme Unlocked: 2 Free Units Applied'));
     });
   });
 
@@ -252,22 +252,13 @@ void main() {
         timestamp: DateTime(2026, 11, 7, 18, 30),
       );
 
-      // Verify Billed Quantity
-      expect(message, contains('Billed Qty: *20* units'));
-      // Verify Carton Pack breakdown
-      expect(message, contains('(Box: 20u ≈ 1b)'));
-      // Verify Free Scheme Bonus Units
-      expect(message, contains('🎁 Bonus: *+2 Free Units* (Total: 22u)'));
-      // Verify Effective Rate
-      expect(message, contains('Eff. Rate:'));
-      // Verify Line Total and Agreed PTR
-      expect(message, contains('Line Total: *₹5,000.00*'));
-      expect(message, contains('Total Order Value (PTR):* *₹5,000.00*'));
-      expect(message, contains('Guwahati Kirana Store'));
-      expect(message, contains('Fancy Bazaar'));
-      // Verify Indian Date & Time (DD/MM/YYYY) and Mobile (+91)
-      expect(message, contains('📅 *Date & Time (IST):* 07/11/2026, 06:30 PM'));
-      expect(message, contains('📱 *Mobile:* +91 98765 43210'));
+      // Verify Compressed WhatsApp Spec format
+      expect(message, contains('*ORDER: Guwahati Kirana Store (Fancy Bazaar)*'));
+      expect(message, contains('--------------------------------'));
+      expect(message, contains('1. Tata Tea Gold 500g'));
+      expect(message, contains('20 pcs (+2 Free) @ ₹250.00 = ₹5,000.00'));
+      expect(message, contains('*Total Payable: ₹5,000.00*'));
+      expect(message, contains('*Items: 1 (20 units)*'));
     });
   });
 

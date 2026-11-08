@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.0] - 2026-11-08
+
+### Added
+- **Compressed WhatsApp Order Payload**: Ultra-compact, clean plaintext format (`*ORDER: Store (Route)*`, itemized lines with `@ PTR = ₹Total`, and summary grand totals) preventing URL query string truncation on large multi-item orders.
+- **1-Tap Scheme Undo ([REMOVE])**: Applied schemes in catalog listings can be reversed in 1 tap with the red `[REMOVE]` button, restoring base quantities or clearing the lot.
+- **Quick-Buy 1 Box Action in Desktop Table**: Added adjacent `[1 Box (N)]` quick-add button in the desktop catalog table for instant carton ordering.
+
+### Changed
+- **Enterprise Desktop Cart Redesign (≥ 1024px)**:
+  - Main container set to enterprise `max-width: 1240px` centered with `margin: 32px auto`.
+  - 2-Column split with 28px gap: ~70% scrollable Proforma Invoice Table and ~30% pinned/sticky Order Valuation Dock.
+  - Removed redundant `"PTR:"` and `"Line:"` prefixes from table columns; displays clean, bold currency figures (`₹285.00` and `₹3,420.00`).
+  - Formatted product column with title breathing on top line and secondary metadata (`Brand · Box: N`) beneath.
+- **Mobile Cart Polish (< 768px)**:
+  - Eliminated inner duplicate WhatsApp CTA in the valuation card; sticky bottom bar is now the sole checkout button.
+  - Enclosed red trash delete button in a 40x40px minimum touch target.
+  - Tightened card vertical margins to 6px and configured 90px bottom scroll padding for safe clearance above the sticky footer.
+  - Single-line identity subheader (`Ordering for: Store · Route`) beneath minimal app bar.
+
+### Fixed
+- **Double Checkmark Bug**: Resolved duplicate checkmark symbols in scheme unlocked status banners.
+- **Stepper Drawer Layout**: Replaced unbounded textfield intrinsic width in drawer steppers with fixed sizing, eliminating horizontal RenderFlex layout overflows.
+
+---
+
 ## [1.6.0] - 2026-11-07
 
 ### Added

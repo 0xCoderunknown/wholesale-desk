@@ -8,7 +8,9 @@ import 'package:wholesale_desk/services/whatsapp_service.dart';
 import 'package:wholesale_desk/state/auth_provider.dart';
 import 'package:wholesale_desk/state/cart_provider.dart';
 import 'package:wholesale_desk/state/desk_provider.dart';
+import 'package:wholesale_desk/views/retailer/components/catalog_data_table.dart';
 import 'package:wholesale_desk/views/retailer/retailer_cart_screen.dart';
+import 'package:wholesale_desk/views/widgets/catalog_quantity_stepper.dart';
 
 Widget buildTestableWidget({
   required Widget child,
@@ -97,10 +99,10 @@ void main() {
   });
 
   group('WhatsApp Service Order Message with Notes & Packaging', () {
-    test('Includes packaging breakdown and delivery notes in formatted WhatsApp message', () {
+    test('Includes compact format and delivery notes in formatted WhatsApp message', () {
       final cart = CartProvider();
       cart.addItem(productBox);
-      cart.updateQuantity(productBox.id, 48); // 2 full boxes
+      cart.updateQuantity(productBox.id, 48); // 4 full scheme cycles (10+1 -> +4 free)
 
       final message = WhatsAppService.buildOrderMessage(
         storeName: 'Test Distributor',
@@ -111,12 +113,13 @@ void main() {
         orderNotes: 'Deliver by 10 AM sharp via tempo',
       );
 
-      expect(message, contains('Guwahati Supermart'));
-      expect(message, contains('Central Market'));
-      expect(message, contains('Packaging Breakdown:* 2 Cartons + 0 Loose Units'));
-      expect(message, contains('Retailer Remarks / Instructions:'));
-      expect(message, contains('Deliver by 10 AM sharp via tempo'));
-      expect(message, contains('🎁 *Bonus Free Goods:*'));
+      expect(message, contains('*ORDER: Guwahati Supermart (Central Market)*'));
+      expect(message, contains('--------------------------------'));
+      expect(message, contains('1. Surf Excel Detergent Powder 1kg'));
+      expect(message, contains('48 pcs (+4 Free) @ ₹150.00 = ₹7,200.00'));
+      expect(message, contains('*Total Payable: ₹7,200.00*'));
+      expect(message, contains('*Items: 1 (48 units)*'));
+      expect(message, contains('Note: Deliver by 10 AM sharp via tempo'));
     });
   });
 
@@ -139,39 +142,44 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Top bar title & counter badge
-      expect(find.text('Wholesale Order Desk'), findsOneWidget);
-      expect(find.text('1 items • 9u'), findsOneWidget);
+      // Top bar title & single identity header & clear action
+      expect(find.text('Back'), findsOneWidget);
+      expect(find.text('Cart (1)'), findsOneWidget);
+      expect(find.text('Clear'), findsOneWidget);
+      expect(find.text('Ordering for: Guwahati Supermart · Central Market'), findsOneWidget);
 
       // Scheme Maximizer Alert Strip is visible because 9 units is near 10
       expect(find.textContaining('within reach of Free Bonus Units'), findsOneWidget);
 
       // Proforma Invoice Table Headers
       expect(find.text('#'), findsOneWidget);
-      expect(find.text('Product & Specification'), findsOneWidget);
-      expect(find.text('Wholesale Rate'), findsOneWidget);
-      expect(find.text('Billed Qty'), findsOneWidget);
-      expect(find.text('Line Total (PTR)'), findsOneWidget);
+      expect(find.text('Product & Brand'), findsOneWidget);
+      expect(find.text('PTR Rate'), findsOneWidget);
+      expect(find.text('Order Quantity & Scheme'), findsOneWidget);
+      expect(find.text('Line Total'), findsOneWidget);
 
-      // Table line item content
-      expect(find.text(productBox.name), findsOneWidget);
-      expect(find.text(productBox.brand), findsOneWidget);
-      expect(find.text('Box: 24'), findsOneWidget);
+      // Table line item content (prefixes removed)
+      expect(find.textContaining(productBox.name), findsOneWidget);
+      expect(find.text('₹150.00'), findsOneWidget);
+      expect(find.text('₹1,350.00'), findsWidgets);
 
       // Right-hand Summary Dock
       expect(find.text('Order Valuation Summary'), findsOneWidget);
-      expect(find.text('Packaging Estimate:'), findsOneWidget);
+      expect(find.text('Total Items:'), findsOneWidget);
+      expect(find.text('1 (9 billed)'), findsOneWidget);
+      expect(find.text('Total Payable (PTR):'), findsOneWidget);
       expect(find.text('Send Order on WhatsApp'), findsOneWidget);
-      expect(find.text('Delivery Instructions / Remarks (Optional):'), findsOneWidget);
 
-      // In-cart instant search filters table
-      await tester.enterText(find.byType(TextField).first, 'Dove');
+      // Verify Clear Cart confirmation dialog
+      await tester.tap(find.text('Clear'));
       await tester.pumpAndSettle();
-      expect(find.text('No items match "Dove"'), findsOneWidget);
+      expect(find.text('Clear Cart?'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+      expect(find.text('Clear All'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField).first, 'Surf');
+      await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
-      expect(find.text(productBox.name), findsOneWidget);
+      expect(find.text('Clear Cart?'), findsNothing);
     });
 
     testWidgets('Mobile view (<768px) renders high-density cards and sticky bottom dock',
@@ -192,13 +200,94 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Mobile card displays product and carton equivalence
-      expect(find.text(productBox.name), findsOneWidget);
-      expect(find.text('≈ 1 Box(es)'), findsOneWidget);
+      // Mobile card displays product name, brand, PTR, and total price
+      expect(find.textContaining(productBox.name), findsOneWidget);
+      expect(find.text('PTR: ₹150.00'), findsOneWidget);
+      expect(find.text('₹3,600.00'), findsWidgets);
 
-      // Sticky bottom action dock is visible
-      expect(find.text('Send Order on WhatsApp'), findsOneWidget);
-      expect(find.textContaining('Total: 1 items (24u)'), findsOneWidget);
+      // Sticky bottom action dock is the sole checkout button (inner CTA removed)
+      expect(find.text('Send on WhatsApp'), findsOneWidget);
+      expect(find.text('Send Order on WhatsApp'), findsNothing);
+      expect(find.text('Total Payable'), findsWidgets);
+
+      // Verify ListView bottom padding is 90px for scroll safety above sticky bottom bar
+      final listView = tester.widget<ListView>(find.byType(ListView));
+      expect((listView.padding as EdgeInsets).bottom, equals(90.0));
+    });
+
+    testWidgets('CatalogDataTable on Desktop: hitting Add to Cart brings [-]MOQ[+][dustbin], hitting scheme brings [-]scheme_val[+][dustbin]',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final cart = CartProvider();
+      await tester.pumpWidget(
+        buildTestableWidget(
+          cartProvider: cart,
+          surfaceSize: const Size(1280, 800),
+          child: Scaffold(
+            body: CatalogDataTable(
+              products: [productBox], // moq: 6, scheme: '10+1 Free'
+              enforceMoq: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Initially shows 'Add to Cart' button
+      expect(find.text('Add to Cart'), findsOneWidget);
+      expect(find.byType(CatalogQuantityStepper), findsNothing);
+      expect(find.text('1 Box (24)'), findsOneWidget); // 1-Tap carton box bulk buy button
+
+      // Hit '1 Box (24)' -> immediately sets cart quantity to 24 (1 box) and switches to stepper
+      await tester.ensureVisible(find.text('1 Box (24)'));
+      await tester.tap(find.text('1 Box (24)'));
+      await tester.pumpAndSettle();
+
+      expect(cart.getQuantity(productBox.id), equals(24));
+      expect(find.byType(CatalogQuantityStepper), findsOneWidget);
+      expect(find.text('24'), findsOneWidget);
+      expect(find.text('REMOVE'), findsOneWidget); // 24 >= 10 scheme threshold
+
+      // Clear cart using Dustbin -> restores initial state
+      await tester.ensureVisible(find.byIcon(Icons.delete_outline_rounded));
+      await tester.tap(find.byIcon(Icons.delete_outline_rounded));
+      await tester.pumpAndSettle();
+
+      expect(cart.getQuantity(productBox.id), equals(0));
+      expect(find.text('Add to Cart'), findsOneWidget);
+      expect(find.text('APPLY'), findsOneWidget);
+
+      // Hit 'Add to Cart' -> immediately switches to Stepper with MOQ (6) and dustbin
+      await tester.ensureVisible(find.text('Add to Cart'));
+      await tester.tap(find.text('Add to Cart'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add to Cart'), findsNothing);
+      expect(find.byType(CatalogQuantityStepper), findsOneWidget);
+      expect(find.text('6'), findsOneWidget); // MOQ value
+      expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget); // Dustbin icon
+
+      // Hit Scheme 'APPLY' -> updates quantity to scheme threshold (10) in the stepper, and button changes to 'REMOVE'
+      expect(find.text('APPLY'), findsOneWidget);
+      await tester.ensureVisible(find.text('APPLY'));
+      await tester.tap(find.text('APPLY'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CatalogQuantityStepper), findsOneWidget);
+      expect(find.text('10'), findsOneWidget); // Scheme threshold value
+      expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget);
+      expect(find.text('REMOVE'), findsOneWidget); // Scheme pill changes to REMOVE
+
+      // Hit 'REMOVE' on scheme pill -> undoes scheme / removes the whole lot, returns to 'Add to Cart'
+      await tester.ensureVisible(find.text('REMOVE'));
+      await tester.tap(find.text('REMOVE'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add to Cart'), findsOneWidget);
+      expect(find.byType(CatalogQuantityStepper), findsNothing);
+      expect(find.text('APPLY'), findsOneWidget);
     });
   });
 }
