@@ -46,15 +46,23 @@ class WooCommerceRestService implements WholesaleRepository {
     _baseUrl = _cleanBaseUrl(newUrl);
   }
 
+  String get baseUrl => _baseUrl;
+  String get sessionToken => _sessionToken;
+  String? get currentRole => _currentRole;
+  Map<String, String> get headers => _headers;
+
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        if (_sessionToken.isNotEmpty) 'X-SWAC-Master-Token': _sessionToken,
+        if (_sessionToken.isNotEmpty) ...{
+          'X-SWAC-Master-Token': _sessionToken,
+          'X-SWAC-Retailer-Token': _sessionToken,
+        },
       };
 
   // ================= AUTHENTICATION =================
 
-  /// Authenticates with WordPress backend using 4-digit PIN (Master or Staff)
+  /// Authenticates with WordPress backend using 4-digit PIN (Master, Staff, or Salesman)
   Future<Map<String, dynamic>> loginDesk(String pin) async {
     try {
       final response = await http.post(
@@ -67,9 +75,12 @@ class WooCommerceRestService implements WholesaleRepository {
       if (response.statusCode == 200 && data['success'] == true) {
         _sessionToken = data['token']?.toString() ?? '';
         _currentRole = data['role']?.toString() ?? 'owner';
-        // Refresh products and settings upon login
+        // Refresh products upon login
         await getProducts();
-        await getSettings();
+        // Role-guard getSettings: only owner/admin has permission to read settings
+        if (_currentRole == 'owner' || _currentRole == 'admin') {
+          await getSettings();
+        }
         return {'success': true, 'role': _currentRole};
       } else {
         return {
@@ -101,6 +112,13 @@ class WooCommerceRestService implements WholesaleRepository {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       if (response.statusCode == 200 && data['success'] == true) {
         final retData = data['retailer'] as Map<String, dynamic>?;
+        final token = retData?['token']?.toString() ?? '';
+        if (token.isNotEmpty) {
+          _sessionToken = token;
+          _currentRole = 'retailer';
+          // Refresh products using retailer token
+          await getProducts();
+        }
         return {
           'success': true,
           'retailer': Retailer(

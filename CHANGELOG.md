@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tapping a new shop switches immediately when the cart is empty.
   - When the cart contains items, prompts confirmation (`"Switch Active Shop? Active Cart has items for [Shop Name]"`) to prevent cross-retailer order contamination.
 - **Salesman Order Watermark**: Compiles `Booked by: Salesman Name (Salesman)` into the WhatsApp order header line 3, while preserving clean direct order formatting for self-ordering retailers.
+- **WooCommerce Dual-Backend Parity**:
+  - Whitelisted `X-SWAC-Master-Token` and `X-SWAC-Retailer-Token` in WordPress `rest_allowed_cors_headers` to resolve cross-origin preflight (`OPTIONS`) blocks on Flutter Web.
+  - Broadened `/desk/products` catalog authorization to validate Retailer HMAC tokens alongside Master, Staff, and Salesman tokens.
+  - Added Salesman PIN (`3344`) authentication support to WordPress `/desk/auth`.
+  - Added `moq` and `scheme_shorthand` parsing in `create-product.php` to prevent data loss when adding items from Admin Desk.
+  - Retained retailer session tokens upon login and role-guarded `/desk/settings` calls to prevent 403 authorization locks.
 
 ---
 

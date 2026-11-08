@@ -69,7 +69,7 @@ class Product {
       brand: map['brand']?.toString() ?? '',
       mrp: (map['mrp'] is num) ? (map['mrp'] as num).toDouble() : double.tryParse(map['mrp']?.toString() ?? '0') ?? 0.0,
       ptr: (map['ptr'] is num) ? (map['ptr'] as num).toDouble() : double.tryParse(map['ptr']?.toString() ?? '0') ?? 0.0,
-      scheme: map['scheme']?.toString() ?? '',
+      scheme: map['scheme']?.toString() ?? map['scheme_shorthand']?.toString() ?? map['scheme_badge']?.toString() ?? '',
       moq: (map['moq'] is num) ? (map['moq'] as num).toInt() : int.tryParse(map['moq']?.toString() ?? '1') ?? 1,
       cartonPack: carton,
       inStock: map['in_stock'] is bool ? map['in_stock'] as bool : true,
