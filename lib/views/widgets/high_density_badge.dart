@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../config/theme.dart';
+import '../../services/scheme_helper.dart';
 
 class SchemeBadge extends StatelessWidget {
   final String scheme;
@@ -13,34 +14,43 @@ class SchemeBadge extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final parsed = SchemeHelper.parse(scheme);
+    if (parsed.type == SchemeType.none) {
+      return const SizedBox.shrink();
+    }
+
+    final isPct = parsed.type == SchemeType.percentage;
+    final isInfo = parsed.type == SchemeType.infoNote;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppTheme.schemeAmberBg,
+        color: isPct
+            ? const Color(0xFFECFDF5)
+            : isInfo
+                ? AppTheme.slate100
+                : AppTheme.schemeAmberBg,
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: AppTheme.schemeAmber.withValues(alpha: 0.4),
+          color: isPct
+              ? const Color(0xFFA7F3D0)
+              : isInfo
+                  ? AppTheme.slate300
+                  : AppTheme.schemeAmber.withValues(alpha: 0.4),
           width: 0.8,
         ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.local_offer_rounded,
-            size: 11,
-            color: AppTheme.schemeAmber,
-          ),
-          const SizedBox(width: 3),
-          Text(
-            scheme,
-            style: const TextStyle(
-              color: AppTheme.schemeAmber,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+      child: Text(
+        parsed.badgeLabel,
+        style: TextStyle(
+          color: isPct
+              ? const Color(0xFF047857)
+              : isInfo
+                  ? AppTheme.slate700
+                  : AppTheme.schemeAmber,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

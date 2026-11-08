@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/theme.dart';
 import '../../models/product.dart';
 import '../../services/scheme_helper.dart';
 
@@ -34,39 +35,30 @@ class _SchemeInlineStripState extends State<SchemeInlineStrip> {
     }
 
     final p = widget.product;
-    final details = SchemeHelper.getMaxSchemeDetails(
-      scheme: p.scheme,
-      ptr: p.ptr,
-      mrp: p.mrp,
-    );
+    final parsed = SchemeHelper.parse(p.scheme);
+    if (parsed.type == SchemeType.none) {
+      return const SizedBox.shrink();
+    }
 
-    final isTiered = details.threshold > 0;
-
-    // 1. Static info strip for continuous/percentage schemes (auto-applied)
-    if (!isTiered) {
-      final schemeLabel = p.scheme.trim().toLowerCase().contains('net rate')
-          ? 'Net Rate auto-applied'
-          : '${p.scheme.trim()} auto-applied';
+    // 1. Informational Note: Pure informational text pill, Crucial UI Guard: NEVER show [APPLY] button
+    if (parsed.type == SchemeType.infoNote) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEFCE8), // Amber 50
+          color: AppTheme.slate100,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: const Color(0xFFFDE047), // Amber 300
-            width: 0.8,
-          ),
+          border: Border.all(color: AppTheme.slate300, width: 0.8),
         ),
         child: Row(
           children: [
-            const Text('🏷️ ', style: TextStyle(fontSize: 12)),
+            const Text('📢 ', style: TextStyle(fontSize: 12)),
             Expanded(
               child: Text(
-                schemeLabel,
+                p.scheme.trim(),
                 style: const TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF92400E),
+                  color: AppTheme.slate700,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -76,9 +68,15 @@ class _SchemeInlineStripState extends State<SchemeInlineStrip> {
       );
     }
 
+    final details = SchemeHelper.getMaxSchemeDetails(
+      scheme: p.scheme,
+      ptr: p.ptr,
+      mrp: p.mrp,
+    );
+
     final isActive = widget.isAlreadyActive;
 
-    // 2. Tiered schemes: Clean, single-line horizontal strip with inline [APPLY] button
+    // 2. Automated Schemes (Free Goods & Percentage Discount): Clean strip with active [APPLY] button
     return Container(
       decoration: BoxDecoration(
         color: isActive ? const Color(0xFFECFDF5) : const Color(0xFFFEFCE8),
@@ -111,7 +109,7 @@ class _SchemeInlineStripState extends State<SchemeInlineStrip> {
           const SizedBox(width: 8),
 
           // Sized [APPLY] / [REMOVE] Action Button
-          if (widget.inStock && details.threshold > 0 && (widget.onApplyScheme != null || widget.onRemoveScheme != null))
+          if (widget.inStock && parsed.canApply && (widget.onApplyScheme != null || widget.onRemoveScheme != null))
             Material(
               color: Colors.transparent,
               child: InkWell(

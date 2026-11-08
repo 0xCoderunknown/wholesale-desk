@@ -14,15 +14,100 @@ void main() {
       expect(SchemeHelper.parseThreshold('20+1'), equals(20));
       expect(SchemeHelper.parseThreshold('20 Bags + 1 Free'), equals(20));
       expect(SchemeHelper.parseThreshold('12+1 Free'), equals(12));
-      expect(SchemeHelper.parseThreshold('Buy 24 Get ₹100 Off'), equals(24));
+      expect(SchemeHelper.parseThreshold('25+3'), equals(25));
       expect(SchemeHelper.parseThreshold('12+2 Special Scheme'), equals(12));
 
-      // Cash Discounts, Percentages, and Net Rates -> Strictly 0 (No Apply Button)
+      // Normalization tests: word variants ('plus', 'and') and spacing
+      expect(SchemeHelper.parseThreshold('10 plus 1'), equals(10));
+      expect(SchemeHelper.parseThreshold('10 plus 1 free'), equals(10));
+      expect(SchemeHelper.parseThreshold('10 and 1'), equals(10));
+      expect(SchemeHelper.parseThreshold('10 + 1'), equals(10));
+      expect(SchemeHelper.parseThreshold('10+ 1'), equals(10));
+      expect(SchemeHelper.parseThreshold('  24   plus   2   free  '), equals(24));
+
+      // Percentage, Informational Notes, and Net Rates -> Strictly 0 threshold
+      expect(SchemeHelper.parseThreshold('Buy 24 Get ₹100 Off'), equals(0)); // infoNote
       expect(SchemeHelper.parseThreshold('5% Cash Disc'), equals(0));
       expect(SchemeHelper.parseThreshold('3% Special Scheme'), equals(0));
       expect(SchemeHelper.parseThreshold('5% Scheme'), equals(0));
       expect(SchemeHelper.parseThreshold('Net Rate'), equals(0));
       expect(SchemeHelper.parseThreshold(''), equals(0));
+    });
+
+    test('parsePreview classifies free goods, percentage discount, and informational text', () {
+      final freeGoods = SchemeHelper.parsePreview('10 plus 1');
+      expect(freeGoods.type, equals(SchemeType.freeGoods));
+      expect(freeGoods.previewDescription, equals('🎁 Free Goods: Earn 1 free for every 10 billed'));
+      expect(freeGoods.threshold, equals(10));
+      expect(freeGoods.freeUnits, equals(1));
+      expect(freeGoods.canApply, isTrue);
+
+      final pct = SchemeHelper.parsePreview('5% CD');
+      expect(pct.type, equals(SchemeType.percentage));
+      expect(pct.previewDescription, equals('🏷️ Percentage: 5% deducted from unit PTR on apply'));
+      expect(pct.percentDiscount, equals(5.0));
+      expect(pct.canApply, isTrue);
+
+      final info = SchemeHelper.parsePreview('Diwali Scheme: Rs.50 off');
+      expect(info.type, equals(SchemeType.infoNote));
+      expect(info.previewDescription, equals('ℹ️ Note: Shown as informational badge (no automated cart math)'));
+      expect(info.canApply, isFalse);
+
+      final empty = SchemeHelper.parsePreview('   ');
+      expect(empty.type, equals(SchemeType.none));
+      expect(empty.previewDescription, isEmpty);
+    });
+
+    test('parsePreview flags unusually large quantities and extreme discounts with warnings', () {
+      // Free goods threshold too large
+      final hugeScheme = SchemeHelper.parsePreview('9999999+1');
+      expect(hugeScheme.type, equals(SchemeType.freeGoods));
+      expect(hugeScheme.warning, contains('Unusually large scheme'));
+
+      // Free goods ratio reversed
+      final reverseRatio = SchemeHelper.parsePreview('1+10');
+      expect(reverseRatio.type, equals(SchemeType.freeGoods));
+      expect(reverseRatio.warning, contains('Free quantity (10) exceeds billed quantity (1)'));
+
+      // Percentage discount >= 100%
+      final extremePercent = SchemeHelper.parsePreview('900%');
+      expect(extremePercent.type, equals(SchemeType.percentage));
+      expect(extremePercent.warning, contains('Extreme discount: 900% is 100% or greater'));
+
+      // Percentage discount > 50%
+      final highPercent = SchemeHelper.parsePreview('99%');
+      expect(highPercent.type, equals(SchemeType.percentage));
+      expect(highPercent.warning, contains('High discount: 99% exceeds 50%'));
+
+      // Normal schemes should have no warning
+      expect(SchemeHelper.parsePreview('10+1').warning, isNull);
+      expect(SchemeHelper.parsePreview('5% CD').warning, isNull);
+    });
+
+    test('formatCompactBadge keeps badge label compact and correctly badged', () {
+      expect(SchemeHelper.formatCompactBadge('10 plus 1'), equals('10+1 Free 🎁'));
+      expect(SchemeHelper.formatCompactBadge('25+3'), equals('25+3 Free 🎁'));
+      expect(SchemeHelper.formatCompactBadge('5% CD'), equals('5% Off 🏷️'));
+      expect(SchemeHelper.formatCompactBadge('Special Pack'), equals('📢 Special Pack'));
+    });
+
+    test('CartItem and CartProvider percentage discount mode math verification', () {
+      final pctProduct = Product(
+        id: 'p_pct',
+        name: 'Horlicks 500g',
+        brand: 'HUL',
+        mrp: 300.0,
+        ptr: 200.0,
+        scheme: '5% Scheme Discount',
+        moq: 2,
+        inStock: true,
+      );
+
+      final item = CartItem(product: pctProduct, quantity: 10);
+      expect(item.effectiveRate, equals(190.0)); // 200 * (1 - 0.05)
+      expect(item.lineTotalPtr, equals(1900.0)); // 190 * 10
+      expect(item.lineTotalMrp, equals(3000.0)); // 300 * 10
+      expect(item.lineSavings, equals(1100.0)); // 3000 - 1900
     });
 
     test('Micro-copy is completely hidden at qty == 0', () {

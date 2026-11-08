@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0] - 2026-11-08
+
+### Added
+- **Warehouse Godown Staff Mode & Rate Shielding**:
+  - Enforced physical warehouse operational controls for `UserRole.staff` (PIN: `1122`), strictly hiding PTR rates, margins, wholesale scheme structures, retailer credentials, and store settings.
+  - Elevated box pack metadata as prominent high-contrast badges (`📦 Box: 24 Pcs`) and optimized 1-tap stock toggle action rows for walking godown aisles on budget mobile devices.
+- **Dispatch Box Breakdown Calculator (`BoxBreakdownDialog`)**:
+  - Added dedicated warehouse utility modal accessible by Admin and Staff.
+  - Decomposes total required order units into full sealed shipper cartons and loose units (e.g. `52 pcs in Box of 24 = 📦 2 Full Boxes (48 pcs)  +  🧴 4 Loose Pieces`).
+  - Eliminates mental math errors during peak van-loading and carton dispatch hours.
+- **Pure Domain Packaging Helper (`PackagingHelper` & `BoxBreakdown`)**:
+  - Created standalone pure domain math model [`PackagingHelper`](lib/models/packaging_helper.dart) centralizing modulo carton division.
+  - Standardized trade nomenclature (`2 Boxes + 4 Loose`) and godown dispatch summaries across [`CartItem`](lib/models/cart_item.dart) and [`BoxBreakdownDialog`](lib/views/distributor/box_breakdown_dialog.dart).
+- **POS-Grade Product Modal Hardening (`ProductEditDialog`)**:
+  - **Live Margin Status Pill:** Keystroke preview displaying emerald status pill (`📈 Retailer Margin: ₹XX.XX (YY.Y%)`) or bold red alert pill (`⚠️ Illegal Pricing: PTR exceeds MRP by ₹XX.XX`).
+  - **Cross-Field Validations:** Enforces $PTR \le MRP$, $MRP > 0$, $PTR > 0$, $MOQ \ge 1$, and $Carton Pack \ge 0$.
+  - **High-Speed Counter Ergonomics:** Chained desktop keyboard traversal (`autofocus` on Name $\rightarrow$ Brand $\rightarrow$ Scheme $\rightarrow$ MRP $\rightarrow$ PTR $\rightarrow$ MOQ $\rightarrow$ Box Pack $\rightarrow$ Enter saves).
+  - **Strict Numeric Filtering:** Regex formatters preventing invalid characters, double dots, or negative values.
+  - **Custom Stock Toggle Pill:** Replaced generic Material switch with the repo's signature `StockTogglePill`.
+  - **Save Feedback:** Floating 2-second SnackBar confirming product updates.
+- **Two Math Primitives for Scheme Automation (`SchemeHelper`)**:
+  - Normalized colloquial variations (`10 plus 1`, `10 and 1`, `10 + 1` $\rightarrow$ `10+1`).
+  - Automated schemes strictly limited to Free Goods (`X+Y`) and Flat Percentage (`N%`), with native MOQ enforcement for minimum order thresholds.
+  - Informational Notes (`📢 {text}`) strictly gated with no `[APPLY]` button, rendering purely as announcement badges and WhatsApp notes.
+- **Scheme Plausibility & Extreme Input Warnings**:
+  - Added real-time non-blocking warning alert pills for extreme discounts ($\ge 100\%$ or $> 50\%$) and unusually high quantities ($> 1000$ or inverted ratios).
+  - Rate clamping guard preventing effective PTR from dropping below ₹0.00.
+- **Wholesale Scheme Guide Dialog (`SchemeGuideDialog`)**:
+  - Interactive syntax reference explaining automated cart math for Free Goods, % Discounts, and Informational Notes.
+  - 1-tap template insertion chips (`10+1`, `12+1 Free`, `20+1`, `2% CD`, `5% Scheme`, etc.) that auto-fill the scheme input in 1 tap.
+- **Distributor Architecture Modularization (`lib/views/distributor/components/`)**:
+  - Deconstructed monolithic 992-line `distributor_desk_screen.dart` into 4 focused components: `DistributorCounterBar`, `DistributorAdminTable`, `DistributorStaffTable`, and `DistributorMobileCard`.
+  - Reduced screen file size by 60%, establishing separation of concerns between Admin commercial views and Staff godown views.
+- **Automated Test Expansion**:
+  - Expanded test coverage from 57 to **80 passing tests** across `test/product_edit_dialog_test.dart`, `test/packaging_helper_test.dart`, and `test/scheme_and_moq_test.dart`.
+
+---
+
 ## [1.8.0] - 2026-11-08
 
 ### Added

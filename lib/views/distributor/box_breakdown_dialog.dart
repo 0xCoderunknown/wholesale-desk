@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/theme.dart';
+import '../../models/packaging_helper.dart';
 import '../../models/product.dart';
 
 /// Lightweight "Dispatch Box Breakdown Calculator" utility for warehouse staff and distributors.
@@ -100,9 +101,10 @@ class _BoxBreakdownDialogState extends State<BoxBreakdownDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final fullBoxes = _boxSize > 0 ? _orderedQty ~/ _boxSize : 0;
-    final looseUnits = _boxSize > 0 ? _orderedQty % _boxSize : _orderedQty;
-    final boxedUnits = fullBoxes * _boxSize;
+    final breakdown = PackagingHelper.calculate(quantity: _orderedQty, cartonPack: _boxSize);
+    final fullBoxes = breakdown.fullBoxes;
+    final looseUnits = breakdown.looseUnits;
+    final boxedUnits = breakdown.boxedUnits;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

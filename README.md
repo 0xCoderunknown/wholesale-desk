@@ -4,10 +4,10 @@
 
 Wholesale Desk replaces messy handwritten parchaas, cluttered WhatsApp voice notes, and sluggish ERP ordering portals with a single, lightning-fast screen. Built for FMCG, pharma, and grocery distributors who need POS counter speed, zero latency, and seamless WhatsApp dispatch. No expensive software installations. Runs directly in any modern browser.
 
-[![Version](https://img.shields.io/badge/Version-1.8.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.9.0-blue)](CHANGELOG.md)
 [![Platform](https://img.shields.io/badge/Platform-Flutter%20Web-teal)](#deployment--developer-setup)
 [![Speed](https://img.shields.io/badge/Search%20Speed-%3C1ms%20In--Memory-brightgreen)](#core-operational-invariants)
-[![Tests](https://img.shields.io/badge/Tests-57%20Passing-success)](test/)
+[![Tests](https://img.shields.io/badge/Tests-80%20Passing-success)](test/)
 [![Dual Backend](https://img.shields.io/badge/Backend-Firestore%20%7C%20WooCommerce%20REST-orange)](#dual-backend-architecture)
 
 ---
@@ -53,20 +53,22 @@ Retailer/Salesman taps verified MOQ & scheme ➔ Live PTR & savings verified ➔
 ### 1. Distributor Admin Desk (Master Access)
 The command center for distributor owners and billing managers. Protected by Master PIN (`5075` or dynamic from database).
 
-- **High-Density Split Panel (Desktop Monitors):** Designed for 1080p and 1366x768 billing desk monitors with zero vertical margin waste.
-- **In-Place Catalog Management:** Edit PTR (distributor price to retailer), MRP, MOQ, box pack sizes, and scheme configurations in-place without sluggish popup save cycles.
+- **High-Density Split Panel (Desktop Monitors):** Designed for 1080p and 1366x768 billing desk monitors with modular component architecture (`DistributorCounterBar`, `DistributorAdminTable`, `DistributorStaffTable`, `DistributorMobileCard`).
+- **POS-Grade Product Modal Hardening:** Real-time keystroke margin calculations (`📈 Retailer Margin` or `⚠️ Illegal Pricing`), cross-field rate validations ($PTR \le MRP$), chained desktop keyboard navigation (`autofocus`, Enter to save), and numeric regex formatters.
+- **Two Math Primitives & Wholesale Scheme Guide:** Automated cart math strictly handles Free Goods (`X+Y`) and Flat Percentage (`N%`) with native MOQ enforcement; unrecognized text is badged as Informational Notes (`📢`). Includes an interactive Scheme Guide Dialog with 1-tap template chips (`10+1`, `5% Scheme`).
+- **Plausibility & Safety Guards:** Real-time non-blocking warnings for extreme discounts ($\ge 100\%$ or $> 50\%$) and abnormally large scheme quantities ($> 1000$).
 - **Instant Stock Control:** Toggle binary stock availability (`in_stock: true | false`) with instant green/red status pills.
 - **Retailer PIN & Party Ledger Management:** Create and manage retailer accounts linked directly to ERP party codes, assigned routes, and phone numbers.
 - **Store & Identity Configuration:** Configure billing WhatsApp number, store title, backend mode, and access PINs directly from the UI without redeployment.
 - **1-Click Demo Reset:** Instantly resets the database to standard demonstration products and routes for testing and onboarding.
 
-### 2. Staff Counter (Restricted Assistant)
+### 2. Staff Counter (Restricted Godown Assistant)
 Designed for the warehouse boy or junior counter assistant. Protected by Staff PIN (`1122`).
 
 - **Rate & Margin Shielding:** PTR (Rate), Margins, MRP, and wholesale scheme structures are strictly hidden from staff view to protect distributor trade secrets.
 - **0ms Catalog Search:** Rapidly scan products by name, brand, or packing size with sub-millisecond in-memory response.
 - **Stock Availability Toggling:** Staff are permitted only to toggle binary stock availability (Green = In Stock, Red = Out of Stock).
-- **Warehouse Carton Breakdown Calculator:** Instant modal calculator that decomposes total required units into full sealed shipper cartons and loose units (`e.g. 52 pcs in Box of 24 = 2 Full Boxes + 4 Loose Units`).
+- **Warehouse Carton Breakdown Calculator (`PackagingHelper`):** Instant modal calculator that decomposes total required units into full sealed shipper cartons and loose units (`e.g. 52 pcs in Box of 24 = 📦 2 Full Boxes (48 pcs)  +  🧴 4 Loose Pieces`). Powered by a pure domain `PackagingHelper` with standardized trade nomenclature.
 
 ### 3. Field Salesman Mode (Route Order Booker)
 Built for field order bookers who visit 25–40 retail counters per day. Protected by Salesman PIN (`3344`).
@@ -213,7 +215,7 @@ Every commit and PR must strictly satisfy:
 
 ```bash
 flutter analyze   # Enforces zero analyzer issues
-flutter test      # All 57 automated unit and widget tests must pass
+flutter test      # All 80 automated unit and widget tests must pass
 ```
 
 ### Build & Deploy to Firebase Hosting

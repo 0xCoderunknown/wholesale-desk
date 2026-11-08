@@ -49,7 +49,12 @@ class WhatsAppService {
           : '';
 
       buffer.writeln('${i + 1}. ${p.name}');
-      buffer.writeln('   ${item.quantity} pcs $schemeBonusText@ ${AppFormatters.formatCurrency(p.ptr)} = ${AppFormatters.formatCurrency(item.lineTotalPtr)}');
+      buffer.writeln('   ${item.quantity} pcs $schemeBonusText@ ${AppFormatters.formatCurrency(item.effectiveRate)} = ${AppFormatters.formatCurrency(item.lineTotalPtr)}');
+
+      final parsed = SchemeHelper.parse(p.scheme);
+      if (parsed.type == SchemeType.infoNote && parsed.raw.trim().isNotEmpty) {
+        buffer.writeln('   Note: ${parsed.raw.trim()}');
+      }
     }
 
     buffer.writeln('--------------------------------');

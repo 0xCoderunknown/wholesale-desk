@@ -21,9 +21,10 @@ Any code or proposal that violates these invariants will be rejected:
    - Stock availability is toggled in-place via fast green/red toggle pills by Admin or Staff.
    - Retailer catalog respects `in_stock`: out-of-stock items are visually flagged or disabled from cart additions.
 
-3. **WhatsApp B2B Checkout (Zero Gateway Overhead):**
+3. **WhatsApp B2B Checkout & Strict Scheme Automation:**
    - No payment gateways, transactional merchant accounts, or checkout server sessions.
    - Cart checkout compiles an itemized, cleanly formatted B2B order string directly into a WhatsApp URL (`https://wa.me/{phone}?text=...`) and dispatches via `url_launcher`.
+   - **Two Math Primitives Only:** Automated cart schemes are strictly restricted to Free Goods (`X+Y`) and Flat Percentage (`N%`). Minimum thresholds for `%` discounts are enforced natively via product `moq`. All unrecognized strings are classified as Informational Notes (`📢 {text}`) and are strictly prohibited from mutating cart line pricing.
    - Calculations (MRP, PTR/Rate, Scheme savings, Total Bill) must be mathematically verified in domain logic before string compilation.
 
 4. **4-Tier Role Guarding & PIN Authentication:**
@@ -79,17 +80,19 @@ Follow this workflow when addressing requests from the Product Manager:
 ├── rules/        -> AI workspace rules (wholesale_desk_rules.md)
 └── recipes/      -> Implementation checklists (add_product_field.md, add_store_setting.md)
 lib/
-├── config/       -> Firebase options, theme definitions, and color tokens
-├── models/       -> Pure data models (Product, Retailer, CartItem, AppSettings)
-├── services/     -> Database (Firestore) & WhatsApp URL launch services
+├── config/       -> Firebase options, theme definitions, formatters, and breakpoints
+├── models/       -> Pure data models (Product, Retailer, CartItem, AppSettings, PackagingHelper)
+├── services/     -> Dual-backend repositories, SchemeHelper, and WhatsApp URL launch services
 ├── state/        -> Application state providers (AuthProvider, DeskProvider, CartProvider)
-├── views/        -> UI Screens & Dialogs
+├── views/        -> UI Screens & Modular Components
 │   ├── auth/         -> PIN keypad login and session guards
-│   ├── distributor/  -> Admin distributor desk, product edit, retailer management, store settings
-│   ├── retailer/     -> Retailer catalog, MOQ steppers, slide-out cart drawer
+│   ├── distributor/  -> Admin distributor desk, product modal, settings, and components/
+│   │   └── components/   -> Modular counter bar, admin table, staff godown table, and mobile cards
+│   ├── retailer/     -> Retailer catalog, proforma invoice cart screen, and components/
+│   │   └── components/   -> Modular invoice table, summary dock, card grid, and filter toolbar
 │   ├── salesman/     -> Sticky beat/route switcher bar and shop picker with cart isolation
-│   └── widgets/      -> Shared high-density widgets (badges, stock pill, numeric keypad)
-test/             -> Automated unit and widget tests
+│   └── widgets/      -> Shared high-density widgets (badges, stock pill, keypad, scheme guide)
+test/             -> Automated unit and widget tests (80 passing tests)
 ```
 
 ---

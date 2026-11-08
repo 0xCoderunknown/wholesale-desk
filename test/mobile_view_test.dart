@@ -231,18 +231,18 @@ void main() {
       expect(foundTogether, isTrue);
     });
 
-    testWidgets('Inline scheme strip: static flat badge for percentage scheme vs 1-click inline apply button for tiered (no accordion)',
+    testWidgets('Inline scheme strip: static info note badge (no apply) vs 1-click inline apply button for automated schemes',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final percentProduct = Product(
-        id: 'prod_parle',
+      final infoProduct = Product(
+        id: 'prod_info',
         name: 'Parle-G 250g',
         brand: 'Parle',
         mrp: 30.0,
         ptr: 25.0,
-        scheme: '5% Cash Disc',
+        scheme: 'Diwali Scheme: Rs.50 off',
         moq: 10,
         cartonPack: 60,
         inStock: true,
@@ -251,7 +251,7 @@ void main() {
       await tester.pumpWidget(
         buildTestableWidget(
           child: SchemeInlineStrip(
-            product: percentProduct,
+            product: infoProduct,
             inStock: true,
             isAlreadyActive: false,
             onApplyScheme: () {},
@@ -259,12 +259,12 @@ void main() {
         ),
       );
 
-      // Percentage scheme: flat static amber badge with no expansion arrow or apply button
-      expect(find.text('5% Cash Disc auto-applied'), findsOneWidget);
+      // Informational note: flat static badge with no expansion arrow or apply button
+      expect(find.text('Diwali Scheme: Rs.50 off'), findsOneWidget);
       expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsNothing);
       expect(find.textContaining('APPLY'), findsNothing);
 
-      // Tiered scheme: clean inline single-line strip with inline [APPLY] button and no accordion drawer
+      // Free goods scheme: clean inline single-line strip with inline [APPLY] button and no accordion drawer
       var appliedCount = 0;
       await tester.pumpWidget(
         buildTestableWidget(
@@ -279,7 +279,7 @@ void main() {
         ),
       );
 
-      // Tiered scheme shows scheme label and inline APPLY button without expansion arrows
+      // Scheme shows scheme label and inline APPLY button without expansion arrows
       expect(find.textContaining('Scheme: 10+1 Free'), findsOneWidget);
       expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsNothing);
       expect(find.text('APPLY'), findsOneWidget);
