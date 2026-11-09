@@ -7,7 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.9.0] - 2026-11-08
+## [1.10.0] - 09-11-2026
+
+### Added
+- **Native Android Platform Harness (`android/`)**:
+  - Scaffolded native Android build platform for future compilation (`flutter build apk --release`, `flutter build appbundle --release`).
+  - Added `android.permission.INTERNET` and Android 11+ (API 30+) `<queries>` intent declarations for WhatsApp packages (`com.whatsapp`, `com.whatsapp.w4b`) and `https` schemes in `AndroidManifest.xml`.
+- **Defensive Mobile Layout Hardening**:
+  - Replaced rigid badge row in `DistributorMobileCard` with flexible `Wrap(spacing: 6, runSpacing: 4)` to eliminate horizontal RenderFlex overflow on long scheme strings, notes, and carton tags.
+  - Constrained PTR/MRP text inside `Expanded` with `TextOverflow.ellipsis`.
+  - Added ellipsis overflow guards to `ProductCardTile` carton buttons and `RetailerCartScreen` sticky bottom action buttons (`Copy` and `Send on WhatsApp`).
+  - Dynamically shortened Add Product button in `DistributorCounterBar` to `"Add"` on mobile viewports (<600px).
+- **Dual-Backend Token Parity**:
+  - Synchronized `master_pin`, `staff_pin`, and `salesman_pin` in WooCommerce REST mode (`WooCommerceRestService`).
+- **Comprehensive Positioning & Architecture Documentation**:
+  - Updated `README.md` to position Wholesale Desk as an order-taking frontend with direct WhatsApp handoff, documenting boundaries against separate billing/ERP systems (Tally, Marg, SAP).
+
+---
+
+## [1.9.0] - 08-11-2026
 
 ### Added
 - **Warehouse Godown Staff Mode & Rate Shielding**:
@@ -45,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.8.0] - 2026-11-08
+## [1.8.0] - 08-11-2026
 
 ### Added
 - **Field Salesman Role (`UserRole.salesman`)**: Dedicated in-memory ordering mode for field order bookers (PIN: `3344` configurable in Store Settings). Reuses the high-density retailer catalog with instantaneous shop switching and zero backend bloat.
@@ -68,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.7.0] - 2026-11-08
+## [1.7.0] - 08-11-2026
 
 ### Added
 - **Retailer Profile & ERP Ledger Guardrails**: Added read-only `RetailerProfileDialog` displaying immutable party ledger credentials (Store Name, Party Code, Assigned Route, Registered Phone) with `🔒 Managed by Distributor ERP` lock indicator, distributor dispute contact footer, and `[ Sign Out / Switch Store ]` counter session handoff.
@@ -96,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.6.0] - 2026-11-07
+## [1.6.0] - 07-11-2026
 
 ### Added
 - **Dynamic Green Scheme Recalculation**: Live effective PTR and boosted margin pills transition directly to new values in vibrant emerald green without cluttering strikethroughs when volume thresholds are met.
@@ -115,7 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.5.0] - 2026-11-07
+## [1.5.0] - 07-11-2026
 
 ### Added
 - **Progressive Scheme Guidance**: Real-time contextual distance cues (`Add X more to get +1 Free`) when cart quantity approaches a deal threshold.
@@ -127,7 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.4.0] - 2026-11-07
+## [1.4.0] - 07-11-2026
 
 ### Refactored
 - **Domain & UI Architectural Decoupling**:
@@ -138,7 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.0] - 2026-11-07
+## [1.3.0] - 07-11-2026
 
 ### Added
 - **1-Tap Scheme Auto-Fill**: Instant threshold fill (`[Apply Scheme (+N)]`) for tiered and free-goods schemes without manual stepping.
@@ -148,7 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.0] - 2026-11-07
+## [1.2.0] - 07-11-2026
 
 ### Added
 - **Floating Cart Pill**: High-visibility floating cart action button displaying live item counts and running order totals.
@@ -160,7 +178,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.1.0] - 2026-11-07
+## [1.1.0] - 07-11-2026
 
 ### Added
 - **Dual-Backend Architecture**: Seamless switching between Cloud Firestore and WordPress WooCommerce REST API (`/wp-json/swac/v1/`) via `WholesaleRepository`.
@@ -170,7 +188,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.0] - 2026-11-07
+## [1.0.0] - 07-11-2026
 
 ### Added
 - **Initial Release of Wholesale Desk**:

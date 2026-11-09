@@ -354,10 +354,12 @@ void main() {
       expect(AppFormatters.formatCurrency(1250.50), equals('₹1,250.50'));
     });
 
-    test('Formats Indian standard date as DD/MM/YYYY', () {
+    test('Formats Indian standard date as DD/MM/YYYY, DD-MM-YYYY, and DD-MM-YY', () {
       final date = DateTime(2026, 11, 7, 18, 58);
       expect(AppFormatters.formatIndianDate(date), equals('07/11/2026'));
-      expect(AppFormatters.formatIndianDateTime(date), equals('07/11/2026, 06:58 PM'));
+      expect(AppFormatters.formatIndianDate(date, hyphen: true), equals('07-11-2026'));
+      expect(AppFormatters.formatIndianDateShort(date), equals('07-11-26'));
+      expect(AppFormatters.formatIndianDateTime(date), equals('07-11-2026, 06:58 PM'));
     });
 
     test('Formats 10-digit Indian mobile numbers with +91 and 5-5 split', () {

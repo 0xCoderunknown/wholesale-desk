@@ -26,14 +26,21 @@ class AppFormatters {
   static String formatPercent(double value, {int decimals = 1}) =>
       '+${value.toStringAsFixed(decimals)}%';
 
-  // 2. Indian Date & Time Formats (DD/MM/YYYY is standard in India)
+  // 2. Indian Date & Time Formats (Strict Indian DD-MM-YYYY / DD-MM-YY / DD/MM/YYYY standards)
+  static final DateFormat indianDateHyphen = DateFormat('dd-MM-yyyy');
+  static final DateFormat indianDateShort = DateFormat('dd-MM-yy');
   static final DateFormat indianDate = DateFormat('dd/MM/yyyy');
-  static final DateFormat indianDateTime = DateFormat('dd/MM/yyyy, hh:mm a');
+  static final DateFormat indianDateTime = DateFormat('dd-MM-yyyy, hh:mm a');
   static final DateFormat indianDateLong = DateFormat('dd MMM yyyy, hh:mm a');
 
-  static String formatIndianDate(DateTime? date) {
+  static String formatIndianDate(DateTime? date, {bool hyphen = false}) {
     if (date == null) return '-';
-    return indianDate.format(date);
+    return hyphen ? indianDateHyphen.format(date) : indianDate.format(date);
+  }
+
+  static String formatIndianDateShort(DateTime? date) {
+    if (date == null) return '-';
+    return indianDateShort.format(date);
   }
 
   static String formatIndianDateTime(DateTime? date) {

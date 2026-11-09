@@ -7,6 +7,7 @@
 - **Verification:** Always verify changes with `flutter analyze` and `flutter test`. Both must pass with zero issues.
 - **Stock Model:** Binary stock only (`in_stock: true | false`). Never deduct numerical stock counts.
 - **Zero Image Overhead:** Maintain zero media/image rendering in the catalog for instant counter-speed performance.
+- **India-Centric Locale & Date Standards:** All dates must strictly follow Indian ordering (`DD-MM-YYYY` or `DD-MM-YY` / `DD/MM/YYYY`). Never use US-style `MM/DD/YYYY`. Currency must use Indian Lakhs & Crores grouping (`₹ #,##,##0.00`).
 - **Role Security:** Strictly isolate Admin (full desk), Staff (stock toggle only), Salesman (field route/shop booking), and Retailer (authenticated ordering) permissions.
 - **State Management:** Provider strictly (`ChangeNotifierProvider`). Do not introduce external state management libraries.
 - **Zero Legacy Debt:** Backward compatibility is not required during pre-2.0 active development. Never add compatibility shims or polyfills. Immediately delete superseded or replaced legacy files.

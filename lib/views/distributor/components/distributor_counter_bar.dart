@@ -136,9 +136,9 @@ class DistributorCounterBar extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: onAddProduct,
                     icon: const Icon(Icons.add_rounded, size: 16),
-                    label: const Text('Add Product'),
+                    label: Text(isDesktop ? 'Add Product' : 'Add'),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 14 : 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     ),
                   ),

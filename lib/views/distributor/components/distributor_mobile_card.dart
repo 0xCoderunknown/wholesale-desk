@@ -136,21 +136,19 @@ class DistributorMobileCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            Row(
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
               children: [
-                if (p.scheme.trim().isNotEmpty) ...[
+                if (p.scheme.trim().isNotEmpty)
                   SchemeBadge(scheme: p.scheme),
-                  const SizedBox(width: 6),
-                ],
                 MoqBadge(moq: p.moq),
-                if (p.hasCartonPack) ...[
-                  const SizedBox(width: 6),
+                if (p.hasCartonPack)
                   InkWell(
                     onTap: () => onOpenBoxCalculator(p),
                     borderRadius: BorderRadius.circular(4),
                     child: BoxPackBadge(cartonPack: p.cartonPack),
                   ),
-                ],
               ],
             ),
             const SizedBox(height: 8),
@@ -158,10 +156,14 @@ class DistributorMobileCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'PTR: ${AppFormatters.formatCurrency(p.ptr)} (MRP: ${AppFormatters.formatCurrency(p.mrp)})',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
+                Expanded(
+                  child: Text(
+                    'PTR: ${AppFormatters.formatCurrency(p.ptr)} (MRP: ${AppFormatters.formatCurrency(p.mrp)})',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+                const SizedBox(width: 6),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

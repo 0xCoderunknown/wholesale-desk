@@ -207,6 +207,8 @@ class ProductCardTile extends StatelessWidget {
                         icon: const Icon(Icons.inventory_2_outlined, size: 15, color: Color(0xFF2563EB)),
                         label: Text(
                           'Buy 1 Box (${product.cartonPack})',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 11.5,

@@ -164,6 +164,15 @@ class WooCommerceRestService implements WholesaleRepository {
           _cachedSettings = _cachedSettings.copyWith(
             whatsappPhone: s['phone_number']?.toString() ?? _cachedSettings.whatsappPhone,
             storeName: s['store_name']?.toString() ?? _cachedSettings.storeName,
+            masterPin: (s['master_pin'] != null && s['master_pin'].toString().isNotEmpty)
+                ? s['master_pin'].toString()
+                : _cachedSettings.masterPin,
+            staffPin: (s['staff_pin'] != null && s['staff_pin'].toString().isNotEmpty)
+                ? s['staff_pin'].toString()
+                : _cachedSettings.staffPin,
+            salesmanPin: (s['salesman_pin'] != null && s['salesman_pin'].toString().isNotEmpty)
+                ? s['salesman_pin'].toString()
+                : _cachedSettings.salesmanPin,
           );
           _settingsController.add(_cachedSettings);
         }
@@ -188,6 +197,7 @@ class WooCommerceRestService implements WholesaleRepository {
           'store_name': settings.storeName,
           if (settings.masterPin.isNotEmpty) 'master_pin': settings.masterPin,
           if (settings.staffPin.isNotEmpty) 'staff_pin': settings.staffPin,
+          if (settings.salesmanPin.isNotEmpty) 'salesman_pin': settings.salesmanPin,
         }),
       );
     } catch (e) {

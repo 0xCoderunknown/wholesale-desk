@@ -27,23 +27,28 @@ Any code or proposal that violates these invariants will be rejected:
    - **Two Math Primitives Only:** Automated cart schemes are strictly restricted to Free Goods (`X+Y`) and Flat Percentage (`N%`). Minimum thresholds for `%` discounts are enforced natively via product `moq`. All unrecognized strings are classified as Informational Notes (`📢 {text}`) and are strictly prohibited from mutating cart line pricing.
    - Calculations (MRP, PTR/Rate, Scheme savings, Total Bill) must be mathematically verified in domain logic before string compilation.
 
-4. **4-Tier Role Guarding & PIN Authentication:**
+4. **India-Centric Trade & Locale Formatting Standards (Strict DD-MM-YYYY / DD-MM-YY):**
+   - **Target Audience:** The portal is built exclusively for the Indian wholesale trade ecosystem (FMCG, pharma, groceries, general trade).
+   - **Date Formats:** Dates **must always** be rendered in Indian standard order: `DD-MM-YYYY` or `DD-MM-YY` (or `DD/MM/YYYY` / `DD MMM YYYY`). **Never** use US-style `MM/DD/YYYY` or `MM-DD-YYYY`.
+   - **Currency & Mobile:** Currency must strictly use the Indian Lakhs & Crores grouping (`₹ #,##,##0.00` via `en_IN`), and mobile numbers follow 10-digit Indian trade notation (`+91 XXXXX XXXXX`). All date/currency formatting must be routed through [`AppFormatters`](lib/config/formatters.dart).
+
+5. **4-Tier Role Guarding & PIN Authentication:**
    - **Admin (Master PIN `5075` / dynamic from `/settings/general`):** Full Distributor Desk access (product catalog CRUD, rate/scheme/MOQ edits, retailer PIN management, store settings).
    - **Staff (Staff PIN `1122` / dynamic from `/settings/general`):** High-speed counter assistant. Allowed **only** to toggle `in_stock` (true/false) and search items. Rates, scheme modifications, retailer credentials, and settings remain strictly hidden and immutable.
    - **Salesman (Salesman PIN `3344` / dynamic from `/settings/general`):** High-speed field order booker. Operates the authenticated catalog with a sticky beat/route filter (`SalesmanRouteBar`), 0ms shop picker, Cart Isolation Guard, and WhatsApp order watermarking (`Booked by: Salesman`).
    - **Retailer (Mobile + 4-Digit PIN):** Authenticates against `/retailers/{id}`. Views authenticated catalog with immutable ERP ledger profile card, applies MOQ quantity steppers, reviews savings, and submits WhatsApp orders with clipboard copy fallback.
    - Never bypass role guards or expose admin tools to Staff, Salesman, or Retailer views.
 
-5. **Responsive Counter & Mobile Layout Standards:**
+6. **Responsive Counter & Mobile Layout Standards:**
    - **Counter Desktop Monitors (1080p / 1366x768):** High-density split panels, compact toolbars, keyboard-friendly search, and zero vertical margin waste.
    - **Mobile Browsers (390–430px):** Single-column high-density listing, sticky bottom action bar / cart pill, slide-out drawer, and touch-optimized numeric keypads.
 
-6. **Pre-2.0 Active Development Phase & Zero Legacy Debt:**
+7. **Pre-2.0 Active Development Phase & Zero Legacy Debt:**
    - Schema migrations and backward-compatibility polyfills are not required. Clean, unified domain code takes precedence over preserving obsolete structures.
    - **Immediate Deletion of Replaced Files:** When a component or screen is refactored, superseded files must be deleted immediately.
    - If a breaking change is introduced, inform the Product Manager explicitly.
 
-7. **Strict Push & Deployment Protocol (Zero Autonomous Push or Deploy):**
+8. **Strict Push & Deployment Protocol (Zero Autonomous Push or Deploy):**
    - **Never push to Git (`git push`)** unless the PM explicitly commands `"push to git"`.
    - **Never build or deploy to hosting (`firebase deploy` or `flutter build web`)** unless the PM explicitly commands `"push to hosting"`.
    - Keep all local development and test execution completely offline from remotes. Once code is ready and tested, stop and wait for PM review.
@@ -104,6 +109,7 @@ test/             -> Automated unit and widget tests (80 passing tests)
 - Never introduce image download bottlenecks or decorative media to product list items.
 - Never hardcode WhatsApp phone numbers in UI widgets (always resolve from `AppSettings`).
 - Never allow Staff PIN sessions to edit prices, PTR, schemes, or store settings.
+- Never format dates using US notation (`MM/DD/YYYY` or `MM-DD-YYYY`); always enforce Indian standard date ordering (`DD-MM-YYYY` / `DD-MM-YY` or `DD/MM/YYYY`).
 
 ### Architecture & State
 - Never switch state management away from Provider.

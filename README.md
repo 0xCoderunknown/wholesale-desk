@@ -1,135 +1,163 @@
 # Wholesale Desk
 
-**The high-speed B2B ordering and distributor desk built for Indian wholesale trade.**
+**High-speed B2B wholesale order-taking frontend with direct WhatsApp handoff.**
 
-Wholesale Desk replaces messy handwritten parchaas, cluttered WhatsApp voice notes, and sluggish ERP ordering portals with a single, lightning-fast screen. Built for FMCG, pharma, and grocery distributors who need POS counter speed, zero latency, and seamless WhatsApp dispatch. No expensive software installations. Runs directly in any modern browser.
+Wholesale Desk is an order-taking frontend built for FMCG, pharma, and grocery distributors in wholesale trade. It provides a fast, zero-image catalog interface for retailers, field salesmen, and counter staff to prepare structured, mathematically verified wholesale orders and hand them off directly to the distributor via WhatsApp.
 
-[![Version](https://img.shields.io/badge/Version-1.9.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.10.0-blue)](CHANGELOG.md)
 [![Platform](https://img.shields.io/badge/Platform-Flutter%20Web-teal)](#deployment--developer-setup)
-[![Speed](https://img.shields.io/badge/Search%20Speed-%3C1ms%20In--Memory-brightgreen)](#core-operational-invariants)
 [![Tests](https://img.shields.io/badge/Tests-80%20Passing-success)](test/)
 [![Dual Backend](https://img.shields.io/badge/Backend-Firestore%20%7C%20WooCommerce%20REST-orange)](#dual-backend-architecture)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
+---
+
+## What Wholesale Desk Is (and What It Is Not)
+
+To evaluate Wholesale Desk accurately, it is important to understand its specific architectural boundaries:
+
+- **What it is:** A focused, lightweight, client-side order-taking frontend. It allows retailers to self-order from their mobile browsers, field salesmen to book orders during shop visits, and counter staff to check availability and packing breakdowns.
+- **What it is not:** Wholesale Desk is **not** billing, invoicing, accounting, or ERP software. It does not replace systems like Tally, Marg ERP, Busy, SAP, or QuickBooks. It does not generate GST e-invoices, print tax invoices, manage general ledgers, track customer outstanding balances, or process online card/UPI payment gateway settlements.
+- **The End-to-End Workflow:**
+  1. **Distributor Setup:** The distributor maintains wholesale rates (PTR), retail reference rates (MRP), promotional trade schemes (`X+Y` or `N%`), minimum order quantities (MOQ), and binary stock availability in Wholesale Desk.
+  2. **Order Preparation:** A retailer (self-ordering) or field salesman (route booking) builds an itemized cart. Cart domain logic verifies MOQ thresholds and automatically computes free goods or percentage discounts.
+  3. **WhatsApp Handoff:** On checkout, the app compiles the verified order into a clean, itemized text payload and opens it in WhatsApp via a deep link addressed to the distributor's registered WhatsApp number.
+  4. **Final Billing & Invoicing:** The distributor or billing clerk receives the WhatsApp message and enters or imports the order into their separate accounting/billing software (e.g., Tally, Marg, SAP) where formal tax invoicing, payment collection, and accounting entries take place.
+
+```
+┌────────────────────────────────────────────────────────┐
+│                     Wholesale Desk                     │
+│  (Catalog Search · Scheme Math · Order Construction)   │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            │ WhatsApp Deep Link (wa.me)
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                   WhatsApp Handoff                     │
+│   (Structured B2B Text Payload to Distributor Phone)   │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            │ Manual Entry / Order Import
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│          Existing Billing / ERP System                 │
+│      (Tally Prime · Marg ERP · Busy · SAP)             │
+│    Tax Invoices · GST E-Way Bills · Payment Ledgers    │
+└────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Try the Live Demo
 
-**[▶ wholesale-desk-hub.web.app](https://wholesale-desk-hub.web.app)** — Pre-loaded with FMCG catalog, active schemes, and sample routes. Resets in one tap.
+A public demonstration is hosted at **[wholesale-desk-hub.web.app](https://wholesale-desk-hub.web.app)**. It is pre-loaded with sample FMCG catalog items, volume schemes, and sample routes.
 
-| Role | Access Credentials | Primary Workspace |
+The login screen provides 1-click quick-fill buttons for testing the following **demo-only credentials**:
+
+| Role | Demo Credentials | Primary Workspace |
 |---|---|---|
-| **Distributor Admin (Master)** | PIN `5075` | Master catalog CRUD, rates, schemes, retailer PINs, and store config |
-| **Staff Counter (Restricted)** | PIN `1122` | 0ms catalog search, rate-shielded stock toggle, and carton calculator |
-| **Field Salesman (Booker)** | PIN `3344` | Route/beat filter, 0ms shop picker, cart isolation, and order watermarking |
-| **Retailer Order Desk** | Mobile `9876543210` · PIN `1234` | Read-only ERP ledger, MOQ steppers, live scheme math, and WhatsApp checkout |
+| **Distributor Admin (Master)** | PIN `5075` | Master catalog CRUD, rates, schemes, retailer accounts, and store settings |
+| **Staff Counter (Godown)** | PIN `1122` | Client-side search, rate-shielded stock toggle, and carton breakdown calculator |
+| **Field Salesman (Booker)** | PIN `3344` | Route/beat filter, client-side shop selector, cart isolation, and order watermarking |
+| **Retailer Order Desk** | Mobile `9876543210` · PIN `1234` | Read-only party ledger profile, MOQ steppers, live scheme math, and WhatsApp checkout |
 
-*(All demo credentials have 1-click quick-fill chips on the login screen).*
-
----
-
-## The Operational Problem It Solves
-
-In traditional Indian distribution (Marg, Tally, Busy setups), distributors manage 500–5,000 SKUs with constantly fluctuating trade rates, volume schemes (e.g. `12+1 Free`, `3% Cash Scheme`), and minimum order quantities (MOQ). 
-
-Retailers either send garbled WhatsApp voice notes, call busy counter staff during peak billing hours, or wait for a field salesman to visit their shop once a week. When distributors deploy conventional B2B apps or heavy SFA tools (Bizom, FieldAssist), they fail because:
-- High-res product images consume mobile data and choke counter loading speeds.
-- Heavy sync spinners lock the UI during shop visits.
-- Complex payment gateways introduce transaction drop-offs and settlement delays.
-
-Wholesale Desk solves this with **POS-speed architecture**: everything executes in-memory, product cards have zero image weight, and orders compile directly into verified WhatsApp deep links.
-
-```
-Traditional Flow:
-Retailer sends messy voice note ➔ Counter boy mishears item ➔ Wrong carton billed in Tally ➔ Dispute on delivery
-
-Wholesale Desk Flow:
-Retailer/Salesman taps verified MOQ & scheme ➔ Live PTR & savings verified ➔ 1-tap WhatsApp dispatch with ERP Ref # ➔ Clerk imports directly
-```
+> **Note on Demo Credentials:** The PINs and phone number listed above are pre-configured strictly for the public evaluation demo and local development. In production deployments, distributors customize their access PINs and contact numbers via `config.json` or the Admin Settings dialog.
 
 ---
 
-## What It Covers
+## Role Workflows & Access Control
 
-### 1. Distributor Admin Desk (Master Access)
-The command center for distributor owners and billing managers. Protected by Master PIN (`5075` or dynamic from database).
+Wholesale Desk provides four distinct operational roles designed around counter and field operations:
 
-- **High-Density Split Panel (Desktop Monitors):** Designed for 1080p and 1366x768 billing desk monitors with modular component architecture (`DistributorCounterBar`, `DistributorAdminTable`, `DistributorStaffTable`, `DistributorMobileCard`).
-- **POS-Grade Product Modal Hardening:** Real-time keystroke margin calculations (`📈 Retailer Margin` or `⚠️ Illegal Pricing`), cross-field rate validations ($PTR \le MRP$), chained desktop keyboard navigation (`autofocus`, Enter to save), and numeric regex formatters.
-- **Two Math Primitives & Wholesale Scheme Guide:** Automated cart math strictly handles Free Goods (`X+Y`) and Flat Percentage (`N%`) with native MOQ enforcement; unrecognized text is badged as Informational Notes (`📢`). Includes an interactive Scheme Guide Dialog with 1-tap template chips (`10+1`, `5% Scheme`).
-- **Plausibility & Safety Guards:** Real-time non-blocking warnings for extreme discounts ($\ge 100\%$ or $> 50\%$) and abnormally large scheme quantities ($> 1000$).
-- **Instant Stock Control:** Toggle binary stock availability (`in_stock: true | false`) with instant green/red status pills.
-- **Retailer PIN & Party Ledger Management:** Create and manage retailer accounts linked directly to ERP party codes, assigned routes, and phone numbers.
-- **Store & Identity Configuration:** Configure billing WhatsApp number, store title, backend mode, and access PINs directly from the UI without redeployment.
-- **1-Click Demo Reset:** Instantly resets the database to standard demonstration products and routes for testing and onboarding.
+### 1. Distributor Admin Desk (Master PIN)
+The management dashboard for distributor owners and counter managers.
+- **Catalog Management:** Add, edit, or delete products with PTR (wholesale rate), MRP, carton pack size, MOQ, and scheme notation.
+- **Validation Guards:** Real-time margin preview ($MRP - PTR$), validation warnings if $PTR > MRP$, and non-blocking safety warnings for unusually large quantities or percentage schemes.
+- **Retailer Directory:** Register retail store accounts with party codes, route/beat assignments, phone numbers, and 4-digit PINs.
+- **Configuration:** Update store name, WhatsApp destination number, and access PINs directly from the UI.
+- **Backend Switching & Demo Reset:** Switch between Firestore and WooCommerce backends, or reset sample demo catalog data.
 
-### 2. Staff Counter (Restricted Godown Assistant)
-Designed for the warehouse boy or junior counter assistant. Protected by Staff PIN (`1122`).
+### 2. Staff Counter (Staff PIN)
+Designed for godown workers or junior counter assistants who check stock and pack items.
+- **Rate & Margin Shielding:** PTR (wholesale rates), retailer margins, and backend configuration are hidden from the staff interface to prevent unauthorized rate exposure.
+- **Stock Toggling:** Fast green/red binary stock toggle (`in_stock: true | false`).
+- **Carton Breakdown Calculator (`PackagingHelper`):** Utility modal that calculates shipper cartons and loose pieces for any order quantity (e.g., 52 units packed in boxes of 24 = 2 full boxes + 4 loose pieces).
 
-- **Rate & Margin Shielding:** PTR (Rate), Margins, MRP, and wholesale scheme structures are strictly hidden from staff view to protect distributor trade secrets.
-- **0ms Catalog Search:** Rapidly scan products by name, brand, or packing size with sub-millisecond in-memory response.
-- **Stock Availability Toggling:** Staff are permitted only to toggle binary stock availability (Green = In Stock, Red = Out of Stock).
-- **Warehouse Carton Breakdown Calculator (`PackagingHelper`):** Instant modal calculator that decomposes total required units into full sealed shipper cartons and loose units (`e.g. 52 pcs in Box of 24 = 📦 2 Full Boxes (48 pcs)  +  🧴 4 Loose Pieces`). Powered by a pure domain `PackagingHelper` with standardized trade nomenclature.
+### 3. Field Salesman Mode (Salesman PIN)
+Optimized for order bookers visiting retail counters on daily delivery beats.
+- **Route / Beat Bar (`SalesmanRouteBar`):** Sticky filter bar allowing salesmen to filter shops by route (e.g., `📍 Central Market Route`, `📍 Station Road Route`, or `📍 All Routes`).
+- **Client-Side Shop Selector:** Searchable modal to quickly switch between approved retail accounts.
+- **Cart Isolation Guard:** If a salesman switches to another retail counter while the active cart contains items, the app prompts for confirmation and clears the cart, preventing cross-shop item contamination.
+- **Salesman Order Watermarking:** Orders dispatched in salesman mode automatically append `Booked by: <Name> (Salesman)` in the WhatsApp header for commission tracking.
 
-### 3. Field Salesman Mode (Route Order Booker)
-Built for field order bookers who visit 25–40 retail counters per day. Protected by Salesman PIN (`3344`).
+### 4. Retailer Self-Order Desk (Mobile + PIN)
+A mobile-first ordering interface for verified retail shopkeepers.
+- **Party Profile Card:** Displays the store's registered trade identity, party code, and delivery beat.
+- **Dual Price & Scheme Display:** Shows MRP alongside PTR, with margin percentage indicators and color transitions when volume schemes apply.
+- **MOQ & Carton Quick-Buy:** Steppers enforce minimum order quantities, with adjacent 1-tap buttons to add full carton cases.
+- **Proforma Cart & Dispatch:** Itemized review screen showing line rates, earned free units or discount subtotals, notes field, and 1-tap WhatsApp checkout with a clipboard fallback button.
 
-- **Sticky Beat & Route Selector (`SalesmanRouteBar`):** Compact 44px sticky bar at the top of the mobile catalog allowing salesmen to filter shops by route (`📍 Central Market Route`, `📍 Station Road Route`, or `📍 All Routes`).
-- **Sub-Millisecond Shop Picker:** Instant searchable bottom sheet to select active retailer by store name, phone, or beat.
-- **Cart Isolation Guard:** When switching between shops, automatically prompts confirmation if the active cart contains items, preventing accidental cross-shop order contamination.
-- **Salesman Order Watermark:** WhatsApp orders automatically include `Booked by: Salesman Name (Salesman)` in the header for transparent commission attribution and clerk verification.
-
-### 4. Retailer Self-Order Desk
-The mobile-first ordering portal given to verified shopkeepers. Authenticates via Registered Mobile + 4-Digit PIN.
-
-- **Immutable ERP Ledger Profile:** Displays read-only party ledger credentials (Store Name, Party Code, Route, Registered Mobile) with `🔒 Managed by Distributor ERP` lock indicator and distributor dispute contact footer.
-- **Unified Price Bar:** Clear typography displaying `[₹MRP  [MARGIN %]  ₹PTR]`. MRP and PTR share identical font sizing; PTR dynamically transitions to vibrant emerald green when volume schemes take effect.
-- **MOQ Stepper & 1-Tap Carton Quick-Buy:** Quantity steppers enforce minimum order quantities, with adjacent `[ Buy 1 Box (N) ]` pills to add full case packs in a single tap.
-- **Collapsible Tiered Scheme Accordion:** Shikhar-style expandable deals drawer showing tiered slabs (`Buy 10+1 Free`, `Buy 50 Get ₹5 Off`) with instant 1-tap undo (`[REMOVE]`).
-- **Enterprise 2-Column Desktop Cart & Mobile Sticky Bar:** Split proforma invoice table with pinned summary dock on desktop (≥1024px) and thumb-friendly sticky checkout bar on mobile (<768px).
-- **WhatsApp B2B Checkout & Clipboard Fallback:** Compiles itemized B2B order string directly into WhatsApp URL, complete with 4-character reference hash (`Ref: #XXXX`) and 1-tap copy button (`[ 📋 Copy ]`) for desktop or web fallback.
+### Authorization Model (Client-Side vs. Server-Side)
+- **PIN-Based Access:** PIN verification is designed for rapid counter POS switching and field speed, not cryptographic single sign-on.
+- **Firestore Mode:** Role guards and field shielding (such as hiding rates from Staff) operate as **client-side view filters** within the Flutter web application. Raw database access in Firestore is governed by the Firebase project's Firestore Security Rules.
+- **WooCommerce REST Mode:** Authorization is verified **server-side** via custom REST authorization callbacks (`swac_desk_is_owner_authorized`, `swac_desk_can_read_retailers`, and role tokens). Requests from staff or salesmen attempting to modify protected fields like prices or schemes are rejected by the WordPress server with HTTP 403 Forbidden.
 
 ---
 
-## Core Operational Invariants
+## Operational Model & Limitations
 
-Any code or modification in Wholesale Desk strictly adheres to five non-negotiable invariants:
+Distributors evaluating Wholesale Desk should note its specific operational constraints:
 
-1. **High-Speed In-Memory Operations (<1ms):** Catalog filtering, route switching, and cart calculations happen entirely in-memory on the client without blocking network spinners.
-2. **Zero Image Overhead:** No heavy media or image rendering in the product catalog. Scanning density, visual clarity, and counter speed take absolute priority over decorative pictures.
-3. **Strict Binary Stock Model (`in_stock: true | false`):** Orders **never** decrement quantitative inventory counts in the database. Stock status is binary and toggled in-place by staff or admin.
-4. **WhatsApp B2B Checkout (Zero Gateway Overhead):** No payment gateway SDKs, merchant transaction fees, or cart checkout server sessions. Calculations (MRP, PTR, Scheme savings, Total Bill) are mathematically verified in domain logic and dispatched directly via WhatsApp deep links.
-5. **4-Tier Sovereign Role Guarding:** Admin, Staff, Salesman, and Retailer roles are strictly isolated with dedicated PIN authentication and client-side view shielding.
+1. **Strict Binary Stock Model (`in_stock: true | false`):**
+   - Stock availability is binary. The app does **not** track quantitative inventory balances (e.g., counting down from 150 units).
+   - WhatsApp order submissions **never decrement** inventory counts in the connected database.
+   - Out-of-stock products are visually flagged and disabled from cart additions. Stock status is manually toggled in-place by staff or admin.
+2. **No Database Order Records:**
+   - Checking out does **not** create order documents, customer transactions, or invoice entities in Firestore or WooCommerce.
+   - The order exists exclusively as an itemized, mathematically verified text message dispatched to the distributor's WhatsApp chat.
+3. **Automated Scheme Math (Two Primitives Only):**
+   - Automated cart scheme calculations are strictly limited to two predictable primitives:
+     - **Free Goods (`X+Y`):** Adds `floor(qty / X) * Y` bonus pieces to line items on apply.
+     - **Flat Percentage (`N%`):** Deducts `N%` from unit PTR on apply. Minimum thresholds are enforced via product `moq`.
+   - Any unrecognized string (e.g., custom festive promotions or conditional terms) is badged as an Informational Note (`📢 {text}`) and passed into the WhatsApp message without mutating cart line pricing.
+4. **Zero Image Overhead:**
+   - The product catalog uses dense typography, packing specifications, and brand badges with no heavy image rendering. This ensures fast rendering and low data consumption across mobile browsers and counter PCs.
 
 ---
 
-## Dual Backend Architecture
+## Dual Backend Architecture & Standalone Path
 
-Wholesale Desk features a pluggable repository architecture (`WholesaleRepository`) supporting two enterprise backends:
+Wholesale Desk features a modular repository layer (`WholesaleRepository`) supporting two backend implementations:
 
 ```
                         ┌───────────────────────────────┐
                         │      WholesaleRepository      │
                         │    (Abstract Domain Engine)   │
                         └───────────────┬───────────────┘
-                                        │
+                                         │
                 ┌───────────────────────┴───────────────────────┐
                 ▼                                               ▼
 ┌───────────────────────────────┐               ┌───────────────────────────────┐
 │     Cloud Firestore Mode      │               │     WooCommerce REST Mode     │
-│   (Realtime serverless B2B)   │               │   (WordPress Enterprise B2B)  │
-│  /settings/general            │               │   /wp-json/swac/v1/desk/...   │
-│  /products                    │               │   Full sync with WP catalog   │
-│  /retailers                   │               │   Carton packs & custom schemes│
+│   (Standalone / Serverless)   │               │     (WordPress Integration)   │
+│  • Direct Firestore sync      │               │  • /wp-json/swac/v1/desk/...  │
+│  • /settings/general          │               │  • Syncs with WC products     │
+│  • /products & /retailers     │               │  • Server-side REST auth      │
+│  • In-memory demo fallback    │               │  • Reads/writes B2B post-meta │
 └───────────────────────────────┘               └───────────────────────────────┘
 ```
 
-You can toggle between backends at any time in `config.json` or live through the Admin Store Settings dialog.
+### Origin & Standalone Positioning
+- **Origin:** Wholesale Desk was originally conceived from the B2B wholesale module in [`0xCoderunknown/woocommerce-whatsapp-commerce`](https://github.com/0xCoderunknown/woocommerce-whatsapp-commerce).
+- **Standalone Path:** Many traditional wholesale distributors in India do not run WordPress or WooCommerce, nor do they desire the operational overhead of maintaining a WooCommerce website. Wholesale Desk provides a **fully standalone path**: distributors can deploy Wholesale Desk using Cloud Firestore (or test it locally using the built-in in-memory catalog) with zero WordPress dependencies.
+- **Connected Path:** For businesses that already run a WooCommerce store powered by `woocommerce-whatsapp-commerce`, Wholesale Desk can switch to WooCommerce REST mode, syncing rates, carton packs, MOQ, and stock status directly with WooCommerce product post-meta.
+- Neither backend is mandatory for local evaluation; the app boots out-of-the-box in demo mode using in-memory mock data if neither backend is configured.
 
 ---
 
 ## Human-Configurable Root File (`config.json`)
 
-To prevent hardcoding business details or distributor secrets, configuration is stored in a clean, human-editable `config.json` at the project root:
+Store identity, contact phone numbers, access PINs, and Firebase credentials reside in `config.json` at the project root:
 
 ```json
 {
@@ -155,7 +183,7 @@ To prevent hardcoding business details or distributor secrets, configuration is 
 
 ## WhatsApp Order Payload Specification
 
-The compiled order string is optimized for WhatsApp deep links, staying within URL character limits and providing a clean, parseable header for warehouse clerks:
+The compiled order string is structured for readability on warehouse phones, fitting cleanly within WhatsApp URL length constraints:
 
 ```text
 *ORDER: Gupta Provision Store (Central Market Route)*
@@ -171,32 +199,34 @@ Booked by: Salesman (Salesman)
 Notes: Dispatch before 2 PM via Tempo delivery
 ```
 
-*(Line 3 `Booked by:` is automatically omitted when a retailer self-orders).*
+*(Line 3 `Booked by:` is automatically omitted when an authenticated retailer places their own order).*
 
 ---
 
-## Hardware & Environment Standards
+## Platform & Hardware Targets
 
-Wholesale Desk runs in modern web browsers (Chrome, Edge, Safari, Firefox). Zero native installations required.
+Wholesale Desk is built using **Flutter** and targets modern desktop and mobile browsers (Chrome, Edge, Safari, Firefox), with native Android compilation readiness pre-configured.
 
-| Terminal | Target Device | Layout Experience |
+> **Deployment Architecture:** The primary deployment target is Flutter Web, delivering instant, zero-install access across desktop monitors and mobile web browsers. The repository also includes the complete Android platform harness (`android/` scaffolding, Internet permissions, and WhatsApp `<queries>` intent filters), keeping the scope alive so the app can be compiled directly to a native Android APK or App Bundle whenever required.
+
+| Surface | Recommended Device | Optimized Interface |
 |---|---|---|
-| **Distributor Desk** | Desktop Monitor (1080p / 1366x768) | High-density data table, keyboard shortcuts, inline rate editors |
-| **Warehouse Counter** | Low-cost Celeron / Core i3 PC | Rate-shielded stock toggle pills, dispatch box breakdown calculator |
-| **Field Salesman** | Mobile Browser (390px – 430px) | Sticky beat bar, sub-millisecond shop selector, cart isolation guard |
-| **Retailer Shop** | Android / iOS Mobile Browser | 1-Handed single-column card list, MOQ steppers, sticky cart pill |
+| **Distributor Desk** | Desktop Monitor (1080p / 1366x768) | High-density data table, keyboard shortcuts, inline rate dialogs |
+| **Warehouse Counter** | Low-cost Desktop / Counter PC | Rate-shielded stock toggle pills, dispatch carton calculator |
+| **Field Salesman** | Mobile Browser / Android Device (390px – 430px) | Sticky route bar, client-side shop selector, cart isolation guard |
+| **Retailer Shop** | Mobile Web Browser / Android Device | Single-column card list, MOQ steppers, sticky bottom cart pill |
 
 ---
 
 ## Deployment & Developer Setup
 
 ### Prerequisites
-- Flutter 3.x Web SDK
-- Chrome Browser
-- *(Optional)* Firebase project with Firestore and Hosting enabled
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) 3.13+ (configured for Web)
+- Google Chrome (for local debugging)
+- *(Optional)* Firebase project with Cloud Firestore and Hosting enabled
 
 ### Run Locally (Demo Mode Out-of-the-Box)
-The app runs immediately with rich in-memory sample FMCG products, sample routes, and mock fallback stores without requiring Firebase credentials:
+The application starts immediately with an in-memory sample FMCG catalog and mock routes without requiring external database configuration:
 
 ```bash
 # Clone the repository
@@ -211,14 +241,19 @@ flutter run -d chrome
 ```
 
 ### Verification & Testing Gate
-Every commit and PR must strictly satisfy:
+Every commit and pull request must satisfy the automated test suite:
 
 ```bash
-flutter analyze   # Enforces zero analyzer issues
-flutter test      # All 80 automated unit and widget tests must pass
+# Enforces zero static analyzer issues
+flutter analyze
+
+# Executes all 80 unit, domain, and widget tests
+flutter test
 ```
 
-### Build & Deploy to Firebase Hosting
+### Build & Deploy Targets
+
+**Web Build (Firebase Hosting):**
 ```bash
 # Production Web Build
 flutter build web --release
@@ -227,15 +262,24 @@ flutter build web --release
 firebase deploy --only hosting
 ```
 
+**Android Build (Future Scope / Native App Compilation):**
+```bash
+# Production Android APK
+flutter build apk --release
+
+# Production Android App Bundle (Play Store)
+flutter build appbundle --release
+```
+
 ---
 
-## Documentation & Architecture Guide
+## Architecture & Reference Documents
 
 | Document | Purpose |
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | **Operating Constitution**: Architectural invariants, red lines, role guardrails, and PM protocol |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history, added features, breaking changes, and domain polish |
-| [`.agents/rules/wholesale_desk_rules.md`](.agents/rules/wholesale_desk_rules.md) | AI workspace rules and operational directives |
+| [`.agents/rules/wholesale_desk_rules.md`](.agents/rules/wholesale_desk_rules.md) | Workspace rules and operational directives |
 | [`.agents/recipes/add_product_field.md`](.agents/recipes/add_product_field.md) | Implementation checklist for extending product catalog fields |
 | [`.agents/recipes/add_store_setting.md`](.agents/recipes/add_store_setting.md) | Implementation checklist for adding system configuration parameters |
 
@@ -243,4 +287,4 @@ firebase deploy --only hosting
 
 ## License
 
-Open Source / MIT. Maintained by [0xCoderunknown](https://github.com/0xCoderunknown).
+Open Source under the [MIT License](LICENSE). Maintained by [0xCoderunknown](https://github.com/0xCoderunknown).

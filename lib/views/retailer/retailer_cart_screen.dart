@@ -500,7 +500,12 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
             OutlinedButton.icon(
               onPressed: () => _handleCopyOrderText(context),
               icon: const Icon(Icons.copy_rounded, size: 14),
-              label: const Text('Copy', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              label: const Text(
+                'Copy',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.slate700,
                 side: const BorderSide(color: AppTheme.slate300),
@@ -521,6 +526,8 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
                     : const Text('🚀', style: TextStyle(fontSize: 14)),
                 label: Text(
                   _isSending ? 'Launching...' : 'Send on WhatsApp',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
                 style: ElevatedButton.styleFrom(
