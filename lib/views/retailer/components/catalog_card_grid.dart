@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../../config/breakpoints.dart';
 import '../../../models/product.dart';
 import 'product_card_tile.dart';

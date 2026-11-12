@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../../config/theme.dart';
 import '../../../models/retailer.dart';
 import '../../../state/auth_provider.dart';

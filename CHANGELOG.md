@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.11.0] - 12-11-2026
+
+### Added
+- **Flutter 3.50+ & Dart 3.14 Toolchain Modernization**:
+  - Migrated Material library imports to `package:material_ui/material_ui.dart` across all components and widget tests, eliminating `package:flutter/material.dart` deprecation warnings introduced in Flutter 3.47+.
+  - Added `material_ui: ^1.11.0` and upgraded `cupertino_icons` to `^2.0.0`.
+  - Updated SDK constraint to `^3.14.0` in `pubspec.yaml`.
+- **Android Gradle & Java Toolchain Hardening**:
+  - Upgraded Gradle Wrapper to `9.5.0` (`android/gradle/wrapper/gradle-wrapper.properties`).
+  - Upgraded Android Gradle Plugin to `9.3.1` and Kotlin Gradle plugin to `2.4.20` (`android/settings.gradle.kts`).
+  - Pinned `org.gradle.java.home` to JDK 24 (`android/gradle.properties`).
+  - Standardized JVM target compatibility on JVM 21 across Java and Kotlin compiler tasks (`android/app/build.gradle.kts`).
+
+---
+
 ## [1.10.0] - 09-11-2026
 
 ### Added

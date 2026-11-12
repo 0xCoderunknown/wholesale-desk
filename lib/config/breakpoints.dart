@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Single source of truth for responsive breakpoints across Wholesale Desk.
 /// Eliminates hardcoded magic width numbers in UI components.

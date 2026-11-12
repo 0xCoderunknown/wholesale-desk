@@ -4,7 +4,7 @@
 
 Wholesale Desk is an order-taking frontend built for FMCG, pharma, and grocery distributors in wholesale trade. It provides a fast, zero-image catalog interface for retailers, field salesmen, and counter staff to prepare structured, mathematically verified wholesale orders and hand them off directly to the distributor via WhatsApp.
 
-[![Version](https://img.shields.io/badge/Version-1.10.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.11.0-blue)](CHANGELOG.md)
 [![Platform](https://img.shields.io/badge/Platform-Flutter%20Web-teal)](#deployment--developer-setup)
 [![Tests](https://img.shields.io/badge/Tests-80%20Passing-success)](test/)
 [![Dual Backend](https://img.shields.io/badge/Backend-Firestore%20%7C%20WooCommerce%20REST-orange)](#dual-backend-architecture)
